@@ -1,0 +1,18 @@
+﻿namespace GymBro.API.DTOs
+{
+    // Dữ liệu người dùng gửi lên khi Đăng Ký
+    public class RegisterDto
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+    }
+
+    // Dữ liệu người dùng gửi lên khi Đăng Nhập
+    public class LoginDto
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}
