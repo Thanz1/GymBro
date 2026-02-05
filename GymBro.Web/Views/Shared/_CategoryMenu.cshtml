@@ -1,0 +1,14 @@
+﻿@model IEnumerable<GymBro.Core.Category>
+
+@if (Model != null)
+{
+    foreach (var item in Model)
+    {
+        <li>
+            @* SỬA: CategoryID -> Id *@
+            <a href="@Url.Action("Shop", "Home", new { categoryId = item.Id })" class="dropdown-item">
+                @item.CategoryName
+            </a>
+        </li>
+    }
+}

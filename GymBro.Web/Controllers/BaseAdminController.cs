@@ -1,7 +1,7 @@
 ﻿using GymBro.Core;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using WebGymBro.Helpers;
+using GymBro.Web.Helpers;
 
 namespace GymBro.Web.Controllers
 {

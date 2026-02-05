@@ -1,0 +1,64 @@
+﻿@model GymBro.Core.OrderDetail
+
+@{
+    ViewBag.Title = "Chi tiết Đơn hàng";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h4 class="mb-0 text-info">Chi tiết Đơn hàng</h4>
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered">
+                    <tr>
+                        <th class="bg-light" style="width: 35%;">Mã Đơn hàng</th>
+                        @* SỬA: OrderID -> OrderId *@
+                        <td>#@Model.OrderId</td>
+                    </tr>
+                    <tr>
+                        <th class="bg-light">Sản phẩm</th>
+                        <td>@Html.DisplayFor(model => model.Product.ProductName)</td>
+                    </tr>
+                    <tr>
+                        <th class="bg-light">Số lượng</th>
+                        <td>@Html.DisplayFor(model => model.Quantity)</td>
+                    </tr>
+                    <tr>
+                        <th class="bg-light">Đơn giá</th>
+                        <td class="text-primary fw-bold">@string.Format("{0:N0}", Model.Price) VNĐ</td>
+                    </tr>
+                    <tr>
+                        <th class="bg-light">Thành tiền</th>
+                        <td class="text-danger fw-bold">@string.Format("{0:N0}", Model.Quantity * Model.Price) VNĐ</td>
+                    </tr>
+                    <tr>
+                        <th class="bg-light">Trạng thái ĐH</th>
+                        <td>
+                            @if (Model.Order.Status == "Chờ xử lý")
+                            {
+                                <span class="badge bg-warning text-dark">@Model.Order.Status</span>
+                            }
+                            else if (Model.Order.Status == "Đã giao hàng")
+                            {
+                                <span class="badge bg-success">@Model.Order.Status</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-info">@Model.Order.Status</span>
+                            }
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="mt-3 d-flex gap-2">
+                    @* SỬA: OrderDetailID -> Id *@
+                    @Html.ActionLink("Chỉnh sửa", "Edit", new { id = Model.Id }, new { @class = "btn btn-primary" })
+                    @Html.ActionLink("Quay lại", "Index", null, new { @class = "btn btn-secondary" })
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

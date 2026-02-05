@@ -15,13 +15,17 @@ namespace GymBro.Web.Controllers
             var query = _context.Orders.Include(o => o.User).AsQueryable();
 
             if (!string.IsNullOrEmpty(status))
-                query = query.Where(o => o.TrangThai == status);
+                // SỬA: TrangThai -> Status
+                query = query.Where(o => o.Status == status);
 
             if (!string.IsNullOrEmpty(searchString))
+                // Tìm theo ID đơn hoặc tên User
                 query = query.Where(o => o.Id.ToString() == searchString || o.User.Username.Contains(searchString));
 
             ViewBag.CurrentStatus = status;
-            return View(await query.OrderByDescending(o => o.NgayDat).ToListAsync());
+
+            // SỬA: NgayDat -> OrderDate
+            return View(await query.OrderByDescending(o => o.OrderDate).ToListAsync());
         }
 
         public async Task<IActionResult> Details(int id)
@@ -48,7 +52,8 @@ namespace GymBro.Web.Controllers
             var existingOrder = await _context.Orders.FindAsync(id);
             if (existingOrder != null)
             {
-                existingOrder.TrangThai = order.TrangThai; // Cập nhật trạng thái
+                // SỬA: TrangThai -> Status
+                existingOrder.Status = order.Status; // Cập nhật trạng thái
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));

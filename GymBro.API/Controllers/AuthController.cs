@@ -17,7 +17,6 @@ namespace GymBro.API.Controllers
         private readonly GymBroDbContext _context;
         private readonly IConfiguration _configuration;
 
-        // Tiêm DbContext và Cấu hình vào để dùng
         public AuthController(GymBroDbContext context, IConfiguration configuration)
         {
             _context = context;
@@ -28,20 +27,18 @@ namespace GymBro.API.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<User>> Register(RegisterDto request)
         {
-            // Kiểm tra xem username đã tồn tại chưa
             if (await _context.Users.AnyAsync(u => u.Username == request.Username))
             {
                 return BadRequest("Tài khoản đã tồn tại.");
             }
 
-            // Mã hóa mật khẩu (Bảo mật: Không bao giờ lưu mật khẩu gốc)
+            // Mã hóa mật khẩu
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
-            // Tạo user mới
             var user = new User
             {
                 Username = request.Username,
-                PasswordHash = passwordHash,
+                Password = passwordHash, // <--- ĐÃ SỬA: Dùng 'Password' thay vì 'PasswordHash'
                 FullName = request.FullName,
                 Email = request.Email,
                 Role = "User"
@@ -57,7 +54,6 @@ namespace GymBro.API.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<string>> Login(LoginDto request)
         {
-            // Tìm user trong DB
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
 
             if (user == null)
@@ -65,18 +61,16 @@ namespace GymBro.API.Controllers
                 return BadRequest("Sai tài khoản hoặc mật khẩu.");
             }
 
-            // Kiểm tra mật khẩu (So sánh cái nhập vào với cái đã mã hóa trong DB)
-            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+            // <--- ĐÃ SỬA: Dùng 'user.Password' thay vì 'user.PasswordHash'
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
             {
                 return BadRequest("Sai tài khoản hoặc mật khẩu.");
             }
 
-            // Nếu đúng hết, tạo Token (Vé vào cửa)
             string token = CreateToken(user);
             return Ok(token);
         }
 
-        // Hàm tạo JWT Token (Vé vào cửa)
         private string CreateToken(User user)
         {
             List<Claim> claims = new List<Claim>
@@ -85,7 +79,6 @@ namespace GymBro.API.Controllers
                 new Claim(ClaimTypes.Role, user.Role)
             };
 
-            // Lấy mã bí mật từ appsettings.json
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
                 _configuration.GetSection("Jwt:Key").Value!));
 
@@ -93,7 +86,7 @@ namespace GymBro.API.Controllers
 
             var token = new JwtSecurityToken(
                     claims: claims,
-                    expires: DateTime.Now.AddDays(1), // Token hết hạn sau 1 ngày
+                    expires: DateTime.Now.AddDays(1),
                     signingCredentials: creds
                 );
 

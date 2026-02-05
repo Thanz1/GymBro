@@ -1,0 +1,156 @@
+﻿@model GymBro.Core.PurchaseOrder
+
+@{
+    ViewBag.Title = "Chi tiết Phiếu nhập kho";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    @* SỬA: PurchaseOrderID -> Id *@
+    <h2 class="text-primary">Chi tiết Phiếu nhập #@Model.Id</h2>
+    <a href="@Url.Action("Index")" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Quay lại danh sách</a>
+</div>
+
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">Nhà cung cấp:</dt>
+                            <dd class="col-sm-8">@(Model.Supplier != null ? Model.Supplier.SupplierName : "N/A")</dd>
+
+                            <dt class="col-sm-4">Ngày lập:</dt>
+                            <dd class="col-sm-8">@Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                            <dt class="col-sm-4">Trạng thái:</dt>
+                            <dd class="col-sm-8">
+                                @if (Model.Status == "Đã nhập kho")
+                                {
+                                    <span class="badge bg-success">@Model.Status</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">@Model.Status</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-4">Tổng tiền:</dt>
+                            <dd class="col-sm-8 fw-bold text-danger fs-5">@string.Format("{0:N0}", Model.TotalAmount) đ</dd>
+                        </dl>
+                    </div>
+
+                    <div class="col-md-6 text-end d-flex align-items-center justify-content-end">
+                        @if (Model.Status != "Đã nhập kho")
+                        {
+                            // Form Duyệt phiếu
+                            using (Html.BeginForm("Approve", "PurchaseOrders", new { id = Model.Id }, FormMethod.Post))
+                            {
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-success btn-lg shadow" onclick="return confirm('Xác nhận nhập kho?\n\n- Tồn kho sản phẩm sẽ được cộng thêm.\n- Không thể sửa đổi phiếu này sau khi duyệt.');">
+                                    <i class="bi bi-check-lg"></i> Duyệt & Nhập kho
+                                </button>
+                            }
+                        }
+                        else
+                        {
+                            <div class="alert alert-success mb-0">
+                                <i class="bi bi-check-circle-fill"></i> Phiếu đã được nhập kho.
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* FORM THÊM SẢN PHẨM (Chỉ hiện khi chưa nhập kho) *@
+@if (Model.Status != "Đã nhập kho")
+{
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-header bg-light fw-bold">
+            <i class="bi bi-plus-circle"></i> Thêm sản phẩm vào phiếu
+        </div>
+        <div class="card-body">
+            @using (Html.BeginForm("AddDetail", "PurchaseOrders", FormMethod.Post, new { @class = "row g-3 align-items-end" }))
+            {
+                @Html.AntiForgeryToken()
+                @* SỬA: PurchaseOrderID -> PurchaseOrderId (tên tham số action) hoặc dùng model binding *@
+                <input type="hidden" name="purchaseOrderId" value="@Model.Id" />
+
+                <div class="col-md-4">
+                    <label class="form-label">Sản phẩm</label>
+                    @Html.DropDownList("ProductId", null, new { @class = "form-control form-select" })
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Số lượng</label>
+                    <input type="number" name="quantity" class="form-control" value="1" min="1" required />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Đơn giá nhập (VNĐ)</label>
+                    <input type="number" name="unitPrice" class="form-control" value="0" min="0" step="1000" required />
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-plus-lg"></i> Thêm</button>
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger mt-3 mb-0">
+                    <i class="bi bi-exclamation-circle"></i> @TempData["Error"]
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-striped table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th class="text-center">Số lượng</th>
+                    <th class="text-end">Đơn giá</th>
+                    <th class="text-end">Thành tiền</th>
+                    <th style="width: 100px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.PurchaseOrderDetails == null || !Model.PurchaseOrderDetails.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">Chưa có sản phẩm nào trong phiếu.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in Model.PurchaseOrderDetails)
+                    {
+                        <tr>
+                            <td>@(item.Product != null ? item.Product.ProductName : "SP đã xóa")</td>
+                            <td class="text-center">@item.Quantity</td>
+                            <td class="text-end">@string.Format("{0:N0}", item.UnitPrice)</td>
+                            <td class="text-end fw-bold">@string.Format("{0:N0}", item.Quantity * item.UnitPrice)</td>
+                            <td class="text-center">
+                                @if (Model.Status != "Đã nhập kho")
+                                {
+                                    using (Html.BeginForm("DeleteDetail", "PurchaseOrders", new { id = item.Id }, FormMethod.Post))
+                                    {
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa dòng này?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

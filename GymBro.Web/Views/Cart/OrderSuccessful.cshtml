@@ -1,0 +1,13 @@
+﻿@{
+    ViewBag.Title = "Đặt hàng thành công";
+}
+
+<div class="alert alert-success" style="padding: 50px; text-align: center;">
+    <h2>Đặt hàng thành công!</h2>
+    <p>Cảm ơn bạn đã mua hàng. Đơn hàng của bạn đang được xử lý.</p>
+    <p style="margin-top: 20px;">
+        @Html.ActionLink("Tiếp tục mua sắm", "Index", "Home", null, new { @class = "btn btn-primary" })
+        @* Có thể thêm link xem lịch sử *@
+        @Html.ActionLink("Xem đơn hàng", "OrderHistory", "Account", null, new { @class = "btn btn-outline-success ms-2" })
+    </p>
+</div>

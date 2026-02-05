@@ -1,0 +1,111 @@
+﻿@model IEnumerable<GymBro.Core.Review>
+
+@{
+    ViewBag.Title = "Quản lý Đánh giá";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h2 class="mb-0 text-primary"><i class="bi bi-star"></i> Quản lý Đánh giá</h2>
+    </div>
+    <div class="card-body">
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+        }
+
+        <div class="row mb-4 align-items-end">
+            <div class="col-md-12">
+                <form action="@Url.Action("Index")" method="get" class="row g-2">
+                    <div class="col-auto">
+                        <input type="text" name="searchString" value="@ViewBag.CurrentSearch" class="form-control" placeholder="Tìm theo SP, User, Nội dung..." style="width: 300px;" />
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Tìm kiếm</button>
+                        @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch as string))
+                        {
+                            <a href="@Url.Action("Index")" class="btn btn-outline-secondary"><i class="bi bi-x-lg"></i> Xóa lọc</a>
+                        }
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Ngày đánh giá</th>
+                        <th>Sản phẩm</th>
+                        <th>Người dùng</th>
+                        <th>Đánh giá</th>
+                        <th>Nội dung</th>
+                        <th class="text-center">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">Không tìm thấy đánh giá nào.</td>
+                        </tr>
+                    }
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            @* SỬA: ReviewID -> Id *@
+                            <td>#@item.Id</td>
+                            <td>@(item.CreatedDate.ToString("dd/MM/yyyy HH:mm"))</td>
+                            <td>
+                                @if (item.Product != null)
+                                {
+                                    @* SỬA: ProductID -> ProductId *@
+                                    <a href="@Url.Action("Details", "Products", new { id = item.ProductId })" target="_blank">@item.Product.ProductName</a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Sản phẩm đã xóa</span>
+                                }
+                            </td>
+                            <td>
+                                @(item.User != null ? item.User.Username : "Unknown User")
+                            </td>
+                            <td>
+                                <div class="text-warning">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        if (i <= item.Rating)
+                                        {
+                                            <i class="bi bi-star-fill"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-star"></i>
+                                        }
+                                    }
+                                </div>
+                            </td>
+                            <td>@item.Comment</td>
+                            <td class="text-center">
+                                @* Sửa ReviewID -> Id *@
+                                <a href="@Url.Action("Delete", new { id = item.Id })" class="btn btn-sm btn-danger" title="Xóa"><i class="bi bi-trash"></i></a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @* Phần phân trang (Chỉ hiện khi Controller có trả về ViewBag.TotalPages) *@
+        @if (ViewBag.TotalPages != null && ViewBag.TotalPages > 1)
+        {
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                </ul>
+            </nav>
+        }
+    </div>
+</div>

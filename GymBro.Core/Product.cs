@@ -8,16 +8,32 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GymBro.Core
 {
+    [Table("Products")]
     public class Product
     {
         [Key]
         public int Id { get; set; }
-        public string TenSanPham { get; set; } = string.Empty; // Ví dụ: "Tạ tay 5kg", "Thảm Yoga"
-        [Column(TypeName = "decimal(18,2)")] // Định dạng tiền tệ chuẩn SQL
-        public decimal Gia { get; set; }
-        public string MoTa { get; set; } = string.Empty;
-        public string HinhAnhUrl { get; set; } = string.Empty;
-        public string DanhMuc { get; set; } = string.Empty; // Ví dụ: "Dụng cụ", "Quần áo"
-        public int SoLuongTon { get; set; }
+
+        [Required]
+        [StringLength(500)]
+        public string ProductName { get; set; } = string.Empty;
+
+        public string? Description { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Price { get; set; }
+
+        public string? ImageURL { get; set; }
+
+        // 👇 ĐÂY LÀ CHỖ QUAN TRỌNG: Viết là CategoryId (d thường)
+        public int CategoryId { get; set; }
+
+        public int StockQuantity { get; set; }
+
+        [ForeignKey("CategoryId")] // Khớp với tên biến ở trên
+        public virtual Category? Category { get; set; }
+
+        // Các quan hệ khác (Giữ nguyên hoặc xóa bớt nếu chưa dùng)
+        public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     }
 }

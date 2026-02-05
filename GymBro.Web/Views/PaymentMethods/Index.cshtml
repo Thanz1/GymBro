@@ -1,0 +1,63 @@
+﻿@model IEnumerable<GymBro.Core.PaymentMethod>
+
+@{
+    ViewBag.Title = "Phương thức thanh toán";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h2 class="mb-0 text-primary"><i class="bi bi-credit-card-2-front"></i> Phương thức thanh toán</h2>
+        <a href="@Url.Action("Create")" class="btn btn-success"><i class="bi bi-plus-lg"></i> Thêm mới</a>
+    </div>
+    <div class="card-body">
+        @* Hiển thị thông báo *@
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show">
+                <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên phương thức</th>
+                        <th>Mô tả</th>
+                        <th>Trạng thái</th>
+                        <th class="text-center">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            @* SỬA: PaymentMethodID -> Id *@
+                            <td>#@item.Id</td>
+                            <td class="fw-bold">@item.MethodName</td>
+                            <td>@item.Description</td>
+                            <td>
+                                @if (item.IsActive)
+                                {
+                                    <span class="badge bg-success">Hoạt động</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Vô hiệu</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @* SỬA: PaymentMethodID -> Id *@
+                                <a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-sm btn-primary me-1" title="Sửa"><i class="bi bi-pencil"></i></a>
+                                <a href="@Url.Action("Delete", new { id = item.Id })" class="btn btn-sm btn-danger" title="Xóa"><i class="bi bi-trash"></i></a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

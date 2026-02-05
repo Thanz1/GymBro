@@ -1,0 +1,69 @@
+﻿@model GymBro.Core.Review
+
+@{
+    ViewBag.Title = "Xóa Đánh giá";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h3 class="mb-0 text-danger"><i class="bi bi-trash"></i> Xác nhận xóa đánh giá</h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Bạn có chắc chắn muốn xóa đánh giá này không? Hành động này không thể hoàn tác.
+                </div>
+
+                <div class="mb-4">
+                    <h5 class="text-primary mb-3">Thông tin đánh giá</h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th class="bg-light" style="width: 150px;">Sản phẩm</th>
+                            <td>@(Model.Product != null ? Model.Product.ProductName : "Unknown")</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Người dùng</th>
+                            <td>@(Model.User != null ? Model.User.Username : "Unknown")</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Đánh giá</th>
+                            <td class="text-warning">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= Model.Rating)
+                                    {
+                                        <i class="bi bi-star-fill"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-star"></i>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Nội dung</th>
+                            <td>@Model.Comment</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Ngày tạo</th>
+                            <td>@(Model.CreatedDate.ToString("dd/MM/yyyy HH:mm"))</td>
+                        </tr>
+                    </table>
+                </div>
+
+                @using (Html.BeginForm())
+                {
+                    @Html.AntiForgeryToken()
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="@Url.Action("Index")" class="btn btn-secondary">Hủy bỏ</a>
+                        <button type="submit" class="btn btn-danger">Xóa đánh giá</button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

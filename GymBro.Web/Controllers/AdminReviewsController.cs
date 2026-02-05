@@ -13,7 +13,9 @@ namespace GymBro.Web.Controllers
         public async Task<IActionResult> Index()
         {
             var reviews = _context.Reviews.Include(r => r.Product).Include(r => r.User);
-            return View(await reviews.OrderByDescending(r => r.NgayTao).ToListAsync());
+
+            // 👇 ĐÃ SỬA: Đổi 'NgayTao' thành 'CreatedDate' cho khớp với Model
+            return View(await reviews.OrderByDescending(r => r.CreatedDate).ToListAsync());
         }
 
         public async Task<IActionResult> Delete(int id)

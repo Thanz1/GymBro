@@ -1,18 +1,20 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json; // <--- Dùng thư viện có sẵn của .NET Core
 
-namespace WebGymBro.Helpers // Giữ namespace cũ cho quen thuộc
+namespace GymBro.Web.Helpers
 {
     public static class SessionExtensions
     {
         public static void SetObject<T>(this ISession session, string key, T value)
         {
-            session.SetString(key, JsonConvert.SerializeObject(value));
+            // Thay JsonConvert bằng JsonSerializer
+            session.SetString(key, JsonSerializer.Serialize(value));
         }
 
         public static T? GetObject<T>(this ISession session, string key)
         {
             var value = session.GetString(key);
-            return value == null ? default : JsonConvert.DeserializeObject<T>(value);
+            // Thay JsonConvert bằng JsonSerializer
+            return value == null ? default : JsonSerializer.Deserialize<T>(value);
         }
     }
 }

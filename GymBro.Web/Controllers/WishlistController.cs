@@ -2,7 +2,7 @@
 using GymBro.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebGymBro.Helpers;
+using GymBro.Web.Helpers;
 
 namespace GymBro.Web.Controllers
 {
