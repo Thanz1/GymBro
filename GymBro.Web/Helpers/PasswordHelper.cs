@@ -1,7 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 
-namespace WebGymBro.Helpers
+namespace GymBro.Web.Helpers
 {
     public static class PasswordHelper
     {

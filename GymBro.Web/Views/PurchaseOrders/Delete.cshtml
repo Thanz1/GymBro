@@ -1,0 +1,80 @@
+﻿@model GymBro.Core.PurchaseOrder
+
+@{
+    ViewBag.Title = "Xóa Phiếu nhập kho";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h3 class="mb-0 text-danger"><i class="bi bi-trash"></i> Xác nhận xóa phiếu nhập kho</h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Bạn có chắc chắn muốn xóa phiếu nhập kho này không? Hành động này sẽ xóa tất cả chi tiết bên trong.
+                </div>
+
+                <div class="mb-4">
+                    <h5 class="text-primary mb-3">Thông tin phiếu nhập</h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th class="bg-light" style="width: 150px;">Mã phiếu</th>
+                            @* SỬA: PurchaseOrderID -> Id *@
+                            <td class="fw-bold">#@Model.Id</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Nhà cung cấp</th>
+                            <td>@(Model.Supplier != null ? Model.Supplier.SupplierName : "N/A")</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Ngày lập</th>
+                            <td>@Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Tổng tiền</th>
+                            <td class="fw-bold text-success">@string.Format("{0:N0}", Model.TotalAmount) đ</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Trạng thái</th>
+                            <td>
+                                @if (Model.Status == "Đã nhập kho")
+                                {
+                                    <span class="badge bg-success">@Model.Status</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">@Model.Status</span>
+                                }
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                @if (Model.Status == "Đã nhập kho")
+                {
+                    <div class="alert alert-danger">
+                        <i class="bi bi-x-circle-fill me-2"></i>
+                        Không thể xóa phiếu đã nhập kho (đã ảnh hưởng đến tồn kho).
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <a href="@Url.Action("Index")" class="btn btn-secondary">Quay lại</a>
+                    </div>
+                }
+                else
+                {
+                    using (Html.BeginForm())
+                    {
+                        @Html.AntiForgeryToken()
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">Hủy bỏ</a>
+                            <button type="submit" class="btn btn-danger">Xóa phiếu nhập</button>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>

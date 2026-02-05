@@ -1,7 +1,7 @@
 ﻿using GymBro.Core;
 using GymBro.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
-using WebGymBro.Helpers;
+using GymBro.Web.Helpers;
 
 namespace GymBro.Web.Controllers
 {
@@ -14,12 +14,12 @@ namespace GymBro.Web.Controllers
             _context = context;
         }
 
-        // Action này được gọi từ View Details (dùng ViewComponent sẽ tốt hơn nhưng giữ logic cũ cho bạn dễ hiểu)
         public IActionResult GetByProduct(int productId)
         {
             var reviews = _context.Reviews
                 .Where(r => r.ProductId == productId)
-                .OrderByDescending(r => r.NgayTao)
+                // SỬA: NgayTao -> CreatedDate
+                .OrderByDescending(r => r.CreatedDate)
                 .ToList();
 
             return PartialView("_ProductReviews", reviews);
@@ -37,7 +37,8 @@ namespace GymBro.Web.Controllers
                 UserId = user.Id,
                 Rating = rating,
                 Comment = comment,
-                NgayTao = DateTime.Now
+                // SỬA: NgayTao -> CreatedDate
+                CreatedDate = DateTime.Now
             };
 
             _context.Reviews.Add(review);

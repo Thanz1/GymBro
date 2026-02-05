@@ -1,0 +1,85 @@
+﻿@model GymBro.Core.Product
+
+@{
+    ViewBag.Title = "Chi tiết Sản phẩm";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="container pb-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-primary"><i class="bi bi-eye"></i> Chi tiết Sản phẩm</h2>
+            <hr />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="row">
+                        @* Cột hình ảnh *@
+                        <div class="col-md-5 mb-4 text-center">
+                            @if (!string.IsNullOrEmpty(Model.ImageURL))
+                            {
+                                <img src="~/Content/Images/@Model.ImageURL" class="img-fluid rounded border shadow-sm" style="max-height: 400px;" onerror="this.src='/Content/Images/no-image.png'" />
+                            }
+                            else
+                            {
+                                <div class="bg-light d-flex align-items-center justify-content-center rounded border" style="height: 300px;">
+                                    <i class="bi bi-image" style="font-size: 4rem; color: #ccc;"></i>
+                                </div>
+                            }
+                        </div>
+
+                        @* Cột thông tin *@
+                        <div class="col-md-7">
+                            <h3 class="fw-bold mb-3">@Model.ProductName</h3>
+                            <p class="text-muted mb-2">Mã sản phẩm: <strong>#@Model.Id</strong></p>
+
+                            <div class="mb-3">
+                                <span class="badge bg-info text-dark fs-6">
+                                    @(Model.Category != null ? Model.Category.CategoryName : "Chưa phân loại")
+                                </span>
+                            </div>
+
+                            <h4 class="text-danger fw-bold mb-3">@string.Format("{0:N0}", Model.Price) VNĐ</h4>
+
+                            <div class="mb-3">
+                                <strong>Tồn kho: </strong>
+                                @if (Model.StockQuantity > 0)
+                                {
+                                    <span class="text-success fw-bold">@Model.StockQuantity sản phẩm</span>
+                                }
+                                else
+                                {
+                                    <span class="text-danger fw-bold">Hết hàng</span>
+                                }
+                            </div>
+
+                            <div class="product-description mt-4 p-3 bg-light rounded border">
+                                <h6 class="fw-bold text-secondary">Mô tả sản phẩm:</h6>
+                                <div class="mt-2">
+                                    @if (!string.IsNullOrEmpty(Model.Description))
+                                    {
+                                        @Html.Raw(Model.Description)
+                                    }
+                                    else
+                                    {
+                                        <em class="text-muted">Chưa có mô tả.</em>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="mt-4 d-flex gap-2">
+                                @* SỬA: ProductID -> Id *@
+                                <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-primary btn-lg"><i class="bi bi-pencil-square"></i> Chỉnh sửa</a>
+                                <a href="@Url.Action("Index")" class="btn btn-secondary btn-lg">Quay lại</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

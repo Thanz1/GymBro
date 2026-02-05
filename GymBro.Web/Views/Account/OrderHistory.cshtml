@@ -1,0 +1,57 @@
+﻿@model IEnumerable<GymBro.Core.Order>
+
+@{
+    ViewBag.Title = "Lịch sử đơn hàng";
+}
+
+<h2>Đơn hàng của bạn</h2>
+<hr />
+
+@if (!Model.Any())
+{
+    <div class="alert alert-warning">
+        Bạn chưa mua đơn hàng nào.
+        @Html.ActionLink("Mua sắm ngay", "Index", "Home")
+    </div>
+}
+else
+{
+    <table class="table table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Mã đơn</th>
+                <th>Ngày đặt</th>
+                <th>Tổng tiền</th>
+                <th>Trạng thái</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>#@item.Id</td>
+                    <td>@item.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td style="color: #d32f2f; font-weight: bold;">
+                        @string.Format("{0:N0}", item.TotalAmount) VNĐ
+                    </td>
+                    <td>
+                        @{
+                            string badgeClass = "bg-secondary";
+                            if (item.Status == "Chờ xử lý") { badgeClass = "bg-warning text-dark"; }
+                            else if (item.Status == "Đã xác nhận") { badgeClass = "bg-primary"; }
+                            else if (item.Status == "Đang giao hàng") { badgeClass = "bg-info text-dark"; }
+                            else if (item.Status == "Đã giao hàng") { badgeClass = "bg-success"; }
+                            else if (item.Status == "Đã hủy") { badgeClass = "bg-danger"; }
+                        }
+                        <span class="badge @badgeClass">@item.Status</span>
+                    </td>
+                    <td>
+                        @* Link tới Orders/Details (Sửa OrderID thành Id) *@
+                        <a href="@Url.Action("Details", "Orders", new { id = item.Id })" class="btn btn-sm btn-outline-primary">Xem chi tiết</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

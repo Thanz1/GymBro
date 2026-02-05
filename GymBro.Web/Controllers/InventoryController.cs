@@ -13,11 +13,14 @@ namespace GymBro.Web.Controllers
         // Danh sách tồn kho
         public async Task<IActionResult> Index(string searchString)
         {
-            var products = _context.Products.AsQueryable();
-            if (!string.IsNullOrEmpty(searchString))
-                products = products.Where(p => p.TenSanPham.Contains(searchString));
+            var products = _context.Products.Include(p => p.Category).AsQueryable();
 
-            return View(await products.OrderBy(p => p.TenSanPham).ToListAsync());
+            if (!string.IsNullOrEmpty(searchString))
+                // SỬA: TenSanPham -> ProductName
+                products = products.Where(p => p.ProductName.Contains(searchString));
+
+            // SỬA: TenSanPham -> ProductName
+            return View(await products.OrderBy(p => p.ProductName).ToListAsync());
         }
 
         // Điều chỉnh kho thủ công (Nhập/Xuất)
@@ -33,15 +36,19 @@ namespace GymBro.Web.Controllers
             var product = await _context.Products.FindAsync(id);
             if (product == null) return NotFound();
 
-            int diff = NewQuantity - product.SoLuongTon;
-            product.SoLuongTon = NewQuantity;
+            // SỬA: SoLuongTon -> StockQuantity
+            int diff = NewQuantity - product.StockQuantity;
+            product.StockQuantity = NewQuantity;
 
-            // Ghi log giao dịch kho (Nếu bạn có bảng InventoryTransaction)
-            /*
-            _context.InventoryTransactions.Add(new InventoryTransaction {
-                ProductId = id, QuantityChange = diff, Note = Note, Date = DateTime.Now 
+            // ĐÃ MỞ COMMENT VÀ SỬA TÊN BIẾN CHO KHỚP MODEL
+            _context.InventoryTransactions.Add(new InventoryTransaction
+            {
+                ProductId = id,              // Đã sửa ProductID -> ProductId (nếu cần)
+                QuantityChange = diff,
+                Note = Note ?? "Kiểm kê kho",
+                CreatedDate = DateTime.Now,  // Đã sửa Date -> CreatedDate
+                TransactionType = "Điều chỉnh"
             });
-            */
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));

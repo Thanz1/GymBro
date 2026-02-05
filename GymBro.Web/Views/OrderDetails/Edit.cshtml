@@ -1,0 +1,66 @@
+﻿@model GymBro.Core.OrderDetail
+
+@{
+    ViewBag.Title = "Chỉnh sửa Chi tiết Đơn hàng";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h4 class="mb-0 text-primary">Chỉnh sửa Chi tiết Đơn hàng</h4>
+            </div>
+            <div class="card-body">
+                @using (Html.BeginForm())
+                {
+                    @Html.AntiForgeryToken()
+
+                    <div class="form-horizontal">
+                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                        @* SỬA: OrderDetailID -> Id *@
+                        @Html.HiddenFor(model => model.Id)
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Đơn hàng</label>
+                            @* SỬA: OrderID -> OrderId *@
+                            @Html.DropDownList("OrderId", null, htmlAttributes: new { @class = "form-control form-select" })
+                            @Html.ValidationMessageFor(model => model.OrderId, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Sản phẩm</label>
+                            @* SỬA: ProductID -> ProductId *@
+                            @Html.DropDownList("ProductId", null, htmlAttributes: new { @class = "form-control form-select" })
+                            @Html.ValidationMessageFor(model => model.ProductId, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Số lượng</label>
+                            @Html.EditorFor(model => model.Quantity, new { htmlAttributes = new { @class = "form-control", type = "number", min = "1" } })
+                            @Html.ValidationMessageFor(model => model.Quantity, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Giá bán</label>
+                            @Html.EditorFor(model => model.Price, new { htmlAttributes = new { @class = "form-control", type = "number", min = "0", step = "1000" } })
+                            <small class="text-muted">Nhập giá bằng VNĐ</small>
+                            @Html.ValidationMessageFor(model => model.Price, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">Hủy</a>
+                            <input type="submit" value="Lưu thay đổi" class="btn btn-primary" />
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

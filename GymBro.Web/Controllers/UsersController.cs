@@ -2,7 +2,7 @@
 using GymBro.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebGymBro.Helpers;
+// Bỏ using GymBro.Web.Helpers; nếu không dùng PasswordHelper nữa
 
 namespace GymBro.Web.Controllers
 {
@@ -41,8 +41,11 @@ namespace GymBro.Web.Controllers
                     return View(user);
                 }
 
-                user.Password = PasswordHelper.HashPassword(user.Password); // Mã hóa pass
-                user.NgayTao = DateTime.Now;
+                // SỬA: Dùng BCrypt trực tiếp cho đồng bộ
+                user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
+
+                // SỬA: NgayTao -> CreatedDate
+                user.CreatedDate = DateTime.Now;
 
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
@@ -75,7 +78,8 @@ namespace GymBro.Web.Controllers
             // Nếu có nhập mật khẩu mới thì mới đổi
             if (!string.IsNullOrEmpty(NewPassword))
             {
-                existingUser.Password = PasswordHelper.HashPassword(NewPassword);
+                // SỬA: Dùng BCrypt
+                existingUser.Password = BCrypt.Net.BCrypt.HashPassword(NewPassword);
             }
 
             await _context.SaveChangesAsync();
@@ -95,7 +99,7 @@ namespace GymBro.Web.Controllers
             var user = await _context.Users.FindAsync(id);
             if (user != null)
             {
-                // Kiểm tra ràng buộc khóa ngoại (nếu user đã có đơn hàng thì không xóa)
+                // Kiểm tra ràng buộc khóa ngoại (UserId đã sửa trong Order.cs)
                 if (await _context.Orders.AnyAsync(o => o.UserId == id))
                 {
                     TempData["ErrorMessage"] = "Không thể xóa user này vì đã có đơn hàng!";

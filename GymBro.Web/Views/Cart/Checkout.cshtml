@@ -1,0 +1,172 @@
+﻿@using GymBro.Web.Helpers
+@using GymBro.Core
+@model IEnumerable<GymBro.Web.DTOs.CartItemDto>
+
+@{
+    ViewBag.Title = "Xác nhận Thanh toán";
+
+    // Lấy User từ Session theo cách mới
+    var user = Context.Session.GetObject<User>("User");
+
+    // Lấy phương thức thanh toán từ Controller truyền sang
+    var paymentMethods = ViewBag.PaymentMethods as List<PaymentMethod>;
+}
+
+<div class="checkout-page">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 style="font-weight: 700; color: #2c3e50; margin-bottom: 10px;">
+                <i class="bi bi-check-circle"></i> Xác nhận Đơn hàng
+            </h2>
+        </div>
+    </div>
+
+    <div class="row">
+        @* --- CỘT BÊN TRÁI: THÔNG TIN GIAO HÀNG --- *@
+        <div class="col-lg-6 col-md-12 mb-4">
+            <div style="background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 30px;">
+                <h4 style="font-weight: 700; color: #2c3e50; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+                    <i class="bi bi-truck"></i> Thông tin giao hàng
+                </h4>
+
+                @if (user != null)
+                {
+                    <div class="delivery-info">
+                        <div class="mb-3">
+                            <strong style="color: #6c757d; display: block; margin-bottom: 5px;">
+                                <i class="bi bi-person"></i> Khách hàng:
+                            </strong>
+                            <span style="font-size: 1.1rem; color: #2c3e50;">
+                                @(string.IsNullOrEmpty(user.FullName) ? user.Username : user.FullName)
+                            </span>
+                        </div>
+
+                        <div class="mb-3">
+                            <strong style="color: #6c757d; display: block; margin-bottom: 5px;">
+                                <i class="bi bi-envelope"></i> Email:
+                            </strong>
+                            <span style="font-size: 1.1rem; color: #2c3e50;">
+                                @(string.IsNullOrEmpty(user.Email) ? "Chưa cập nhật" : user.Email)
+                            </span>
+                        </div>
+
+                        <div class="mb-4">
+                            <strong style="color: #6c757d; display: block; margin-bottom: 5px;">
+                                <i class="bi bi-geo-alt"></i> Địa chỉ giao hàng:
+                            </strong>
+                            <span style="font-size: 1.1rem; color: #2c3e50;">
+                                @(string.IsNullOrEmpty(user.Address) ? "Chưa cập nhật" : user.Address)
+                            </span>
+                        </div>
+                    </div>
+
+                    if (string.IsNullOrEmpty(user.Address) || string.IsNullOrEmpty(user.Email))
+                    {
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Vui lòng cập nhật đầy đủ thông tin giao hàng trong
+                            <a href="@Url.Action("MyAccount", "Account")" style="text-decoration: none; font-weight: 600;">Tài khoản của tôi</a>
+                        </div>
+                    }
+                }
+
+                @* Form Xác nhận *@
+                @using (Html.BeginForm("PlaceOrder", "Cart", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+
+                    <h4 style="font-weight: 700; color: #2c3e50; margin-bottom: 15px; margin-top: 30px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+                        <i class="bi bi-credit-card"></i> Phương thức thanh toán
+                    </h4>
+
+                    if (paymentMethods != null && paymentMethods.Any())
+                    {
+                        <div class="payment-methods mb-4">
+                            @foreach (var method in paymentMethods)
+                            {
+                                @* Demo: ID = 2 là chuyển khoản *@
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="paymentMethodId" id="method_@method.Id" value="@method.Id" @(method.Id == 1 ? "checked" : "")>
+                                    <label class="form-check-label" for="method_@method.Id">
+                                        <strong>@method.MethodName</strong>
+                                        @if (!string.IsNullOrEmpty(method.Description))
+                                        {
+                                            <span class="text-muted small d-block">@method.Description</span>
+                                        }
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        @* Fallback nếu chưa có DB PaymentMethod *@
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="paymentMethodId" id="method_1" value="1" checked>
+                            <label class="form-check-label" for="method_1"><strong>Thanh toán khi nhận hàng (COD)</strong></label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="paymentMethodId" id="method_2" value="2">
+                            <label class="form-check-label" for="method_2"><strong>Chuyển khoản Ngân hàng (QR Code)</strong></label>
+                        </div>
+                    }
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-success btn-lg" style="padding: 15px; font-size: 1.1rem; font-weight: 600;">
+                            <i class="bi bi-check-circle"></i> Xác nhận Đặt hàng
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* --- CỘT BÊN PHẢI: TÓM TẮT GIỎ HÀNG --- *@
+        <div class="col-lg-6 col-md-12">
+            <div style="background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 30px;">
+                <h4 style="font-weight: 700; color: #2c3e50; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+                    <i class="bi bi-receipt"></i> Tóm tắt đơn hàng
+                </h4>
+
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th class="text-end">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model != null)
+                            {
+                                foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@item.ProductName</strong><br />
+                                            <small class="text-muted">Số lượng: @item.Quantity</small>
+                                        </td>
+                                        <td class="text-end">
+                                            <span style="color: #dc3545; font-weight: 600;">
+                                                @string.Format("{0:N0}", item.ThanhTien) VNĐ
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: linear-gradient(135deg, #fff5f5, #ffe5e5); border-top: 2px solid #dc3545;">
+                                <td style="font-weight: 700; font-size: 1.2rem; padding: 15px;">
+                                    TỔNG TIỀN
+                                </td>
+                                <td class="text-end" style="font-weight: 800; font-size: 1.5rem; color: #dc3545; padding: 15px;">
+                                    @string.Format("{0:N0}", ViewBag.TotalPrice) VNĐ
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

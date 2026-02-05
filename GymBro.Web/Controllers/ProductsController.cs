@@ -6,10 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GymBro.Web.Controllers
 {
-    public class ProductsController : BaseAdminController // Kế thừa Base để bảo mật
+    public class ProductsController : BaseAdminController
     {
         private readonly GymBroDbContext _context;
-        private readonly IWebHostEnvironment _webHostEnvironment; // Để lấy đường dẫn lưu ảnh
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
         public ProductsController(GymBroDbContext context, IWebHostEnvironment webHostEnvironment)
         {
@@ -17,27 +17,39 @@ namespace GymBro.Web.Controllers
             _webHostEnvironment = webHostEnvironment;
         }
 
+        // GET: Admin/Products
         public async Task<IActionResult> Index()
         {
             var products = await _context.Products.Include(p => p.Category).ToListAsync();
             return View(products);
         }
 
+        // GET: Admin/Products/Create
         public IActionResult Create()
         {
-            ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "TenDanhMuc");
+            ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "CategoryName");
             return View();
         }
 
+        // POST: Admin/Products/Create
         [HttpPost]
-        public async Task<IActionResult> Create(Product product, IFormFile? imageFile)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Product product, IFormFile imageFile)
         {
             if (ModelState.IsValid)
             {
-                // Xử lý upload ảnh
-                if (imageFile != null)
+                if (imageFile != null && imageFile.Length > 0)
                 {
-                    string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "Content/Images");
+                    // 1. Tạo đường dẫn thư mục
+                    string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "Content", "Images");
+
+                    // 2. Tự động tạo thư mục nếu chưa có
+                    if (!Directory.Exists(uploadsFolder))
+                    {
+                        Directory.CreateDirectory(uploadsFolder);
+                    }
+
+                    // 3. Tạo tên file và lưu file
                     string uniqueFileName = Guid.NewGuid().ToString() + "_" + imageFile.FileName;
                     string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
@@ -45,17 +57,22 @@ namespace GymBro.Web.Controllers
                     {
                         await imageFile.CopyToAsync(fileStream);
                     }
-                    product.HinhAnhUrl = uniqueFileName;
+
+                    // 4. Lưu đường dẫn ảnh vào object Product
+                    product.ImageURL = "/Content/Images/" + uniqueFileName;
                 }
 
-                _context.Products.Add(product);
+                // --- XÓA DÒNG NÀY ĐI VÌ MODEL CHƯA CÓ ---
+                // product.CreatedDate = DateTime.Now; 
+                // ----------------------------------------
+
+                _context.Add(product);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "TenDanhMuc", product.CategoryId);
+
+            ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "CategoryName", product.CategoryId);
             return View(product);
         }
-
-        // ... (Bạn có thể thêm Edit/Delete tương tự, nhớ dùng IFormFile cho Edit) ...
     }
 }

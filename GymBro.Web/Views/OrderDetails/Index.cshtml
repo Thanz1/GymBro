@@ -1,0 +1,81 @@
+﻿@model IEnumerable<GymBro.Core.OrderDetail>
+
+@{
+    ViewBag.Title = "Quản lý Chi tiết Đơn hàng";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h2 class="mb-0 text-primary"><i class="bi bi-list-check"></i> Quản lý Chi tiết Đơn hàng</h2>
+    </div>
+    <div class="card-body">
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+        }
+
+        <p>
+            @Html.ActionLink("Thêm chi tiết mới", "Create", null, new { @class = "btn btn-success" })
+        </p>
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã ĐH</th>
+                        <th>Sản phẩm</th>
+                        <th>Số lượng</th>
+                        <th>Giá</th>
+                        <th>Thành tiền</th>
+                        <th>Trạng thái ĐH</th>
+                        <th class="text-center">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @* SỬA: OrderID -> OrderId *@
+                                <a href="@Url.Action("Details", "Orders", new { id = item.OrderId })">#@item.OrderId</a>
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Product.ProductName)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Quantity)
+                            </td>
+                            <td>
+                                @string.Format("{0:N0}", item.Price) VNĐ
+                            </td>
+                            <td class="fw-bold text-primary">
+                                @string.Format("{0:N0}", item.Quantity * item.Price) VNĐ
+                            </td>
+                            <td>
+                                @if (item.Order.Status == "Chờ xử lý")
+                                {
+                                    <span class="badge bg-warning text-dark">@item.Order.Status</span>
+                                }
+                                else if (item.Order.Status == "Đã giao hàng")
+                                {
+                                    <span class="badge bg-success">@item.Order.Status</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-info">@item.Order.Status</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @* SỬA: OrderDetailID -> Id *@
+                                @Html.ActionLink("Sửa", "Edit", new { id = item.Id }, new { @class = "btn btn-sm btn-primary" })
+                                @Html.ActionLink("Chi tiết", "Details", new { id = item.Id }, new { @class = "btn btn-sm btn-info" })
+                                @Html.ActionLink("Xóa", "Delete", new { id = item.Id }, new { @class = "btn btn-sm btn-danger" })
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

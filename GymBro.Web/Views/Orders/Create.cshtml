@@ -1,0 +1,64 @@
+﻿@model GymBro.Core.Order
+
+@{
+    ViewBag.Title = "Thêm Đơn hàng mới";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h4 class="mb-0 text-success">Thêm Đơn hàng mới</h4>
+            </div>
+            <div class="card-body">
+                @using (Html.BeginForm())
+                {
+                    @Html.AntiForgeryToken()
+
+                    <div class="form-horizontal">
+                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Ngày đặt hàng</label>
+                            @Html.EditorFor(model => model.OrderDate, new { htmlAttributes = new { @class = "form-control", type = "datetime-local" } })
+                            <small class="text-muted">Để trống sẽ tự động lấy ngày hiện tại</small>
+                            @Html.ValidationMessageFor(model => model.OrderDate, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Trạng thái</label>
+                            @Html.DropDownListFor(model => model.Status, new SelectList(new[] { "Chờ xử lý", "Đang giao hàng", "Đã giao hàng", "Đã hủy" }, Model.Status ?? "Chờ xử lý"), new { @class = "form-control form-select" })
+                            @Html.ValidationMessageFor(model => model.Status, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tổng tiền <span class="text-danger">*</span></label>
+                            @Html.EditorFor(model => model.TotalAmount, new { htmlAttributes = new { @class = "form-control", type = "number", min = "0", step = "1000" } })
+                            <small class="text-muted">Nhập tổng tiền bằng VNĐ (ví dụ: 1000000)</small>
+                            @Html.ValidationMessageFor(model => model.TotalAmount, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Người dùng</label>
+                            @* SỬA: UserID -> UserId *@
+                            @Html.DropDownList("UserId", null, htmlAttributes: new { @class = "form-control form-select" })
+                            @Html.ValidationMessageFor(model => model.UserId, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">Hủy</a>
+                            <input type="submit" value="Tạo mới" class="btn btn-success" />
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

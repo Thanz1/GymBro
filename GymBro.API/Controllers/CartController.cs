@@ -10,7 +10,7 @@ namespace GymBro.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // Bắt buộc phải đăng nhập mới dùng được Giỏ hàng
+    [Authorize]
     public class CartController : ControllerBase
     {
         private readonly GymBroDbContext _context;
@@ -24,21 +24,22 @@ namespace GymBro.API.Controllers
         [HttpGet("my-cart")]
         public async Task<ActionResult<List<CartItemDto>>> GetMyCart()
         {
-            // Lấy Username từ Token (người đang đăng nhập)
             var username = User.FindFirst(ClaimTypes.Name)?.Value;
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
 
             if (user == null) return Unauthorized();
 
-            // Lấy danh sách items trong giỏ
             var cartItems = await _context.CartItems
-                .Include(c => c.Product) // Kèm thông tin sản phẩm
+                .Include(c => c.Product)
                 .Where(c => c.UserId == user.Id)
                 .Select(c => new CartItemDto
                 {
-                    TenSanPham = c.Product.TenSanPham,
-                    DonGia = c.Product.Gia,
-                    SoLuong = c.SoLuong
+                    // ĐÃ SỬA: Đồng bộ Tiếng Anh 100%
+                    ProductId = c.ProductId,
+                    ProductName = c.Product.ProductName,
+                    Price = c.Product.Price,
+                    Quantity = c.Quantity,
+                    ImageURL = c.Product.ImageURL
                 })
                 .ToListAsync();
 
@@ -49,38 +50,34 @@ namespace GymBro.API.Controllers
         [HttpPost("add")]
         public async Task<ActionResult> AddToCart(AddToCartDto request)
         {
-            // Lấy User đang đăng nhập
             var username = User.FindFirst(ClaimTypes.Name)?.Value;
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
             if (user == null) return Unauthorized();
 
-            // Kiểm tra sản phẩm có tồn tại không
             var product = await _context.Products.FindAsync(request.ProductId);
             if (product == null) return BadRequest("Sản phẩm không tồn tại");
 
-            // Kiểm tra xem đã có trong giỏ chưa
             var existingItem = await _context.CartItems
                 .FirstOrDefaultAsync(c => c.UserId == user.Id && c.ProductId == request.ProductId);
 
             if (existingItem != null)
             {
-                // Nếu có rồi thì cộng dồn số lượng
-                existingItem.SoLuong += request.SoLuong;
+                // Sửa: Request dùng Quantity
+                existingItem.Quantity += request.Quantity;
             }
             else
             {
-                // Chưa có thì tạo mới
                 var cartItem = new CartItem
                 {
                     UserId = user.Id,
                     ProductId = request.ProductId,
-                    SoLuong = request.SoLuong
+                    Quantity = request.Quantity // Sửa: Request dùng Quantity
                 };
                 _context.CartItems.Add(cartItem);
             }
 
             await _context.SaveChangesAsync();
-            return Ok("Đã thêm vào giỏ hàng!");
+            return Ok(new { message = "Đã thêm vào giỏ hàng!" });
         }
     }
 }

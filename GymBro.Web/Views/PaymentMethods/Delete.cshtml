@@ -1,0 +1,58 @@
+﻿@model GymBro.Core.PaymentMethod
+
+@{
+    ViewBag.Title = "Xóa Phương thức thanh toán";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h3 class="mb-0 text-danger"><i class="bi bi-trash"></i> Xác nhận xóa</h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Bạn có chắc chắn muốn xóa phương thức thanh toán này không?
+                </div>
+
+                <div class="mb-4">
+                    <h5 class="text-primary mb-3">Thông tin</h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th class="bg-light" style="width: 150px;">Tên phương thức</th>
+                            <td class="fw-bold">@Model.MethodName</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Mô tả</th>
+                            <td>@Model.Description</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Trạng thái</th>
+                            <td>
+                                @if (Model.IsActive)
+                                {
+                                    <span class="badge bg-success">Hoạt động</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Vô hiệu</span>
+                                }
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                @using (Html.BeginForm())
+                {
+                    @Html.AntiForgeryToken()
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="@Url.Action("Index")" class="btn btn-secondary">Hủy bỏ</a>
+                        <button type="submit" class="btn btn-danger">Xóa</button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

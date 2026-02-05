@@ -1,0 +1,94 @@
+﻿@model GymBro.Core.User
+
+@{
+    ViewBag.Title = "Chỉnh sửa Người dùng";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h4 class="mb-0 text-primary">Chỉnh sửa Người dùng</h4>
+            </div>
+            <div class="card-body">
+                @using (Html.BeginForm())
+                {
+                    @Html.AntiForgeryToken()
+                    @* SỬA: UserID -> Id *@
+                    @Html.HiddenFor(model => model.Id)
+                    @* Giữ nguyên username, mật khẩu cũ và ngày tạo *@
+                    @Html.HiddenFor(model => model.Username)
+                    @Html.HiddenFor(model => model.Password)
+                    @Html.HiddenFor(model => model.CreatedDate)
+
+                    <div class="form-horizontal">
+                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+                        <div class="mb-3 row">
+                            <label class="col-md-3 col-form-label fw-bold">Tên đăng nhập</label>
+                            <div class="col-md-9">
+                                <input type="text" class="form-control" value="@Model.Username" disabled readonly />
+                                <small class="text-muted">Không thể thay đổi tên đăng nhập</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 row">
+                            <label class="col-md-3 col-form-label fw-bold">Mật khẩu mới</label>
+                            <div class="col-md-9">
+                                @* QUAN TRỌNG: name="NewPassword" để khớp với Controller *@
+                                <input type="password" name="NewPassword" class="form-control" placeholder="Để trống nếu không muốn đổi mật khẩu" autocomplete="new-password" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3 row">
+                            <label class="col-md-3 col-form-label fw-bold">Họ và tên</label>
+                            <div class="col-md-9">
+                                @Html.EditorFor(model => model.FullName, new { htmlAttributes = new { @class = "form-control" } })
+                                @Html.ValidationMessageFor(model => model.FullName, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+
+                        <div class="mb-3 row">
+                            <label class="col-md-3 col-form-label fw-bold">Email</label>
+                            <div class="col-md-9">
+                                @Html.EditorFor(model => model.Email, new { htmlAttributes = new { @class = "form-control" } })
+                                @Html.ValidationMessageFor(model => model.Email, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+
+                        <div class="mb-3 row">
+                            <label class="col-md-3 col-form-label fw-bold">Địa chỉ</label>
+                            <div class="col-md-9">
+                                @Html.EditorFor(model => model.Address, new { htmlAttributes = new { @class = "form-control" } })
+                                @Html.ValidationMessageFor(model => model.Address, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+
+                        <div class="mb-3 row">
+                            <label class="col-md-3 col-form-label fw-bold">Vai trò</label>
+                            <div class="col-md-9">
+                                @Html.DropDownListFor(model => model.Role, new SelectList(new[] {
+                                new { Value = "User", Text = "Người dùng" },
+                                                        new { Value = "Admin", Text = "Quản trị viên" }
+                                                        }, "Value", "Text"), new { @class = "form-select" })
+                            @Html.ValidationMessageFor(model => model.Role, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="@Url.Action("Index")" class="btn btn-secondary">Hủy bỏ</a>
+                        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                    </div>
+                </div>
+                                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

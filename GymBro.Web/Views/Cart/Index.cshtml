@@ -1,0 +1,190 @@
+﻿@model IEnumerable<GymBro.Web.DTOs.CartItemDto>
+
+@{
+    ViewBag.Title = "Giỏ hàng";
+}
+
+<div class="cart-page">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 style="font-weight: 700; color: #2c3e50; margin-bottom: 10px;">
+                <i class="bi bi-cart-check"></i> Giỏ hàng của bạn
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb" style="background: transparent; padding: 0;">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")" style="text-decoration: none; color: #dc3545;">Trang chủ</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Giỏ hàng</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="empty-cart text-center" style="padding: 80px 20px; background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <i class="bi bi-cart-x" style="font-size: 80px; color: #dc3545; margin-bottom: 20px;"></i>
+            <h3 style="font-weight: 700; color: #2c3e50; margin-bottom: 15px;">Giỏ hàng của bạn đang trống</h3>
+            <p style="color: #6c757d; font-size: 1.1rem; margin-bottom: 30px;">Hãy thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm.</p>
+            @Html.ActionLink("Tiếp tục mua sắm", "Index", "Home", null, new { @class = "btn btn-primary btn-lg", style = "padding: 15px 40px; font-size: 1.1rem; font-weight: 600;" })
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @* Danh sách sản phẩm *@
+            <div class="col-lg-8 col-md-12 mb-4">
+                <div style="background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden;">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 120px;">Hình ảnh</th>
+                                    <th>Tên Sản phẩm</th>
+                                    <th>Đơn giá</th>
+                                    <th style="width: 180px;">Số lượng</th>
+                                    <th>Thành tiền</th>
+                                    <th style="width: 80px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div style="width: 100px; height: 100px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: relative;">
+                                                @if (!string.IsNullOrEmpty(item.ImageURL))
+                                                {
+                                                    // Đã sửa đường dẫn ảnh cho khớp với .NET Core
+                                                    <img src="~/Content/Images/@item.ImageURL"
+                                                         alt="@item.ProductName"
+                                                         style="width: 100%; height: 100%; object-fit: cover;"
+                                                         loading="lazy" 
+                                                         onerror="this.src='/Content/Images/no-image.png'" />
+                                                }
+                                                else
+                                                {
+                                                    <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #f8f9fa, #e9ecef); display: flex; align-items: center; justify-content: center;">
+                                                        <i class="bi bi-image" style="font-size: 2rem; color: #ccc;"></i>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <strong style="color: #2c3e50; font-size: 1.05rem;">@item.ProductName</strong>
+                                        </td>
+                                        <td>
+                                            <span style="color: #dc3545; font-weight: 600; font-size: 1.1rem;">
+                                                @string.Format("{0:N0}", item.Price)
+                                            </span>
+                                            <span style="color: #6c757d; font-size: 0.9rem;"> VNĐ</span>
+                                        </td>
+                                        <td>
+                                            @using (Html.BeginForm("UpdateCart", "Cart", FormMethod.Post, new { @class = "update-quantity-form" }))
+                                            {
+                                                @* SỬA: ProductID -> ProductId *@
+                                                <input type="hidden" name="id" value="@item.ProductId" />
+                                                <div class="input-group quantity-group" style="max-width: 150px;">
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="decreaseQty(this, event)" style="border-radius: 8px 0 0 0px;">
+                                                        <i class="bi bi-dash"></i>
+                                                    </button>
+                                                    <input type="number" name="quantity" value="@item.Quantity" min="1"
+                                                           class="form-control text-center"
+                                                           style="border-radius: 0; font-weight: 600; padding: 1px;"
+                                                           onchange="this.form.submit()" />
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="increaseQty(this, event)" style="border-radius: 0 8px 8px 0;">
+                                                        <i class="bi bi-plus"></i>
+                                                    </button>
+                                                </div>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span style="color: #dc3545; font-weight: 700; font-size: 1.2rem;">
+                                                @string.Format("{0:N0}", item.ThanhTien)
+                                            </span>
+                                            <span style="color: #6c757d; font-size: 0.9rem;"> VNĐ</span>
+                                        </td>
+                                        <td>
+                                            @* SỬA: ProductID -> ProductId *@
+                                            @Html.ActionLink("Xóa", "RemoveFromCart", "Cart", new { id = item.ProductId }, 
+                                                new { @class = "btn btn-danger btn-sm", 
+                                                      style = "border-radius: 8px; padding: 8px 12px;",
+                                                      onclick = "return confirm('Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?');" })
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            @* Tổng kết đơn hàng *@
+            <div class="col-lg-4 col-md-12">
+                <div style="background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 25px; position: sticky; top: 20px;">
+                    <h4 style="font-weight: 700; color: #2c3e50; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+                        <i class="bi bi-receipt"></i> Tổng kết đơn hàng
+                    </h4>
+                    
+                    <div class="summary-item mb-3" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
+                        <span style="color: #6c757d;">Tổng số lượng:</span>
+                        <strong style="color: #2c3e50; font-size: 1.1rem;">
+                            @{
+                                var totalQty = (int)(ViewData["TotalQuantity"] ?? 0);
+                                @totalQty
+                            } sản phẩm
+                        </strong>
+                    </div>
+                    
+                    <hr style="margin: 20px 0; border-color: #e0e0e0;" />
+                    
+                    <div class="total-price mb-4" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: linear-gradient(135deg, #fff5f5, #ffe5e5); border-radius: 10px; border-left: 4px solid #dc3545;">
+                        <span style="font-weight: 700; color: #2c3e50; font-size: 1.2rem;">Tổng tiền:</span>
+                        <span style="color: #dc3545; font-weight: 800; font-size: 1.8rem;">
+                            @{
+                                var totalPrice = (decimal)(ViewData["TotalPrice"] ?? 0M);
+                                @String.Format("{0:N0}", totalPrice)
+                            } <span style="font-size: 1rem;">VNĐ</span>
+                        </span>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        @Html.ActionLink("Tiến hành Thanh toán", "Checkout", "Cart", null, 
+                            new { @class = "btn btn-success btn-lg", 
+                                  style = "padding: 15px; font-size: 1.1rem; font-weight: 600; border-radius: 10px;" })
+                        @Html.ActionLink("Tiếp tục mua sắm", "Index", "Home", null, 
+                            new { @class = "btn btn-outline-primary btn-lg", 
+                                  style = "padding: 15px; font-size: 1.1rem; font-weight: 600; border-radius: 10px;" })
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+    function increaseQty(btn, event) {
+        event.preventDefault();
+        var inputGroup = btn.closest('.input-group');
+        var input = inputGroup.querySelector('input[name="quantity"]');
+        if (input) {
+            var currentValue = parseInt(input.value) || 1;
+            input.value = currentValue + 1;
+            setTimeout(function() { input.form.submit(); }, 100);
+        }
+        return false;
+    }
+
+    function decreaseQty(btn, event) {
+        event.preventDefault();
+        var inputGroup = btn.closest('.input-group');
+        var input = inputGroup.querySelector('input[name="quantity"]');
+        if (input) {
+            var currentValue = parseInt(input.value) || 1;
+            if (currentValue > 1) {
+                input.value = currentValue - 1;
+                setTimeout(function() { input.form.submit(); }, 100);
+            }
+        }
+        return false;
+    }
+</script>

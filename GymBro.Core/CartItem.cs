@@ -8,19 +8,24 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GymBro.Core
 {
+    [Table("CartItems")]
     public class CartItem
     {
         [Key]
         public int Id { get; set; }
 
-        public int UserId { get; set; }
+        public int UserId { get; set; } // Giỏ hàng của ai
+
+        public int ProductId { get; set; } // Mua cái gì
+
+        public int Quantity { get; set; } // Số lượng bao nhiêu
+
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
+
         [ForeignKey("UserId")]
-        public User User { get; set; }
+        public virtual User? User { get; set; }
 
-        public int ProductId { get; set; }
         [ForeignKey("ProductId")]
-        public Product Product { get; set; }
-
-        public int SoLuong { get; set; }
+        public virtual Product? Product { get; set; }
     }
 }

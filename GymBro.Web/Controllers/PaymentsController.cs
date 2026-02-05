@@ -14,7 +14,9 @@ namespace GymBro.Web.Controllers
         {
             return View(await _context.Payments
                 .Include(p => p.Order)
-                .OrderByDescending(p => p.NgayThanhToan).ToListAsync());
+                // SỬA: NgayThanhToan -> PaymentDate
+                .OrderByDescending(p => p.PaymentDate)
+                .ToListAsync());
         }
     }
 }

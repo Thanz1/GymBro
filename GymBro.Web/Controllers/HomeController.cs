@@ -2,7 +2,7 @@
 using GymBro.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebGymBro.Helpers; // Để dùng Session
+using GymBro.Web.Helpers; // Để dùng Session
 
 namespace GymBro.Web.Controllers
 {
@@ -41,7 +41,8 @@ namespace GymBro.Web.Controllers
             // 1. Lọc theo từ khóa
             if (!string.IsNullOrEmpty(keyword))
             {
-                query = query.Where(p => p.TenSanPham.Contains(keyword) || p.MoTa.Contains(keyword));
+                // SỬA: TenSanPham -> ProductName, MoTa -> Description
+                query = query.Where(p => p.ProductName.Contains(keyword) || p.Description.Contains(keyword));
                 ViewBag.Keyword = keyword;
             }
 
@@ -52,16 +53,16 @@ namespace GymBro.Web.Controllers
                 ViewBag.CategoryId = categoryId;
             }
 
-            // 3. Lọc giá
-            if (minPrice.HasValue) query = query.Where(p => p.Gia >= minPrice);
-            if (maxPrice.HasValue) query = query.Where(p => p.Gia <= maxPrice);
+            // 3. Lọc giá (SỬA: Gia -> Price)
+            if (minPrice.HasValue) query = query.Where(p => p.Price >= minPrice);
+            if (maxPrice.HasValue) query = query.Where(p => p.Price <= maxPrice);
 
-            // 4. Sắp xếp
+            // 4. Sắp xếp (SỬA: Gia -> Price, TenSanPham -> ProductName)
             query = sortOrder switch
             {
-                "price_asc" => query.OrderBy(p => p.Gia),
-                "price_desc" => query.OrderByDescending(p => p.Gia),
-                "name_asc" => query.OrderBy(p => p.TenSanPham),
+                "price_asc" => query.OrderBy(p => p.Price),
+                "price_desc" => query.OrderByDescending(p => p.Price),
+                "name_asc" => query.OrderBy(p => p.ProductName),
                 _ => query.OrderByDescending(p => p.Id),
             };
 

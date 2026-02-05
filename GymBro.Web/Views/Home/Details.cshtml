@@ -1,0 +1,157 @@
+﻿@model GymBro.Core.Product
+
+@{
+    ViewBag.Title = "Chi tiết Sản phẩm";
+}
+
+<div class="product-detail-page">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb" style="background: transparent; padding: 0;">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")" class="text-decoration-none text-danger">Trang chủ</a></li>
+                    <li class="breadcrumb-item"><a href="@Url.Action("Shop", "Home")" class="text-decoration-none text-danger">Cửa hàng</a></li>
+                    @if (Model.Category != null)
+                    {
+                        <li class="breadcrumb-item">
+                            @* SỬA: CategoryID -> Id *@
+                            <a href="@Url.Action("Shop", "Home", new { categoryId = Model.Category.Id })" class="text-decoration-none text-danger">
+                                @Model.Category.CategoryName
+                            </a>
+                        </li>
+                    }
+                    <li class="breadcrumb-item active" aria-current="page">@Model.ProductName</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        @* Cột Trái: Ảnh *@
+        <div class="col-lg-6 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm p-3">
+                @if (!string.IsNullOrEmpty(Model.ImageURL))
+                {
+                    <img src="~/Content/Images/@Model.ImageURL"
+                         alt="@Model.ProductName"
+                         class="img-fluid rounded"
+                         style="width: 100%; max-height: 500px; object-fit: contain;"
+                         onerror="this.src='/Content/Images/no-image.png'" />
+                }
+                else
+                {
+                    <div class="d-flex align-items-center justify-content-center bg-light rounded" style="height: 400px;">
+                        <i class="bi bi-image" style="font-size: 5rem; color: #ccc;"></i>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* Cột Phải: Thông tin *@
+        <div class="col-lg-6 col-md-6">
+            <div class="product-info bg-white rounded p-4 shadow-sm">
+                <h1 class="fw-bold text-dark mb-3">@Model.ProductName</h1>
+
+                <div class="price-section mb-4 p-3 bg-light rounded border-start border-4 border-danger">
+                    <h2 class="fw-bold text-danger m-0">
+                        @string.Format("{0:N0}", Model.Price) <span class="fs-5 text-muted">VNĐ</span>
+                    </h2>
+                </div>
+
+                <div class="description-section mb-4">
+                    <h5 class="fw-bold"><i class="bi bi-info-circle"></i> Mô tả sản phẩm</h5>
+                    <div class="text-secondary">
+                        @if (string.IsNullOrEmpty(Model.Description))
+                        {
+                            <p>Đang cập nhật mô tả...</p>
+                        }
+                        else
+                        {
+                            @Html.Raw(Model.Description)
+                        }
+                    </div>
+                </div>
+
+                <hr />
+
+                @* Form Add To Cart *@
+                <form action="@Url.Action("AddToCart", "Cart")" method="post">
+                    @* SỬA: ProductID -> Id *@
+                    <input type="hidden" name="productId" value="@Model.Id" />
+
+                    <div class="d-flex gap-3 align-items-center mb-4">
+                        <div class="input-group" style="width: 140px;">
+                            <button type="button" class="btn btn-outline-secondary" onclick="decreaseQuantity()"><i class="bi bi-dash"></i></button>
+                            <input type="number" id="quantity" name="quantity" value="1" min="1" class="form-control text-center fw-bold" />
+                            <button type="button" class="btn btn-outline-secondary" onclick="increaseQuantity()"><i class="bi bi-plus"></i></button>
+                        </div>
+
+                        @if (Model.StockQuantity > 0)
+                        {
+                            <button type="submit" class="btn btn-success btn-lg flex-grow-1">
+                                <i class="bi bi-cart-plus"></i> Thêm vào giỏ
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-secondary btn-lg flex-grow-1" disabled>
+                                Hết hàng
+                            </button>
+                        }
+                    </div>
+                </form>
+
+                <div class="product-features mt-4 pt-3 border-top">
+                    <div class="row g-2 small text-muted">
+                        <div class="col-6"><i class="bi bi-check-circle-fill text-success"></i> Hàng chính hãng</div>
+                        <div class="col-6"><i class="bi bi-truck text-primary"></i> Giao hàng toàn quốc</div>
+                        <div class="col-6"><i class="bi bi-shield-check text-info"></i> Bảo hành uy tín</div>
+                        <div class="col-6"><i class="bi bi-arrow-repeat text-warning"></i> Đổi trả dễ dàng</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Phần Đánh giá - Load AJAX *@
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="border-bottom pb-2 mb-4">Đánh giá sản phẩm</h3>
+            <div id="review-section">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Đang tải đánh giá...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function increaseQuantity() {
+            var input = document.getElementById('quantity');
+            input.value = parseInt(input.value) + 1;
+        }
+
+        function decreaseQuantity() {
+            var input = document.getElementById('quantity');
+            if (parseInt(input.value) > 1) {
+                input.value = parseInt(input.value) - 1;
+            }
+        }
+
+        // Load Reviews via AJAX
+        $(document).ready(function() {
+            // SỬA: ProductID -> Id
+            var url = '@Url.Action("GetByProduct", "Reviews", new { productId = Model.Id })';
+            $("#review-section").load(url, function(response, status, xhr) {
+                if (status == "error") {
+                    $("#review-section").html("<div class='alert alert-warning'>Chưa có đánh giá nào hoặc không thể tải đánh giá.</div>");
+                }
+            });
+        });
+    </script>
+}
