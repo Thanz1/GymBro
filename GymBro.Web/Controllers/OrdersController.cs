@@ -25,6 +25,7 @@ namespace GymBro.Web.Controllers
 
             // Lọc theo trạng thái nếu có
             if (!string.IsNullOrEmpty(status))
+<<<<<<< HEAD
             {
                 query = query.Where(o => o.Status == status);
             }
@@ -36,6 +37,19 @@ namespace GymBro.Web.Controllers
             // Sắp xếp đơn mới nhất lên đầu
             var orders = await query.OrderByDescending(o => o.OrderDate).ToListAsync();
             return View(orders);
+=======
+                // SỬA: TrangThai -> Status
+                query = query.Where(o => o.Status == status);
+
+            if (!string.IsNullOrEmpty(searchString))
+                // Tìm theo ID đơn hoặc tên User
+                query = query.Where(o => o.Id.ToString() == searchString || o.User.Username.Contains(searchString));
+
+            ViewBag.CurrentStatus = status;
+
+            // SỬA: NgayDat -> OrderDate
+            return View(await query.OrderByDescending(o => o.OrderDate).ToListAsync());
+>>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
         }
 
         // ==========================================
@@ -87,6 +101,7 @@ namespace GymBro.Web.Controllers
 
             if (ModelState.IsValid)
             {
+<<<<<<< HEAD
                 try
                 {
                     // Chỉ cập nhật trạng thái, giữ nguyên các thông tin khác (Tiền, Ngày đặt...)
@@ -101,6 +116,11 @@ namespace GymBro.Web.Controllers
                     else throw;
                 }
                 return RedirectToAction(nameof(Index));
+=======
+                // SỬA: TrangThai -> Status
+                existingOrder.Status = order.Status; // Cập nhật trạng thái
+                await _context.SaveChangesAsync();
+>>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
             }
 
             // Nếu lỗi thì load lại dropdown để không bị crash View

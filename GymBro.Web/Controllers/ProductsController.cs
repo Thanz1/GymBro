@@ -27,6 +27,10 @@ namespace GymBro.Web.Controllers
         // GET: Admin/Products/Create
         public IActionResult Create()
         {
+<<<<<<< HEAD
+=======
+            // SỬA: TenDanhMuc -> CategoryName
+>>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
             ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "CategoryName");
             return View();
         }
@@ -38,7 +42,11 @@ namespace GymBro.Web.Controllers
         {
             if (ModelState.IsValid)
             {
+<<<<<<< HEAD
                 if (imageFile != null && imageFile.Length > 0)
+=======
+                if (imageFile != null)
+>>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
                 {
                     // 1. Tạo đường dẫn thư mục
                     string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "Content", "Images");
@@ -57,9 +65,14 @@ namespace GymBro.Web.Controllers
                     {
                         await imageFile.CopyToAsync(fileStream);
                     }
+<<<<<<< HEAD
 
                     // 4. Lưu đường dẫn ảnh vào object Product
                     product.ImageURL = "/Content/Images/" + uniqueFileName;
+=======
+                    // SỬA: HinhAnhUrl -> ImageURL
+                    product.ImageURL = uniqueFileName;
+>>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
                 }
 
                 // --- XÓA DÒNG NÀY ĐI VÌ MODEL CHƯA CÓ ---
@@ -70,7 +83,11 @@ namespace GymBro.Web.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+<<<<<<< HEAD
 
+=======
+            // SỬA: TenDanhMuc -> CategoryName
+>>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
             ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "CategoryName", product.CategoryId);
             return View(product);
         }

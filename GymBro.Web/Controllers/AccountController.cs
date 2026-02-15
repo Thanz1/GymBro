@@ -1,7 +1,13 @@
+<<<<<<< HEAD
 ﻿using System.Security.Claims;
 using GymBro.Core;
 using GymBro.Infrastructure;
 using GymBro.Web.Helpers; // Đảm bảo bạn đã có class SessionExtensions ở đây
+=======
+﻿using GymBro.Core;
+using GymBro.Infrastructure;
+using GymBro.Web.Helpers; // Để dùng SessionExtensions
+>>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,9 +22,13 @@ namespace GymBro.Web.Controllers
             _context = context;
         }
 
+<<<<<<< HEAD
         // ==========================================
         // 1. ĐĂNG KÝ
         // ==========================================
+=======
+        // 1. ĐĂNG KÝ
+>>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
         public IActionResult Register()
         {
             return View();
@@ -44,12 +54,19 @@ namespace GymBro.Web.Controllers
                     return View(user);
                 }
 
+<<<<<<< HEAD
                 // Mã hóa mật khẩu
                 user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
                 user.Role = "User"; // Mặc định là User thường
                 user.CreatedDate = DateTime.Now; // Ghi lại ngày tạo
 
                 // Lưu vào DB
+=======
+                // Mã hóa mật khẩu và tạo User
+                user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
+                user.Role = "User"; // Mặc định là User thường
+
+>>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
 
@@ -59,9 +76,13 @@ namespace GymBro.Web.Controllers
             return View(user);
         }
 
+<<<<<<< HEAD
         // ==========================================
         // 2. ĐĂNG NHẬP
         // ==========================================
+=======
+        // 2. ĐĂNG NHẬP
+>>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
         public IActionResult Login()
         {
             return View();
@@ -81,6 +102,7 @@ namespace GymBro.Web.Controllers
 
                 if (isPasswordValid)
                 {
+<<<<<<< HEAD
                     // (Đã xóa đoạn kiểm tra IsActive để tránh lỗi Model)
 
                     // Lưu thông tin vào Session (Đăng nhập thành công)
@@ -93,6 +115,10 @@ namespace GymBro.Web.Controllers
                         return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
                     }
 
+=======
+                    // Lưu thông tin vào Session (Đăng nhập thành công)
+                    HttpContext.Session.SetObject("User", user);
+>>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
                     return RedirectToAction("Index", "Home");
                 }
             }
@@ -101,6 +127,7 @@ namespace GymBro.Web.Controllers
             return View();
         }
 
+<<<<<<< HEAD
         // ==========================================
         // 3. ĐĂNG XUẤT
         // ==========================================
@@ -114,11 +141,22 @@ namespace GymBro.Web.Controllers
         // ==========================================
         // 4. TÀI KHOẢN CỦA TÔI
         // ==========================================
+=======
+        // 3. ĐĂNG XUẤT
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Remove("User");
+            return RedirectToAction("Index", "Home");
+        }
+
+        // 4. TÀI KHOẢN CỦA TÔI
+>>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
         public async Task<IActionResult> MyAccount()
         {
             var userSession = HttpContext.Session.GetObject<User>("User");
             if (userSession == null) return RedirectToAction("Login");
 
+<<<<<<< HEAD
             // Lấy thông tin mới nhất từ DB
             var user = await _context.Users.FindAsync(userSession.Id);
 
@@ -127,14 +165,27 @@ namespace GymBro.Web.Controllers
                 .Where(o => o.UserId == user.Id)
                 .OrderByDescending(o => o.OrderDate)
                 .Take(5)
+=======
+            // Lấy thông tin mới nhất từ DB (để tránh Session bị cũ)
+            var user = await _context.Users.FindAsync(userSession.Id);
+
+            // Lấy lịch sử đơn hàng
+            ViewBag.OrderHistory = await _context.Orders
+                .Where(o => o.UserId == user.Id)
+                .OrderByDescending(o => o.OrderDate) // Đã sửa NgayDat -> OrderDate
+>>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
                 .ToListAsync();
 
             return View(user);
         }
 
+<<<<<<< HEAD
         // ==========================================
         // 5. ĐỔI MẬT KHẨU
         // ==========================================
+=======
+        // 5. ĐỔI MẬT KHẨU
+>>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
         public IActionResult ChangePassword()
         {
             var user = HttpContext.Session.GetObject<User>("User");
@@ -166,18 +217,25 @@ namespace GymBro.Web.Controllers
 
             // Cập nhật mật khẩu mới
             user.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+<<<<<<< HEAD
 
             // Cập nhật DB
             _context.Users.Update(user);
+=======
+>>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Đổi mật khẩu thành công!";
             return RedirectToAction("MyAccount");
         }
 
+<<<<<<< HEAD
         // ==========================================
         // 6. LỊCH SỬ ĐƠN HÀNG (Xem tất cả)
         // ==========================================
+=======
+        // 6. LỊCH SỬ ĐƠN HÀNG (Xem tất cả)
+>>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
         public async Task<IActionResult> OrderHistory()
         {
             var userSession = HttpContext.Session.GetObject<User>("User");
@@ -190,6 +248,7 @@ namespace GymBro.Web.Controllers
 
             return View(orders);
         }
+<<<<<<< HEAD
 
         // ==========================================
         // 7. CHI TIẾT ĐƠN HÀNG (ĐÃ SỬA LỖI CRASH)
@@ -211,5 +270,7 @@ namespace GymBro.Web.Controllers
 
             return View(order);
         }
+=======
+>>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
     }
 }
