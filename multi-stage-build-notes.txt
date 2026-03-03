@@ -1,0 +1,72 @@
+Multi-stage Docker build cho GymBro (ASP.NET Core)
+===================================================
+
+1. Tổng quan
+------------
+Dự án này sử dụng kỹ thuật **multi-stage Docker build** để tạo ra một image runtime nhỏ gọn cho ứng dụng web `GymBro.Web`.
+
+- Stage 1 (build):
+  - Base image: `mcr.microsoft.com/dotnet/sdk:9.0`
+  - Khôi phục (restore) toàn bộ gói NuGet cho solution `GymBro.sln`.
+  - Build và publish `GymBro.Web` ở cấu hình Release ra thư mục `/app/publish`.
+
+- Stage 2 (runtime cuối cùng):
+  - Base image: `mcr.microsoft.com/dotnet/aspnet:9.0`
+  - Chỉ copy các file đã publish từ stage build vào thư mục `/app`.
+  - Mở port 8080 và đặt biến `ASPNETCORE_URLS=http://+:8080`.
+  - Lệnh khởi động: `dotnet GymBro.Web.dll`.
+
+2. Build Docker image
+---------------------
+Chạy lệnh sau tại thư mục gốc repository (nơi có `Dockerfile` và `GymBro.sln`):
+
+    docker build -t gymbro-web .
+
+Lệnh này sẽ:
+- Restore gói NuGet cho tất cả project trong solution.
+- Biên dịch và publish `GymBro.Web` với cấu hình Release.
+- Tạo ra image cuối cùng có tên `gymbro-web`, chỉ chứa các file đã publish và runtime cần thiết.
+
+3. Chạy container
+-----------------
+Cách chạy cơ bản (chưa cấu hình database bên ngoài):
+
+    docker run --rm -p 8080:8080 --name gymbro-web gymbro-web
+
+Ứng dụng sẽ lắng nghe trên port 8080 bên trong container và có thể truy cập từ máy host tại địa chỉ `http://localhost:8080`.
+
+4. Cấu hình môi trường (SQL Server, v.v.)
+-----------------------------------------
+Ứng dụng sử dụng connection string tên `DefaultConnection` từ cấu hình (ví dụ: `appsettings.json`, biến môi trường, hoặc secret).
+
+Khi chạy trong Docker, có thể override connection string qua biến môi trường, ví dụ:
+
+    docker run --rm -p 8080:8080 ^
+      -e "ConnectionStrings__DefaultConnection=Server=your-sql-host;Database=GymBro;User Id=sa;Password=Your_password123;TrustServerCertificate=True;" ^
+      --name gymbro-web gymbro-web
+
+Ghi chú:
+- Trên Linux/macOS thay dấu xuống dòng `^` bằng `\`.
+- Đảm bảo SQL Server có thể được truy cập từ trong container (cấu hình mạng/firewall).
+
+5. Lý do sử dụng multi-stage build
+----------------------------------
+- Image nhỏ hơn:
+  - SDK và công cụ build không còn nằm trong image runtime cuối cùng.
+- Triển khai nhanh hơn:
+  - Các layer restore/build có thể được cache lại nếu mã nguồn không thay đổi nhiều.
+- Tách bạch rõ ràng:
+  - Stage build chịu trách nhiệm biên dịch, stage runtime chỉ dùng để chạy ứng dụng đã publish.
+
+6. So sánh trước và sau khi áp dụng multi-stage build
+-----------------------------------------------------
+Trước khi dùng multi-stage build:
+- Thường phải dùng image chứa đầy đủ .NET SDK cho cả build và runtime.
+- Image cuối cùng chứa cả mã nguồn, công cụ build và các file trung gian → kích thước lớn, khó cache hiệu quả.
+- Thời gian pull image dài hơn, triển khai chậm hơn, đặc biệt trong môi trường CI/CD hoặc cloud.
+
+Sau khi áp dụng multi-stage build:
+- Image runtime cuối cùng dựa trên image ASP.NET Core runtime nhỏ gọn và chỉ chứa các file publish trong `/app`.
+- Quá trình restore và build diễn ra ở stage đầu, nên SDK và công cụ build không được đưa vào môi trường production.
+- Kích thước image nhỏ hơn, thời gian pull/trien khai nhanh hơn, và ranh giới giữa bước build và runtime rõ ràng hơn.
+
