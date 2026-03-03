@@ -3,8 +3,11 @@ using GymBro.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
+
+
 namespace GymBro.Web.Controllers
 {
+    
     public class AdminController : BaseAdminController
     {
         private readonly GymBroDbContext _context;

@@ -3,26 +3,32 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. ĐĂNG KÝ DỊCH VỤ
+// =========================================================
+// 1. ĐĂNG KÝ DỊCH VỤ (SERVICES)
+// =========================================================
+
 builder.Services.AddControllersWithViews();
 
-// Đăng ký Database
+// Đăng ký kết nối Database
 builder.Services.AddDbContext<GymBroDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Đăng ký Session (Lưu giỏ hàng, đăng nhập)
-builder.Services.AddSession(options => { // <--- MỚI THÊM
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
+// Cấu hình Session (Dùng cho Đăng nhập và Giỏ hàng)
+builder.Services.AddSession(options => {
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Session hết hạn sau 30 phút
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
 
-// Đăng ký HttpContextAccessor (Để truy cập Session từ Helper)
-builder.Services.AddHttpContextAccessor(); // <--- MỚI THÊM
+// Đăng ký HttpContextAccessor để truy cập Session từ các Class Helper (nếu có)
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
-// 2. CẤU HÌNH PIPELINE
+// =========================================================
+// 2. CẤU HÌNH PIPELINE (MIDDLEWARE)
+// =========================================================
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -34,10 +40,20 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseSession(); // <--- QUAN TRỌNG: Phải đặt trước UseAuthorization
+// QUAN TRỌNG: Thứ tự middleware - UseSession PHẢI nằm trước UseAuthorization
+app.UseSession();
 
 app.UseAuthorization();
 
+// =========================================================
+// 3. CẤU HÌNH ĐƯỜNG DẪN (ROUTING)
+// =========================================================
+
+// SỬA LỖI 404: Route cho vùng quản trị Admin (Area)
+// Thiết lập mặc định controller=Admin và action=Dashboard để khớp với AdminController.cs của bạn
+
+
+// Route mặc định cho khách hàng
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

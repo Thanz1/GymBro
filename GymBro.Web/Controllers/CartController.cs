@@ -1,7 +1,7 @@
-﻿using GymBro.Web.DTOs; // Dùng chung DTO với API hoặc tạo ViewModel riêng cũng được
+﻿using GymBro.Web.DTOs;
 using GymBro.Core;
 using GymBro.Infrastructure;
-using GymBro.Web.Helpers; // Để dùng SessionExtensions
+using GymBro.Web.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,24 +16,25 @@ namespace GymBro.Web.Controllers
             _context = context;
         }
 
-        // Lấy giỏ hàng từ Session
+        // ==========================================
+        // CÁC HÀM HỖ TRỢ GIỎ HÀNG (PRIVATE)
+        // ==========================================
         private List<CartItemDto> GetCart()
         {
             var cart = HttpContext.Session.GetObject<List<CartItemDto>>("Cart");
             return cart ?? new List<CartItemDto>();
         }
 
-        // Lưu giỏ hàng vào Session
         private void SaveCart(List<CartItemDto> cart)
         {
             HttpContext.Session.SetObject("Cart", cart);
-
-            // Cập nhật số lượng hiển thị trên Menu
             ViewData["TotalQuantity"] = cart.Sum(item => item.Quantity);
             ViewData["TotalPrice"] = cart.Sum(item => item.ThanhTien);
         }
 
-        // 1. HIỂN THỊ GIỎ HÀNG
+        // ==========================================
+        // 1. QUẢN LÝ GIỎ HÀNG (INDEX, ADD, UPDATE, REMOVE)
+        // ==========================================
         public IActionResult Index()
         {
             var cart = GetCart();
@@ -42,7 +43,6 @@ namespace GymBro.Web.Controllers
             return View(cart);
         }
 
-        // 2. THÊM VÀO GIỎ (Gọi từ nút "Mua ngay" hoặc "Thêm vào giỏ")
         public async Task<IActionResult> AddToCart(int productId, int quantity = 1)
         {
             var product = await _context.Products.FindAsync(productId);
@@ -68,12 +68,10 @@ namespace GymBro.Web.Controllers
             }
 
             SaveCart(cart);
-
             TempData["SuccessMessage"] = "Đã thêm sản phẩm vào giỏ hàng!";
             return RedirectToAction("Index");
         }
 
-        // 3. CẬP NHẬT SỐ LƯỢNG
         [HttpPost]
         public IActionResult UpdateCart(int id, int quantity)
         {
@@ -82,20 +80,14 @@ namespace GymBro.Web.Controllers
 
             if (item != null)
             {
-                if (quantity > 0)
-                {
-                    item.Quantity = quantity;
-                }
-                else
-                {
-                    cart.Remove(item); // Nếu số lượng <= 0 thì xóa luôn
-                }
+                if (quantity > 0) item.Quantity = quantity;
+                else cart.Remove(item);
+
                 SaveCart(cart);
             }
             return RedirectToAction("Index");
         }
 
-        // 4. XÓA KHỎI GIỎ
         public IActionResult RemoveFromCart(int id)
         {
             var cart = GetCart();
@@ -109,7 +101,9 @@ namespace GymBro.Web.Controllers
             return RedirectToAction("Index");
         }
 
-        // 5. TRANG THANH TOÁN (CHECKOUT)
+        // ==========================================
+        // 2. CHECKOUT & ĐẶT HÀNG (QUAN TRỌNG)
+        // ==========================================
         public async Task<IActionResult> Checkout()
         {
             var user = HttpContext.Session.GetObject<User>("User");
@@ -123,14 +117,25 @@ namespace GymBro.Web.Controllers
 
             ViewBag.TotalPrice = cart.Sum(i => i.ThanhTien);
 
-            // Lấy danh sách phương thức thanh toán từ DB (nếu có bảng PaymentMethod)
-            // Hoặc tạo cứng list demo
-            ViewBag.PaymentMethods = await _context.PaymentMethods.ToListAsync();
+            // Giả lập danh sách phương thức nếu DB chưa có
+            // 1: COD, 2: Banking
+            var methods = await _context.PaymentMethods.ToListAsync();
+            if (!methods.Any())
+            {
+                // Nếu DB trống, tạo list tạm để view không bị lỗi
+                ViewBag.PaymentMethods = new List<dynamic> {
+                    new { Id = 1, MethodName = "Thanh toán khi nhận hàng (COD)" },
+                    new { Id = 2, MethodName = "Chuyển khoản Ngân hàng (QR Code)" }
+                };
+            }
+            else
+            {
+                ViewBag.PaymentMethods = methods;
+            }
 
             return View(cart);
         }
 
-        // 6. XỬ LÝ ĐẶT HÀNG
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> PlaceOrder(int paymentMethodId)
@@ -141,19 +146,19 @@ namespace GymBro.Web.Controllers
             var cart = GetCart();
             if (!cart.Any()) return RedirectToAction("Index");
 
-            // Tạo đơn hàng mới
+            // 1. Tạo đơn hàng (Order)
             var order = new Order
             {
                 UserId = user.Id,
                 OrderDate = DateTime.Now,
-                Status = "Chờ thanh toán",
+                Status = "Chờ xử lý", // Trạng thái mặc định của đơn hàng
                 TotalAmount = cart.Sum(c => c.ThanhTien)
             };
 
             _context.Orders.Add(order);
             await _context.SaveChangesAsync(); // Lưu để lấy OrderId
 
-            // Lưu chi tiết đơn hàng
+            // 2. Lưu chi tiết đơn hàng (OrderDetails)
             foreach (var item in cart)
             {
                 var orderDetail = new OrderDetail
@@ -165,22 +170,41 @@ namespace GymBro.Web.Controllers
                 };
                 _context.OrderDetails.Add(orderDetail);
             }
-            await _context.SaveChangesAsync();
 
-            // Xóa giỏ hàng sau khi đặt thành công
+            // 3. QUAN TRỌNG: TẠO BẢN GHI THANH TOÁN (PAYMENT) NGAY LẬP TỨC
+            // Xác định tên phương thức
+            string methodString = (paymentMethodId == 2) ? "Banking" : "COD";
+
+            var initialPayment = new Payment
+            {
+                OrderId = order.Id,
+                PaymentDate = DateTime.Now,
+                Amount = order.TotalAmount,
+                PaymentMethod = methodString,
+                // Nếu là COD thì coi như xong bước thanh toán (chờ thu tiền)
+                // Nếu là Banking thì là "Chờ thanh toán"
+                Status = (paymentMethodId == 1) ? "Chờ thu tiền" : "Chờ thanh toán"
+            };
+
+            _context.Payments.Add(initialPayment);
+            await _context.SaveChangesAsync(); // Lưu tất cả xuống DB
+
+            // 4. Dọn dẹp giỏ hàng
             HttpContext.Session.Remove("Cart");
 
-            // Nếu chọn chuyển khoản (QR Code) -> Chuyển sang trang Payment
-            // Giả sử paymentMethodId = 2 là chuyển khoản
-            if (paymentMethodId == 2)
+            // 5. Điều hướng
+            if (paymentMethodId == 2) // Nếu chọn Banking -> Sang trang quét mã
             {
                 return RedirectToAction("Payment", new { id = order.Id });
             }
 
+            // Nếu COD -> Thông báo thành công
             return RedirectToAction("OrderSuccessful");
         }
 
-        // 7. TRANG THANH TOÁN QR (Payment)
+        // ==========================================
+        // 3. THANH TOÁN QR CODE
+        // ==========================================
         public async Task<IActionResult> Payment(int id)
         {
             var order = await _context.Orders
@@ -189,11 +213,11 @@ namespace GymBro.Web.Controllers
 
             if (order == null) return NotFound();
 
-            // Tạo link QR Code (VietQR)
-            string bankId = "MB"; // Ví dụ MB Bank
-            string accountNo = "0000123456789"; // Số tài khoản của bạn
-            string accountName = "NGUYEN VAN A"; // Tên chủ TK
-            string content = $"THANHTOAN DONHANG {order.Id}";
+            // Cấu hình VietQR
+            string bankId = "MB";
+            string accountNo = "0000123456789"; // Thay số tài khoản của bạn
+            string accountName = "NGUYEN VAN A"; // Thay tên của bạn
+            string content = $"THANHTOAN DON {order.Id}";
 
             string qrUrl = $"https://img.vietqr.io/image/{bankId}-{accountNo}-compact.png?amount={order.TotalAmount}&addInfo={content}&accountName={accountName}";
 
@@ -202,12 +226,11 @@ namespace GymBro.Web.Controllers
             ViewBag.AccountNo = accountNo;
             ViewBag.AccountName = accountName;
             ViewBag.Description = content;
-            ViewBag.PaymentStatus = order.Status; // Truyền trạng thái sang View
+            ViewBag.PaymentStatus = order.Status;
 
             return View(order);
         }
 
-        // 8. XÁC NHẬN ĐÃ CHUYỂN KHOẢN
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmPayment(int id)
@@ -215,25 +238,40 @@ namespace GymBro.Web.Controllers
             var order = await _context.Orders.FindAsync(id);
             if (order == null) return NotFound();
 
-            order.Status = "Chờ xác minh"; // Chuyển trạng thái
+            // Cập nhật trạng thái Đơn hàng
+            order.Status = "Chờ xác minh"; // Báo cho Admin biết khách đã bấm "Tôi đã chuyển khoản"
+            _context.Update(order);
 
-            // Tạo bản ghi thanh toán
-            var payment = new Payment
+            // Cập nhật trạng thái Thanh toán (Payment)
+            // Thay vì tạo mới, ta tìm cái cũ đã tạo ở bước PlaceOrder để update
+            var payment = await _context.Payments.FirstOrDefaultAsync(p => p.OrderId == id);
+
+            if (payment != null)
             {
-                OrderId = order.Id,
-                PaymentDate = DateTime.Now,
-                Amount = order.TotalAmount,
-                PaymentMethod = "Banking",
-                Status = "Chờ xác minh"
-            };
-            _context.Payments.Add(payment);
+                payment.Status = "Chờ xác minh";
+                payment.PaymentDate = DateTime.Now; // Cập nhật lại thời gian bấm xác nhận
+                _context.Update(payment);
+            }
+            else
+            {
+                // Trường hợp dự phòng (nếu lỡ database cũ chưa có payment)
+                var newPayment = new Payment
+                {
+                    OrderId = order.Id,
+                    PaymentDate = DateTime.Now,
+                    Amount = order.TotalAmount,
+                    PaymentMethod = "Banking",
+                    Status = "Chờ xác minh"
+                };
+                _context.Payments.Add(newPayment);
+            }
 
             await _context.SaveChangesAsync();
 
+            TempData["SuccessMessage"] = "Đã gửi xác nhận thanh toán. Vui lòng đợi Admin kiểm tra!";
             return RedirectToAction("Payment", new { id = id });
         }
 
-        // 9. ĐẶT HÀNG THÀNH CÔNG
         public IActionResult OrderSuccessful()
         {
             return View();

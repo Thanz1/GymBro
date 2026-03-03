@@ -1,20 +1,14 @@
 ﻿@model GymBro.Core.Order
 
 @{
-<<<<<<< HEAD
     ViewData["Title"] = "Cập nhật đơn hàng";
-    Layout = "~/Views/Shared/_LayoutAdmin.cshtml"; // Đảm bảo Layout này đúng tên file của bạn
-=======
-    ViewBag.Title = "Chỉnh sửa Đơn hàng";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
->>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
 }
 
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white py-3">
-<<<<<<< HEAD
                 <h4 class="mb-0 text-primary">
                     <i class="bi bi-pencil-square"></i> Cập nhật Đơn hàng #@Model.Id
                 </h4>
@@ -27,6 +21,7 @@
                     <input type="hidden" asp-for="Id" />
                     <input type="hidden" asp-for="UserId" />
 
+                    @* 1. KHÁCH HÀNG (Chỉ đọc) *@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Khách hàng</label>
                         <input type="text" class="form-control bg-light"
@@ -35,12 +30,13 @@
                         <small class="text-muted">Không thể thay đổi khách hàng của đơn đã đặt.</small>
                     </div>
 
+                    @* 2. NGÀY ĐẶT (Chỉ đọc) *@
                     <div class="mb-3">
                         <label asp-for="OrderDate" class="form-label fw-bold">Ngày đặt hàng</label>
                         <input asp-for="OrderDate" class="form-control" type="datetime-local" readonly />
-                        <span asp-validation-for="OrderDate" class="text-danger"></span>
                     </div>
 
+                    @* 3. TỔNG TIỀN (Chỉ đọc) *@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Tổng tiền</label>
                         <div class="input-group">
@@ -50,12 +46,14 @@
                         </div>
                     </div>
 
+                    @* 4. TRẠNG THÁI (Cho phép sửa) *@
                     <div class="mb-3">
                         <label asp-for="Status" class="form-label fw-bold">Trạng thái đơn hàng <span class="text-danger">*</span></label>
                         <select asp-for="Status" class="form-select" asp-items="ViewBag.Status"></select>
                         <span asp-validation-for="Status" class="text-danger"></span>
                     </div>
 
+                    @* NÚT BẤM *@
                     <div class="d-flex justify-content-end gap-2 mt-4">
                         <a asp-action="Index" class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i> Quay lại
@@ -65,64 +63,6 @@
                         </button>
                     </div>
                 </form>
-=======
-                <h4 class="mb-0 text-primary">Chỉnh sửa Đơn hàng</h4>
-            </div>
-            <div class="card-body">
-                @using (Html.BeginForm())
-                {
-                    @Html.AntiForgeryToken()
-
-                    <div class="form-horizontal">
-                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
-                        @* SỬA: OrderID -> Id *@
-                        @Html.HiddenFor(model => model.Id)
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Ngày đặt hàng</label>
-                            @Html.EditorFor(model => model.OrderDate, new { htmlAttributes = new { @class = "form-control", type = "datetime-local", @Value = Model.OrderDate.ToString("yyyy-MM-ddTHH:mm") } })
-                            @Html.ValidationMessageFor(model => model.OrderDate, "", new { @class = "text-danger" })
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Trạng thái <span class="text-danger">*</span></label>
-                            @if (ViewBag.StatusList != null)
-                            {
-                                @Html.DropDownListFor(model => model.Status, (SelectList)ViewBag.StatusList, new { @class = "form-control form-select" })
-                            }
-                            else
-                            {
-                                @Html.EditorFor(model => model.Status, new { htmlAttributes = new { @class = "form-control" } })
-                            }
-                            @Html.ValidationMessageFor(model => model.Status, "", new { @class = "text-danger" })
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Tổng tiền</label>
-                            <p class="form-control-plaintext text-danger fw-bold fs-5">
-                                @string.Format("{0:N0}", Model.TotalAmount) VNĐ
-                            </p>
-                            <div class="alert alert-info">
-                                <i class="bi bi-info-circle"></i>
-                                <strong>Lưu ý:</strong> Tổng tiền được tự động tính từ chi tiết đơn hàng.
-                                Để thay đổi tổng tiền, vui lòng chỉnh sửa chi tiết đơn hàng.
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Người dùng</label>
-                            @* SỬA: UserID -> UserId *@
-                            @Html.DropDownList("UserId", null, htmlAttributes: new { @class = "form-control form-select" })
-                            @Html.ValidationMessageFor(model => model.UserId, "", new { @class = "text-danger" })
-                        </div>
-
-                        <div class="d-flex gap-2 justify-content-end">
-                            <a href="@Url.Action("Index")" class="btn btn-secondary">Hủy</a>
-                            <input type="submit" value="Lưu thay đổi" class="btn btn-primary" />
-                        </div>
-                    </div>
-                }
->>>>>>> b440fc362f63b696b48ce18ea8836d734d9ba595
             </div>
         </div>
     </div>
