@@ -11,6 +11,42 @@ services:
       - "1433:1433"
     volumes:
       - sql_data:/var/opt/mssql
+    networks:
+      - gymbro_network
+
+  gymbro_api:
+    build:
+      context: .
+      dockerfile: GymBro.API/Dockerfile
+    container_name: gymbro_api
+    depends_on:
+      - db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=db;Database=GymBroDB;User Id=sa;Password=MatKhauSieuManh123!;TrustServerCertificate=True;MultipleActiveResultSets=true
+    ports:
+      - "5001:8080"
+    networks:
+      - gymbro_network
+
+  gymbro_web:
+    build:
+      context: .
+      dockerfile: GymBro.Web/Dockerfile
+    container_name: gymbro_web
+    depends_on:
+      - db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=db;Database=GymBroDB;User Id=sa;Password=MatKhauSieuManh123!;TrustServerCertificate=True;MultipleActiveResultSets=true
+    ports:
+      - "5000:8080"
+    networks:
+      - gymbro_network
+
+networks:
+  gymbro_network:
+    driver: bridge
 
 volumes:
   sql_data:

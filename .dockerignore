@@ -1,0 +1,12 @@
+**/.git
+**/.vs
+**/.vscode
+**/bin
+**/obj
+**/wwwroot/Content/Images/*
+!**/wwwroot/Content/Images/shopping.webp
+docker-compose*
+Dockerfile*
+.gitattributes
+.gitignore
+*.sln
