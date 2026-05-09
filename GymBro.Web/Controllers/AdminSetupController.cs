@@ -1,24 +1,23 @@
-﻿using GymBro.Core;
-using GymBro.Infrastructure;
+﻿using GymBro.Contracts; // Dùng duy nhất namespace này cho DTO
+using GymBro.Service;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace GymBro.Web.Controllers
 {
     public class AdminSetupController : Controller
     {
-        private readonly GymBroDbContext _context;
+        private readonly IIdentityService _identityService;
 
-        public AdminSetupController(GymBroDbContext context)
+        public AdminSetupController(IIdentityService identityService)
         {
-            _context = context;
+            _identityService = identityService;
         }
 
         [HttpGet]
         public async Task<IActionResult> CreateAdmin()
         {
-            // Kiểm tra bảo mật: Nếu đã có Admin rồi thì không cho tạo nữa -> Đá về trang đăng nhập
-            if (await _context.Users.AnyAsync(u => u.Role == "Admin"))
+            // Kiểm tra qua API xem hệ thống đã có Admin chưa
+            if (await _identityService.HasAdminAsync())
             {
                 return RedirectToAction("Login", "Account");
             }
@@ -27,44 +26,29 @@ namespace GymBro.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateAdmin(string username, string password, string fullName, string email, string confirmPassword)
+        public async Task<IActionResult> CreateAdmin(RegisterDto adminDto, string confirmPassword)
         {
-            // Kiểm tra lại lần nữa cho chắc
-            if (await _context.Users.AnyAsync(u => u.Role == "Admin"))
-            {
-                ViewBag.Message = "Hệ thống đã có Admin. Không thể tạo thêm.";
-                ViewBag.MessageType = "danger";
-                return View();
-            }
-
-            if (password != confirmPassword)
+            if (adminDto.Password != confirmPassword)
             {
                 ViewBag.Message = "Mật khẩu xác nhận không khớp.";
                 ViewBag.MessageType = "danger";
-                return View();
+                return View(adminDto);
             }
 
-            // Tạo User Admin
-            var admin = new User
+            // Đẩy trách nhiệm tạo Admin sang Identity.API (Port 7001)
+            var result = await _identityService.CreateAdminAsync(adminDto);
+
+            if (result)
             {
-                Username = username,
-                // Mã hóa mật khẩu
-                Password = BCrypt.Net.BCrypt.HashPassword(password),
-                FullName = fullName ?? "Administrator",
-                Email = email,
-                Role = "Admin", // Quan trọng nhất là dòng này
-                CreatedDate = DateTime.Now,
-                Address = "System Admin"
-            };
-
-            _context.Users.Add(admin);
-            await _context.SaveChangesAsync();
-
-            ViewBag.Message = "Tạo tài khoản Admin thành công! Bạn có thể đăng nhập ngay.";
-            ViewBag.MessageType = "success";
-
-            // Xóa form để tránh submit lại
-            ModelState.Clear();
+                ViewBag.Message = "Tạo tài khoản Admin thành công!";
+                ViewBag.MessageType = "success";
+                ModelState.Clear();
+            }
+            else
+            {
+                ViewBag.Message = "Hệ thống đã có Admin hoặc có lỗi xảy ra.";
+                ViewBag.MessageType = "danger";
+            }
 
             return View();
         }

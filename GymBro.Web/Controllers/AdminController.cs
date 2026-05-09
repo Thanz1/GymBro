@@ -1,46 +1,58 @@
-﻿using GymBro.Core;
-using GymBro.Infrastructure;
+﻿using GymBro.Contracts;
+using GymBro.Contracts;
+using GymBro.Service;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-
-
 
 namespace GymBro.Web.Controllers
 {
-    
     public class AdminController : BaseAdminController
     {
-        private readonly GymBroDbContext _context;
-        public AdminController(GymBroDbContext context) { _context = context; }
+        private readonly IOrderService _orderService;
+        private readonly IProductService _productService;
+        private readonly IIdentityService _identityService;
+
+        public AdminController(
+            IOrderService orderService,
+            IProductService productService,
+            IIdentityService identityService)
+        {
+            _orderService = orderService;
+            _productService = productService;
+            _identityService = identityService;
+        }
 
         public async Task<IActionResult> Dashboard()
         {
-            // 1. Tổng doanh thu (Sửa: TrangThai -> Status, TongTien -> TotalAmount)
-            ViewBag.TotalRevenue = await _context.Orders
+            // 1. Lấy dữ liệu tổng hợp từ các Service (API) thay vì DB
+            // Lưu ý: Bạn cần bổ sung các hàm này vào Service (Xem bước 2)
+
+            var allOrders = await _orderService.GetAllOrdersAsync();
+            var allProducts = await _productService.GetAllProductsAsync();
+            var allUsers = await _identityService.GetAllUsersAsync();
+
+            // 2. Tính toán số liệu trên Web dựa trên DTO nhận được
+            ViewBag.TotalRevenue = allOrders
                 .Where(o => o.Status != "Đã hủy")
-                .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
+                .Sum(o => o.TotalAmount);
 
-            // 2. Đếm số liệu (Sửa: SoLuongTon -> StockQuantity)
-            ViewBag.NewOrdersCount = await _context.Orders.CountAsync(o => o.Status == "Chờ xử lý");
-            ViewBag.TotalMembersCount = await _context.Users.CountAsync(u => u.Role != "Admin");
-            ViewBag.LowStockCount = await _context.Products.CountAsync(p => p.StockQuantity < 10);
+            ViewBag.NewOrdersCount = allOrders.Count(o => o.Status == "Chờ xử lý");
+            ViewBag.TotalMembersCount = allUsers.Count(u => u.Role != "Admin");
+            ViewBag.LowStockCount = allProducts.Count(p => p.StockQuantity < 10);
 
-            // 3. Đơn hàng gần đây (Sửa: NgayDat -> OrderDate)
-            ViewBag.RecentOrders = await _context.Orders
-                .Include(o => o.User)
+            // 3. Đơn hàng gần đây
+            ViewBag.RecentOrders = allOrders
                 .OrderByDescending(o => o.OrderDate)
                 .Take(5)
-                .ToListAsync();
+                .ToList();
 
-            // 4. Biểu đồ doanh thu 7 ngày qua
+            // 4. Xử lý biểu đồ 7 ngày qua
             var sevenDaysAgo = DateTime.Today.AddDays(-6);
-            var revenueData = await _context.Orders
+            var revenueData = allOrders
                 .Where(o => o.Status != "Đã hủy" && o.OrderDate >= sevenDaysAgo)
                 .GroupBy(o => o.OrderDate.Date)
                 .Select(g => new { Date = g.Key, Total = g.Sum(x => x.TotalAmount) })
-                .ToListAsync();
+                .ToList();
 
-            // Xử lý dữ liệu biểu đồ cho View
             ViewBag.ChartLabels = Enumerable.Range(0, 7)
                 .Select(i => sevenDaysAgo.AddDays(i).ToString("dd/MM"))
                 .ToArray();

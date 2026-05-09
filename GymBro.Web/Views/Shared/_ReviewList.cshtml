@@ -1,0 +1,36 @@
+﻿@using GymBro.Contracts
+@model IEnumerable<ReviewDto>
+
+<div class="card mt-4 shadow-sm border-0">
+    <div class="card-header bg-white pt-4 px-4">
+        <h4 class="fw-bold"><i class="bi bi-star-fill text-warning"></i> Đánh giá khách hàng (@(Model?.Count() ?? 0))</h4>
+    </div>
+    <div class="card-body px-4">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var review in Model)
+            {
+                <div class="review-item mb-4 pb-3 border-bottom">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <span class="fw-bold">@review.UserName</span>
+                            <br><small class="text-muted">@review.CreatedDate.ToString("dd/MM/yyyy HH:mm")</small>[cite: 54]
+                        </div>
+                        <div class="text-warning">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <i class="bi bi-star@(i <= review.Rating ? "-fill" : "")"></i>
+                                
+                                        }
+                        </div>
+                    </div>
+                    <p class="mt-2 text-secondary">@review.Comment</p>[cite: 54]
+                </div>
+            }
+        }
+        else
+        {
+            <p class="text-muted text-center py-3">Sản phẩm này chưa có đánh giá nào.</p>
+        }
+    </div>
+</div>

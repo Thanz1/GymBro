@@ -5,11 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-
+using Microsoft.AspNetCore.Identity;
 namespace GymBro.Core
 {
     [Table("Users")]
-    public class User
+    public class User : IdentityUser<int>
     {
         [Key]
         public int Id { get; set; }
@@ -43,5 +43,6 @@ namespace GymBro.Core
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
         public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
         public virtual ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
+
     }
 }

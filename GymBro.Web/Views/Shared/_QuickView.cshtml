@@ -1,37 +1,70 @@
-﻿@model GymBro.Core.Product
+﻿@using GymBro.Contracts
+@model ProductDto
 
-<div class="row g-4">
+<div class="row g-4 align-items-center">
+    @* Cột bên trái: Hình ảnh *@
     <div class="col-md-6 text-center">
-        @if (!string.IsNullOrEmpty(Model.ImageURL))
-        {
-            <img src="~/Content/Images/@Model.ImageURL" class="img-fluid rounded" style="max-height: 300px;" onerror="this.src='/Content/Images/no-image.png'" />
-        }
-        else
-        {
-            <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 300px;">
-                <i class="bi bi-image text-muted fs-1"></i>
-            </div>
-        }
-    </div>
-    <div class="col-md-6">
-        <h4 class="fw-bold">@Model.ProductName</h4>
-        <h3 class="text-primary fw-bold mb-3">@string.Format("{0:N0}", Model.Price) ₫</h3>
-        <p class="text-muted">
-            @(Model.Category != null ? Model.Category.CategoryName : "Chưa phân loại")
-        </p>
-        <p>
-            @if (Model.StockQuantity > 0)
+        <div class="quickview-img-container bg-light rounded p-3">
+            @if (!string.IsNullOrEmpty(Model.ImageURL))
             {
-                <span class="badge bg-success">Còn hàng</span>
+                <img src="~/Content/Images/@Model.ImageURL"
+                     class="img-fluid rounded shadow-sm"
+                     style="max-height: 350px; object-fit: contain;"
+                     alt="@Model.ProductName"
+                     onerror="this.src='/Content/Images/no-image.png'" />
             }
             else
             {
-
-                <span class="badge bg-danger">Hết hàng</span>
+                <div class="d-flex align-items-center justify-content-center bg-white rounded shadow-sm" style="height: 300px;">
+                    <i class="bi bi-image text-muted display-1"></i>
+                </div>
             }
-        </p>
+        </div>
+    </div>
+
+    @* Cột bên phải: Thông tin tóm tắt *@
+    <div class="col-md-6">
+        <h3 class="fw-bold text-dark mb-2">@Model.ProductName</h3>[cite: 53]
+
+        <div class="mb-3">
+            @* Dùng trực tiếp CategoryName từ DTO thay vì Model.Category.CategoryName[cite: 53] *@
+            <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">
+                <i class="bi bi-bookmark-fill me-1"></i> @(Model.CategoryName ?? "Thiết bị Gym")
+            </span>
+        </div>
+
+        <h2 class="text-primary fw-bold mb-4">
+            @Model.Price.ToString("N0") <span class="fs-6">₫</span>[cite: 53]
+        </h2>
+
+        <div class="mb-4">
+            <p class="text-muted small">
+                @if (Model.StockQuantity > 0)
+                {
+                    <span class="text-success fw-bold"><i class="bi bi-check-circle-fill"></i> Còn hàng: @Model.StockQuantity</span>
+                 
+                                }
+                else
+                {
+                    <span class="text-danger fw-bold"><i class="bi bi-x-circle-fill"></i> Hết hàng</span>
+                
+                                }
+            </p>
+        </div>
+
         <div class="d-grid gap-2">
-            <a href="@Url.Action("Details", "Home", new { id = Model.Id })" class="btn btn-primary">Xem chi tiết</a>
+            @* Nút chuyển hướng sang trang chi tiết đầy đủ *@
+            <a href="@Url.Action("Details", "Home", new { id = Model.Id })" class="btn btn-primary btn-lg shadow-sm">
+                <i class="bi bi-eye"></i> Xem chi tiết đầy đủ[cite: 53]
+            </a>
+
+            <form action="@Url.Action("AddToCart", "Cart")" method="post">
+                <input type="hidden" name="productId" value="@Model.Id" />
+                <input type="hidden" name="quantity" value="1" />
+                <button type="submit" class="btn btn-outline-danger btn-lg w-100 mt-2 @(Model.StockQuantity <= 0 ? "disabled" : "")">
+                    <i class="bi bi-cart-plus"></i> Thêm vào giỏ
+                </button>
+            </form>
         </div>
     </div>
 </div>

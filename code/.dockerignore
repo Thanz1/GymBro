@@ -1,0 +1,17 @@
+**/.git
+**/.vs
+**/.vscode
+**/.env
+**/.env.*
+!**/.env.example
+**/.artifacts
+**/bin
+**/obj
+**/TestResults
+**/wwwroot/Content/Images/*
+!**/wwwroot/Content/Images/shopping.webp
+docker-compose*
+Dockerfile*
+.gitattributes
+.gitignore
+*.sln

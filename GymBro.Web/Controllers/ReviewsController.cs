@@ -1,5 +1,5 @@
-﻿using GymBro.Core;
-using GymBro.Infrastructure;
+﻿using GymBro.Contracts;
+using GymBro.Service;
 using Microsoft.AspNetCore.Mvc;
 using GymBro.Web.Helpers;
 
@@ -7,44 +7,59 @@ namespace GymBro.Web.Controllers
 {
     public class ReviewsController : Controller
     {
-        private readonly GymBroDbContext _context;
+        private readonly IReviewService _reviewService;
 
-        public ReviewsController(GymBroDbContext context)
+        public ReviewsController(IReviewService reviewService)
         {
-            _context = context;
+            _reviewService = reviewService;
         }
 
-        public IActionResult GetByProduct(int productId)
+        // Lấy danh sách đánh giá theo sản phẩm (Dùng PartialView để load Ajax)
+        public async Task<IActionResult> GetByProduct(int productId)
         {
-            var reviews = _context.Reviews
-                .Where(r => r.ProductId == productId)
-                // SỬA: NgayTao -> CreatedDate
-                .OrderByDescending(r => r.CreatedDate)
-                .ToList();
+            var reviews = await _reviewService.GetReviewsByProductIdAsync(productId);
 
-            return PartialView("_ProductReviews", reviews);
+            // Sắp xếp giảm dần theo ngày tạo ngay tại đây
+            var sortedReviews = reviews.OrderByDescending(r => r.CreatedDate).ToList();
+
+            return PartialView("_ProductReviews", sortedReviews);
         }
 
+        // Thêm đánh giá mới
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Add(int productId, int rating, string comment)
         {
-            var user = HttpContext.Session.GetObject<User>("User");
-            if (user == null) return RedirectToAction("Login", "Account");
+            // Lấy UserDto từ Session (Đã thống nhất dùng UserDto ở các phần trước)
+            var user = HttpContext.Session.GetObject<UserDto>("User");
 
-            var review = new Review
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "Bạn cần đăng nhập để đánh giá.";
+                return RedirectToAction("Login", "Account");
+            }
+
+            var reviewDto = new ReviewDto
             {
                 ProductId = productId,
                 UserId = user.Id,
+                UserName = user.FullName, // Để hiển thị tên người đánh giá mà không cần Include User
                 Rating = rating,
                 Comment = comment,
-                // SỬA: NgayTao -> CreatedDate
                 CreatedDate = DateTime.Now
             };
 
-            _context.Reviews.Add(review);
-            await _context.SaveChangesAsync();
+            var success = await _reviewService.AddReviewAsync(reviewDto);
 
-            TempData["SuccessMessage"] = "Cảm ơn đánh giá của bạn!";
+            if (success)
+            {
+                TempData["SuccessMessage"] = "Cảm ơn đánh giá của bạn!";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Không thể gửi đánh giá lúc này.";
+            }
+
             return RedirectToAction("Details", "Home", new { id = productId });
         }
     }

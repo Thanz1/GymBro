@@ -1,4 +1,5 @@
-﻿@model GymBro.Core.Product
+﻿@using GymBro.Contracts
+@model CreateProductDto
 
 @{
     ViewBag.Title = "Thêm sản phẩm mới";
@@ -9,74 +10,50 @@
     <div class="col-md-10">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white py-3">
-                <h3 class="mb-0 text-success"><i class="bi bi-plus-circle"></i> Thêm sản phẩm mới</h3>
+                <h4 class="mb-0 text-success fw-bold"><i class="bi bi-plus-circle"></i> Thêm sản phẩm mới</h4>
             </div>
-            <div class="card-body">
-                @* Lưu ý: enctype="multipart/form-data" để upload ảnh *@
-                @using (Html.BeginForm("Create", "Products", FormMethod.Post, new { enctype = "multipart/form-data" }))
+            <div class="card-body p-4">
+                @using (Html.BeginForm("Create", "Products", FormMethod.Post, new { enctype = "multipart/form-data" })) 
                 {
-                    @Html.AntiForgeryToken()
-
-                    <div class="form-horizontal">
-                        @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
-
+                @Html.AntiForgeryToken()
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên sản phẩm *</label>
+                            @Html.EditorFor(model => model.ProductName, new { htmlAttributes = new { @class = "form-control" } })
+                            @Html.ValidationMessageFor(model => model.ProductName, "", new { @class = "text-danger small" })
+                        </div>
                         <div class="row">
-                            <div class="col-md-8">
-                                @* Tên sản phẩm *@
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Tên sản phẩm <span class="text-danger">*</span></label>
-                                    @Html.EditorFor(model => model.ProductName, new { htmlAttributes = new { @class = "form-control" } })
-                                    @Html.ValidationMessageFor(model => model.ProductName, "", new { @class = "text-danger" })
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label fw-bold">Giá bán (VNĐ) <span class="text-danger">*</span></label>
-                                        @Html.EditorFor(model => model.Price, new { htmlAttributes = new { @class = "form-control", type = "number", min = "0", step = "1000" } })
-                                        @Html.ValidationMessageFor(model => model.Price, "", new { @class = "text-danger" })
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label fw-bold">Số lượng tồn <span class="text-danger">*</span></label>
-                                        @Html.EditorFor(model => model.StockQuantity, new { htmlAttributes = new { @class = "form-control", type = "number", min = "0" } })
-                                        @Html.ValidationMessageFor(model => model.StockQuantity, "", new { @class = "text-danger" })
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Danh mục <span class="text-danger">*</span></label>
-                                    @* SỬA: CategoryID -> CategoryId *@
-                                    @Html.DropDownList("CategoryId", null, "--- Chọn danh mục ---", htmlAttributes: new { @class = "form-control form-select" })
-                                    @Html.ValidationMessageFor(model => model.CategoryId, "", new { @class = "text-danger" })
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Giá bán (₫) *</label>
+                                @Html.EditorFor(model => model.Price, new { htmlAttributes = new { @class = "form-control", type = "number" } })
                             </div>
-
-                            <div class="col-md-4">
-                                @* Upload Ảnh *@
-                                <div class="card">
-                                    <div class="card-header bg-light">Hình ảnh sản phẩm</div>
-                                    <div class="card-body text-center">
-                                        <img id="preview" src="~/Content/Images/no-image.png" class="img-fluid mb-3" style="max-height: 200px; object-fit: contain;" />
-
-                                        @* QUAN TRỌNG: name="imageFile" phải khớp với Controller *@
-                                        <input type="file" name="imageFile" class="form-control" onchange="previewImage(this)" accept="image/*" />
-                                        @Html.ValidationMessage("ImageURL", "", new { @class = "text-danger" })
-                                    </div>
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Số lượng kho *</label>
+                                @Html.EditorFor(model => model.StockQuantity, new { htmlAttributes = new { @class = "form-control", type = "number" } })
                             </div>
                         </div>
-
-                        @* Mô tả (CKEditor) *@
-                        <div class="mb-3 mt-3">
-                            <label class="form-label fw-bold">Mô tả chi tiết</label>
-                            @Html.TextAreaFor(model => model.Description, new { @class = "form-control", id = "Description" })
-                            @Html.ValidationMessageFor(model => model.Description, "", new { @class = "text-danger" })
-                        </div>
-
-                        <div class="d-flex justify-content-end gap-2 mt-4">
-                            <a href="@Url.Action("Index")" class="btn btn-secondary">Quay lại</a>
-                            <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Lưu sản phẩm</button>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Danh mục sản phẩm</label>
+                            @Html.DropDownList("CategoryId", null, "-- Chọn danh mục --", new { @class = "form-select border-primary" })
                         </div>
                     </div>
+                    <div class="col-md-4 text-center">
+                        <label class="form-label fw-bold">Hình ảnh đại diện</label>
+                        <div class="border rounded p-2 mb-2 bg-light">
+                            <img id="preview" src="~/Content/Images/no-image.png" class="img-fluid" style="max-height: 200px;" />
+                        </div>
+                        <input type="file" name="imageFile" class="form-control" onchange="previewImage(this)" accept="image/*" />
+                    </div>
+                    <div class="col-12 mt-3">
+                        <label class="form-label fw-bold">Mô tả chi tiết</label>
+                        @Html.TextAreaFor(model => model.Description, new { @class = "form-control", id = "Description" })
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-4 border-top pt-3">
+                    <button type="submit" class="btn btn-success px-4 fw-bold">LƯU SẢN PHẨM</button>
+                    <a href="@Url.Action("Index")" class="btn btn-secondary px-4">HỦY BỎ</a>
+                </div>
                 }
             </div>
         </div>
@@ -84,24 +61,15 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-    @* Script CKEditor (Giữ nguyên hoặc thay bằng link CDN nếu cần) *@
-    <script src="https://cdn.ckeditor.com/4.16.2/standard/ckeditor.js"></script>
+    <script src="https://cdn.ckeditor.com/4.16.2/standard/ckeditor.js"></script>[cite: 40]
     <script>
-        CKEDITOR.replace('Description');
-
+        CKEDITOR.replace('Description');[cite: 40]
         function previewImage(input) {
             var preview = document.getElementById('preview');
             if (input.files && input.files[0]) {
                 var reader = new FileReader();
-                reader.onload = function (e) {
-                    preview.src = e.target.result;
-                }
+                reader.onload = function (e) { preview.src = e.target.result; }
                 reader.readAsDataURL(input.files[0]);
-            } else {
-                preview.src = "/Content/Images/no-image.png";
             }
         }
     </script>

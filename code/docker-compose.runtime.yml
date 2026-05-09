@@ -1,0 +1,109 @@
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sql_server_gymbro
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: ${MSSQL_PID:-Developer}
+      MSSQL_SA_PASSWORD: ${GYMBRO_DB_PASSWORD:?Set GYMBRO_DB_PASSWORD before running docker compose}
+    ports:
+      - "127.0.0.1:${GYMBRO_DB_PORT:-1433}:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "pidof sqlservr >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - gymbro_network
+
+  gymbro_api:
+    image: gymbro/api:secure-multistage
+    container_name: gymbro_api
+    depends_on:
+      db:
+        condition: service_healthy
+      gymbro_migrator:
+        condition: service_completed_successfully
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ConnectionStrings__DefaultConnection: Server=db;Database=${GYMBRO_DB_NAME:-GymBroDB};User Id=sa;Password=${GYMBRO_DB_PASSWORD:?Set GYMBRO_DB_PASSWORD before running docker compose};TrustServerCertificate=True;MultipleActiveResultSets=true
+      Jwt__Key: ${GYMBRO_JWT_KEY:?Set GYMBRO_JWT_KEY before running docker compose}
+      Jwt__Issuer: ${GYMBRO_JWT_ISSUER:-GymBro}
+      Jwt__Audience: ${GYMBRO_JWT_AUDIENCE:-GymBroUser}
+    ports:
+      - "127.0.0.1:${GYMBRO_API_PORT:-5001}:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - gymbro_api_keys:/home/gymapi/.aspnet/DataProtection-Keys
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+    networks:
+      - gymbro_network
+
+  gymbro_web:
+    image: gymbro/web:secure-multistage
+    container_name: gymbro_web
+    depends_on:
+      db:
+        condition: service_healthy
+      gymbro_migrator:
+        condition: service_completed_successfully
+      gymbro_api:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ConnectionStrings__DefaultConnection: Server=db;Database=${GYMBRO_DB_NAME:-GymBroDB};User Id=sa;Password=${GYMBRO_DB_PASSWORD:?Set GYMBRO_DB_PASSWORD before running docker compose};TrustServerCertificate=True;MultipleActiveResultSets=true
+    ports:
+      - "127.0.0.1:${GYMBRO_WEB_PORT:-5000}:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - gymbro_product_images:/app/wwwroot/Content/Images
+      - gymbro_web_keys:/home/gymuser/.aspnet/DataProtection-Keys
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+    networks:
+      - gymbro_network
+
+  gymbro_migrator:
+    image: gymbro/migrator:secure-multistage
+    container_name: gymbro_migrator
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ConnectionStrings__DefaultConnection: Server=db;Database=${GYMBRO_DB_NAME:-GymBroDB};User Id=sa;Password=${GYMBRO_DB_PASSWORD:?Set GYMBRO_DB_PASSWORD before running docker compose};TrustServerCertificate=True;MultipleActiveResultSets=true
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: "no"
+    networks:
+      - gymbro_network
+
+networks:
+  gymbro_network:
+    driver: bridge
+
+volumes:
+  sql_data:
+  gymbro_api_keys:
+  gymbro_product_images:
+  gymbro_web_keys:

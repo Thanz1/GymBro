@@ -1,117 +1,35 @@
-﻿@model GymBro.Core.User
+@model GymBro.Contracts.UserDto
 
 @{
     ViewBag.Title = "Tài khoản của tôi";
-    var orderHistory = ViewBag.OrderHistory as IEnumerable<GymBro.Core.Order>;
 }
 
-<h2>Tài khoản của tôi</h2>
-<hr />
+<div class="container mt-4">
+    <h2 class="fw-bold">Hồ sơ cá nhân</h2>
+    <hr />
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success">
-        @TempData["SuccessMessage"]
-    </div>
-}
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+        }
 
-<div class="row">
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">Thông tin tài khoản</h4>
-            </div>
-            <div class="card-body">
-                <dl class="dl-horizontal">
-                    <dt><strong>Tên đăng nhập:</strong></dt>
-                    <dd>@Model.Username</dd>
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Thông tin chi tiết</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Tên đăng nhập:</strong> @Model.Username</p>
+                    <p><strong>Họ tên:</strong> @(Model.FullName ?? "Chưa cập nhật")</p>
+                    <p><strong>Email:</strong> @(Model.Email ?? "Chưa cập nhật")</p>
+                    <p><strong>Vai trò:</strong> <span class="badge bg-danger">@Model.Role</span></p>
 
-                    <dt><strong>Họ và tên:</strong></dt>
-                    <dd>@(string.IsNullOrEmpty(Model.FullName) ? "Chưa cập nhật" : Model.FullName)</dd>
-
-                    <dt><strong>Email:</strong></dt>
-                    <dd>@(string.IsNullOrEmpty(Model.Email) ? "Chưa cập nhật" : Model.Email)</dd>
-
-                    <dt><strong>Địa chỉ:</strong></dt>
-                    <dd>@(string.IsNullOrEmpty(Model.Address) ? "Chưa cập nhật" : Model.Address)</dd>
-
-                    <dt><strong>Vai trò:</strong></dt>
-                    <dd>
-                        @if (Model.Role == "Admin")
-                        {
-                            <span class="badge bg-danger">@Model.Role</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-info">@Model.Role</span>
-                        }
-                    </dd>
-                </dl>
-                <p>
-                    @* Lưu ý: Controller Users chưa có action Edit nên có thể nút này chưa chạy *@
-                    <a href="#" class="btn btn-primary btn-sm disabled">Sửa thông tin</a>
-                    @Html.ActionLink("Đổi mật khẩu", "ChangePassword", "Account", null, new { @class = "btn btn-warning btn-sm" })
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header bg-secondary text-white">
-                <h4 class="mb-0">Lịch sử đơn hàng</h4>
-            </div>
-            <div class="card-body">
-                @if (orderHistory == null || !orderHistory.Any())
-                {
-                    <div class="alert alert-info">
-                        Bạn chưa có đơn hàng nào.
-                        @Html.ActionLink("Mua sắm ngay", "Index", "Home")
+                    <div class="mt-4">
+                        @Html.ActionLink("Đổi mật khẩu", "ChangePassword", "Account", null, new { @class = "btn btn-warning w-100 mb-2" })
+                        @Html.ActionLink("Lịch sử đơn hàng", "Orders", "Account", null, new { @class = "btn btn-info w-100" })
                     </div>
-                }
-                else
-                {
-                    <table class="table table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Mã đơn</th>
-                                <th>Ngày đặt</th>
-                                <th>Tổng tiền</th>
-                                <th>Trạng thái</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in orderHistory.Take(5))
-                            {
-                                <tr>
-                                    <td>#@item.Id</td>
-                                    <td>@item.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
-                                    <td style="color: #d32f2f; font-weight: bold;">
-                                        @string.Format("{0:N0}", item.TotalAmount) VNĐ
-                                    </td>
-                                    <td>
-                                        @if (item.Status == "Chờ xử lý")
-                                        {
-                                            <span class="badge bg-warning text-dark">@item.Status</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-success">@item.Status</span>
-                                        }
-                                    </td>
-                                    <td>
-                                        @* Link tới Orders/Details *@
-                                        <a href="@Url.Action("Details", "Orders", new { id = item.Id })" class="btn btn-sm btn-outline-primary">Xem</a>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                    <p class="text-center mt-3">
-                        @Html.ActionLink("Xem tất cả đơn hàng", "OrderHistory", "Account", null, new { @class = "btn btn-outline-primary" })
-                    </p>
-                }
+                </div>
             </div>
         </div>
     </div>

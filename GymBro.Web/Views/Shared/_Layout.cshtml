@@ -1,172 +1,75 @@
 ﻿@using GymBro.Web.Helpers
-@using GymBro.Core
-@using Microsoft.EntityFrameworkCore
-@inject GymBro.Infrastructure.GymBroDbContext _context
+@using GymBro.Contracts
+
 
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewBag.Title - GYMBRO</title>
-
-    @* --- CSS --- *@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
-    <link href="~/css/site.css" rel="stylesheet" /> @* File CSS riêng của bạn *@
+    <link href="~/css/site.css" rel="stylesheet" />
 </head>
 <body>
-    @* --- LẤY THÔNG TIN ĐĂNG NHẬP VÀ GIỎ HÀNG --- *@
     @{
-        // Lấy thông tin user từ Session
-        var user = Context.Session.GetObject<User>("User");
-
-        // Lấy giỏ hàng từ Session (Dùng DTO hoặc List<CartItem>)
-        var cart = Context.Session.GetObject<List<GymBro.Web.DTOs.CartItemDto>>("Cart");
-        int totalItemsInCart = cart != null ? cart.Sum(item => item.Quantity) : 0;
-
-        // Active link
-        string currentController = ViewContext.RouteData.Values["controller"]?.ToString();
-        string currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+        // SỬA: Lấy UserDto từ Session
+        var user = Context.Session.GetObject<UserDto>("User");
+        var cart = Context.Session.GetObject<List<CartItemDto>>("Cart");
+        int totalItemsInCart = cart?.Sum(item => item.Quantity) ?? 0;
     }
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-danger py-3 navbar-custom-red">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-danger py-3">
         <div class="container">
-            <a class="navbar-brand fw-bold text-white navbar-brand-custom" href="@Url.Action("Index", "Home")">
-                <i class="bi bi-dumbbell"></i> GYMBRO
-            </a>
-
-            <form action="@Url.Action("Shop", "Home")" method="GET" class="d-flex flex-grow-1 mx-4 position-relative">
-                <div class="input-group search-container">
-                    <input type="search" name="keyword" class="form-control rounded-pill" placeholder="Tìm kiếm sản phẩm..." required>
-                    <button type="submit" class="input-group-text bg-white border-0 rounded-pill">
-                        <i class="bi bi-search"></i>
-                    </button>
-                </div>
+            <a class="navbar-brand fw-bold" href="@Url.Action("Index", "Home")"><i class="bi bi-dumbbell"></i> GYMBRO</a>
+            
+            <form action="@Url.Action("Shop", "Home")" method="GET" class="d-flex flex-grow-1 mx-4">
+                <input type="search" name="keyword" class="form-control rounded-pill" placeholder="Bạn muốn tìm gì?">
             </form>
 
             <ul class="navbar-nav d-flex align-items-center gap-3 flex-row">
-                @* --- USER MENU --- *@
                 @if (user != null)
                 {
-                    <li class="nav-item dropdown text-center text-white user-dropdown-item">
-                        <a class="nav-link dropdown-toggle text-white text-decoration-none" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person fs-4"></i><br />
-                            @(string.IsNullOrEmpty(user.FullName) ? user.Username : user.FullName)
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-white" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> @(user.FullName ?? user.Username)[cite: 49]
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <ul class="dropdown-menu dropdown-menu-end">
                             @if (user.Role == "Admin")
                             {
-                                <li><a class="dropdown-item text-primary fw-bold" href="@Url.Action("Index", "Products")"><i class="bi bi-speedometer2"></i> Trang Quản trị</a></li>
-                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-primary fw-bold" href="@Url.Action("Index", "Products")"><i class="bi bi-speedometer2"></i> Quản trị</a></li>
                             }
-                            <li><a class="dropdown-item" href="@Url.Action("MyAccount", "Account")"><i class="bi bi-person-circle"></i> Tài khoản của tôi</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("OrderHistory", "Account")"><i class="bi bi-receipt"></i> Lịch sử đơn hàng</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="@Url.Action("Logout", "Account")"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("MyAccount", "Account")">Tài khoản</a></li>
+                            <li><a class="dropdown-item text-danger" href="@Url.Action("Logout", "Account")">Đăng xuất</a></li>
                         </ul>
                     </li>
                 }
                 else
                 {
-                    <li class="nav-item text-center text-white user-dropdown-item">
-                        <a href="@Url.Action("Login", "Account")" class="text-white text-decoration-none">
-                            <i class="bi bi-person fs-4"></i><br />
-                            <span>Đăng nhập</span>
-                        </a>
-                    </li>
+                    <li class="nav-item"><a href="@Url.Action("Login", "Account")" class="text-white text-decoration-none">Đăng nhập</a></li>
                 }
-
-                @* --- CART --- *@
-                <li class="nav-item position-relative text-center text-white user-dropdown-item">
-                    <a href="@Url.Action("Index", "Cart")" class="text-white text-decoration-none">
+                <li class="nav-item">
+                    <a href="@Url.Action("Index", "Cart")" class="text-white position-relative">
                         <i class="bi bi-cart fs-4"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white cart-badge-count">
-                            @totalItemsInCart
-                        </span>
-                        <br />
-                        Giỏ hàng
+                        <span class="badge rounded-pill bg-white text-danger position-absolute top-0 start-100 translate-middle">@totalItemsInCart</span>
                     </a>
                 </li>
             </ul>
         </div>
     </nav>
 
-    @* --- MENU CẤP 2 --- *@
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-secondary-red bg-dark">
-        <div class="container">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarMenu">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0 fw-bold">
-                    <li class="nav-item">@Html.ActionLink("TRANG CHỦ", "Index", "Home", null, new { @class = "nav-link text-white" })</li>
-
-                    @* --- DROPDOWN SẢN PHẨM --- *@
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle text-white" href="@Url.Action("Shop", "Home")" id="navbarDropdownProduct" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            SẢN PHẨM
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item fw-bold" href="@Url.Action("Shop", "Home")">Tất cả sản phẩm</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            @* Lấy danh mục trực tiếp từ DB *@
-                            @{
-                                var categories = _context.Categories.ToList();
-                            }
-                            @await Html.PartialAsync("_CategoryMenu", categories)
-                        </ul>
-                    </li>
-                    <li class="nav-item">@Html.ActionLink("LIÊN HỆ", "Contact", "Home", null, new { @class = "nav-link text-white" })</li>
-                    <li class="nav-item">@Html.ActionLink("GIỚI THIỆU", "About", "Home", null, new { @class = "nav-link text-white" })</li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container body-content main-content-wrapper py-4" style="min-height: 60vh;">
-        @* Hiển thị thông báo *@
+    <div class="container py-4">
         @await Html.PartialAsync("_Messages")
-
         @RenderBody()
     </div>
 
     <footer class="bg-dark text-white py-4 mt-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4">
-                    <h5><i class="bi bi-info-circle"></i> Thông tin liên hệ</h5>
-                    <p><strong>GYMBRO STORE</strong></p>
-                    <p>77 Đường số 26A, Phường 10, Quận 6, TPHCM</p>
-                    <p>Email: storethietbi@gmail.com</p>
-                    <p>Hotline: 0902 662 298</p>
-                </div>
-                <div class="col-md-4">
-                    <h5><i class="bi bi-link"></i> Liên kết nhanh</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="@Url.Action("Index", "Home")" class="text-white-50 text-decoration-none">Trang chủ</a></li>
-                        <li><a href="@Url.Action("Shop", "Home")" class="text-white-50 text-decoration-none">Sản phẩm</a></li>
-                        <li><a href="@Url.Action("Contact", "Home")" class="text-white-50 text-decoration-none">Liên hệ</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-4">
-                    <h5><i class="bi bi-share"></i> Kết nối</h5>
-                    <div class="d-flex gap-2">
-                        <a href="#" class="btn btn-outline-light btn-sm"><i class="bi bi-facebook"></i></a>
-                        <a href="#" class="btn btn-outline-light btn-sm"><i class="bi bi-instagram"></i></a>
-                        <a href="#" class="btn btn-outline-light btn-sm"><i class="bi bi-youtube"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="text-center pt-3 border-top border-secondary mt-3">
-                <small>&copy; @DateTime.Now.Year - GYMBRO. Tất cả quyền được bảo lưu.</small>
-            </div>
+        <div class="text-center">
+            <small>&copy; @DateTime.Now.Year - GYMBRO - Sức mạnh từ sự kiên trì</small>
         </div>
     </footer>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

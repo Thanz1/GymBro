@@ -1,4 +1,5 @@
-﻿@model GymBro.Core.OrderDetail
+﻿@using GymBro.Contracts
+@model OrderDetailDto
 
 @{
     ViewBag.Title = "Chi tiết Đơn hàng";
@@ -8,55 +9,35 @@
 <div class="row justify-content-center">
     <div class="col-md-6">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3">
-                <h4 class="mb-0 text-info">Chi tiết Đơn hàng</h4>
+            <div class="card-header bg-white py-3 text-info fw-bold">
+                <h4 class="mb-0">Thông tin Chi tiết</h4>
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 <table class="table table-bordered">
                     <tr>
-                        <th class="bg-light" style="width: 35%;">Mã Đơn hàng</th>
-                        @* SỬA: OrderID -> OrderId *@
+                        <th class="bg-light w-40">Mã Đơn hàng</th>
                         <td>#@Model.OrderId</td>
                     </tr>
                     <tr>
                         <th class="bg-light">Sản phẩm</th>
-                        <td>@Html.DisplayFor(model => model.Product.ProductName)</td>
+                        <td>@Model.ProductName</td>
                     </tr>
                     <tr>
                         <th class="bg-light">Số lượng</th>
-                        <td>@Html.DisplayFor(model => model.Quantity)</td>
+                        <td>@Model.Quantity</td>
                     </tr>
                     <tr>
                         <th class="bg-light">Đơn giá</th>
-                        <td class="text-primary fw-bold">@string.Format("{0:N0}", Model.Price) VNĐ</td>
+                        <td class="text-primary fw-bold">@Model.UnitPrice.ToString("N0") ₫</td>
                     </tr>
                     <tr>
                         <th class="bg-light">Thành tiền</th>
-                        <td class="text-danger fw-bold">@string.Format("{0:N0}", Model.Quantity * Model.Price) VNĐ</td>
-                    </tr>
-                    <tr>
-                        <th class="bg-light">Trạng thái ĐH</th>
-                        <td>
-                            @if (Model.Order.Status == "Chờ xử lý")
-                            {
-                                <span class="badge bg-warning text-dark">@Model.Order.Status</span>
-                            }
-                            else if (Model.Order.Status == "Đã giao hàng")
-                            {
-                                <span class="badge bg-success">@Model.Order.Status</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-info">@Model.Order.Status</span>
-                            }
-                        </td>
+                        <td class="text-danger fw-bold">@Model.Total.ToString("N0") ₫</td>
                     </tr>
                 </table>
-
-                <div class="mt-3 d-flex gap-2">
-                    @* SỬA: OrderDetailID -> Id *@
-                    @Html.ActionLink("Chỉnh sửa", "Edit", new { id = Model.Id }, new { @class = "btn btn-primary" })
-                    @Html.ActionLink("Quay lại", "Index", null, new { @class = "btn btn-secondary" })
+                <div class="mt-4 d-flex gap-2">
+                    <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-primary"><i class="bi bi-pencil"></i> Chỉnh sửa</a>
+                    <a href="@Url.Action("Index")" class="btn btn-secondary">Quay lại</a>
                 </div>
             </div>
         </div>

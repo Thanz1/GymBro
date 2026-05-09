@@ -1,114 +1,96 @@
-﻿using GymBro.Core;
-using GymBro.Infrastructure;
+﻿using GymBro.Contracts;
+using GymBro.Service;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-// Bỏ using GymBro.Web.Helpers; nếu không dùng PasswordHelper nữa
 
 namespace GymBro.Web.Controllers
 {
     public class UsersController : BaseAdminController
     {
-        private readonly GymBroDbContext _context;
-        public UsersController(GymBroDbContext context) { _context = context; }
+        private readonly IUserService _userService;
 
-        public async Task<IActionResult> Index(string searchString)
+        public UsersController(IUserService userService)
         {
-            var query = _context.Users.AsQueryable();
-            if (!string.IsNullOrEmpty(searchString))
-            {
-                query = query.Where(u => u.Username.Contains(searchString) || u.Email.Contains(searchString));
-            }
-            return View(await query.OrderByDescending(u => u.Id).ToListAsync());
+            _userService = userService;
         }
 
+        // 1. Danh sách người dùng
+        public async Task<IActionResult> Index(string searchString)
+        {
+            var users = await _userService.GetAllUsersAsync(searchString);
+            ViewBag.SearchString = searchString;
+            return View(users);
+        }
+
+        // 2. Chi tiết
         public async Task<IActionResult> Details(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _userService.GetUserByIdAsync(id);
             return user == null ? NotFound() : View(user);
         }
 
-        // CREATE
+        // 3. Thêm mới (GET)
         public IActionResult Create() => View();
 
+        // 4. Thêm mới (POST)
         [HttpPost]
-        public async Task<IActionResult> Create(User user)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(UserDto userDto)
         {
             if (ModelState.IsValid)
             {
-                if (await _context.Users.AnyAsync(u => u.Username == user.Username))
-                {
-                    ModelState.AddModelError("Username", "Tên đăng nhập đã tồn tại");
-                    return View(user);
-                }
+                var result = await _userService.CreateUserAsync(userDto);
+                // SỬA: IsSuccess -> Success
+                if (result.Success) return RedirectToAction(nameof(Index));
 
-                // SỬA: Dùng BCrypt trực tiếp cho đồng bộ
-                user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
-
-                // SỬA: NgayTao -> CreatedDate
-                user.CreatedDate = DateTime.Now;
-
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                ModelState.AddModelError("", result.Message ?? "Lỗi khi tạo người dùng.");
             }
-            return View(user);
+            return View(userDto);
         }
 
-        // EDIT
+        // 5. Chỉnh sửa (GET)
         public async Task<IActionResult> Edit(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _userService.GetUserByIdAsync(id);
             return user == null ? NotFound() : View(user);
         }
 
+        // 6. Chỉnh sửa (POST)
         [HttpPost]
-        public async Task<IActionResult> Edit(int id, User user, string? NewPassword)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, UserDto userDto, string? NewPassword)
         {
-            if (id != user.Id) return NotFound();
+            if (id != userDto.Id) return NotFound();
 
-            var existingUser = await _context.Users.FindAsync(id);
-            if (existingUser == null) return NotFound();
-
-            // Cập nhật thông tin cơ bản
-            existingUser.FullName = user.FullName;
-            existingUser.Email = user.Email;
-            existingUser.Address = user.Address;
-            existingUser.Role = user.Role;
-
-            // Nếu có nhập mật khẩu mới thì mới đổi
-            if (!string.IsNullOrEmpty(NewPassword))
+            if (ModelState.IsValid)
             {
-                // SỬA: Dùng BCrypt
-                existingUser.Password = BCrypt.Net.BCrypt.HashPassword(NewPassword);
-            }
+                var success = await _userService.UpdateUserAsync(id, userDto, NewPassword);
+                if (success) return RedirectToAction(nameof(Index));
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+                ModelState.AddModelError("", "Cập nhật không thành công.");
+            }
+            return View(userDto);
         }
 
-        // DELETE
+        // 7. Xóa
         public async Task<IActionResult> Delete(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _userService.GetUserByIdAsync(id);
             return user == null ? NotFound() : View(user);
         }
 
         [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user != null)
+            var result = await _userService.DeleteUserAsync(id);
+            // SỬA: IsSuccess -> Success
+            if (result.Success)
             {
-                // Kiểm tra ràng buộc khóa ngoại (UserId đã sửa trong Order.cs)
-                if (await _context.Orders.AnyAsync(o => o.UserId == id))
-                {
-                    TempData["ErrorMessage"] = "Không thể xóa user này vì đã có đơn hàng!";
-                    return RedirectToAction(nameof(Index));
-                }
-
-                _context.Users.Remove(user);
-                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Xóa người dùng thành công.";
+                return RedirectToAction(nameof(Index));
             }
+
+            TempData["ErrorMessage"] = result.Message;
             return RedirectToAction(nameof(Index));
         }
     }

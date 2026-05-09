@@ -1,52 +1,27 @@
-﻿@model GymBro.Core.OrderDetail
+﻿@using GymBro.Contracts
+@model OrderDetailDto
 
 @{
-    ViewBag.Title = "Xóa Chi tiết Đơn hàng";
+    ViewBag.Title = "Xóa Chi tiết";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
 }
 
 <div class="row justify-content-center">
     <div class="col-md-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3">
-                <h4 class="mb-0 text-danger"><i class="bi bi-trash"></i> Xóa Chi tiết Đơn hàng</h4>
-            </div>
-            <div class="card-body">
-                <div class="alert alert-warning">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    <strong>Bạn có chắc chắn muốn xóa chi tiết đơn hàng này?</strong>
-                    <p class="mb-0 mt-2">Hành động này sẽ ảnh hưởng đến tổng tiền của đơn hàng gốc.</p>
+        <div class="card border-0 shadow-sm border-top border-danger border-4">
+            <div class="card-body p-4 text-center">
+                <i class="bi bi-exclamation-triangle display-4 text-danger mb-3"></i>
+                <h3 class="fw-bold">Xác nhận xóa chi tiết?</h3>
+                <p class="text-muted">Đang xóa <strong>@Model.ProductName</strong> (Số lượng: @Model.Quantity) khỏi đơn hàng <strong>#@Model.OrderId</strong>.</p>
+                <div class="alert alert-light border mb-4">
+                    Giá trị dòng này: <strong class="text-danger">@Model.Total.ToString("N0") ₫</strong>
                 </div>
-
-                <table class="table table-bordered mt-4">
-                    <tr>
-                        <th class="bg-light" style="width: 35%;">Mã Đơn hàng</th>
-                        @* SỬA: OrderID -> OrderId *@
-                        <td>#@Model.OrderId</td>
-                    </tr>
-                    <tr>
-                        <th class="bg-light">Sản phẩm</th>
-                        <td>@Html.DisplayFor(model => model.Product.ProductName)</td>
-                    </tr>
-                    <tr>
-                        <th class="bg-light">Số lượng</th>
-                        <td>@Html.DisplayFor(model => model.Quantity)</td>
-                    </tr>
-                    <tr>
-                        <th class="bg-light">Thành tiền</th>
-                        <td class="fw-bold">@string.Format("{0:N0}", Model.Quantity * Model.Price) VNĐ</td>
-                    </tr>
-                </table>
-
                 @using (Html.BeginForm())
                 {
                     @Html.AntiForgeryToken()
-
-                    <div class="d-flex justify-content-end gap-2 mt-4">
-                        @Html.ActionLink("Hủy", "Index", null, new { @class = "btn btn-secondary" })
-                        <button type="submit" class="btn btn-danger">
-                            <i class="bi bi-trash"></i> Xác nhận Xóa
-                        </button>
+                    <div class="d-flex justify-content-center gap-3">
+                        <button type="submit" class="btn btn-danger btn-lg px-4 shadow-sm">XÁC NHẬN XÓA</button>
+                        <a href="@Url.Action("Index")" class="btn btn-outline-secondary btn-lg px-4">HỦY BỎ</a>
                     </div>
                 }
             </div>

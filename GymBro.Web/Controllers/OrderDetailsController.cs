@@ -1,21 +1,27 @@
-﻿using GymBro.Core;
-using GymBro.Infrastructure;
+﻿using GymBro.Contracts;
+using GymBro.Service;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace GymBro.Web.Controllers
 {
     public class OrderDetailsController : BaseAdminController
     {
-        private readonly GymBroDbContext _context;
-        public OrderDetailsController(GymBroDbContext context) { _context = context; }
+        private readonly IOrderService _orderService;
+
+        public OrderDetailsController(IOrderService orderService)
+        {
+            _orderService = orderService;
+        }
 
         public async Task<IActionResult> Index(int orderId)
         {
-            var details = _context.OrderDetails
-                .Include(od => od.Product)
-                .Where(od => od.OrderId == orderId);
-            return View(await details.ToListAsync());
+            // Gọi API Order (Port 7003) để lấy chi tiết hóa đơn
+            var details = await _orderService.GetOrderDetailsByOrderIdAsync(orderId);
+
+            if (details == null) return NotFound();
+
+            ViewBag.OrderId = orderId;
+            return View(details);
         }
     }
 }

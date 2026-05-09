@@ -1,0 +1,48 @@
+@model GymBro.Core.Supplier
+
+@{
+    ViewBag.Title = "Chi tiết Nhà cung cấp";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h3 class="mb-0 text-info"><i class="bi bi-eye"></i> Chi tiết Nhà cung cấp</h3>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Tên nhà cung cấp</dt>
+                    <dd class="col-sm-8 fw-bold">@Model.SupplierName</dd>
+
+                    <dt class="col-sm-4">Số điện thoại</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Phone) ? "Chưa có" : Model.Phone)</dd>
+
+                    <dt class="col-sm-4">Email</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Email) ? "Chưa có" : Model.Email)</dd>
+
+                    <dt class="col-sm-4">Địa chỉ</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Address) ? "Chưa có" : Model.Address)</dd>
+
+                    <dt class="col-sm-4">Trạng thái</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.IsActive)
+                        {
+                            <span class="badge bg-success">Đang hoạt động</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Ngừng hoạt động</span>
+                        }
+                    </dd>
+                </dl>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-primary">Chỉnh sửa</a>
+                    <a href="@Url.Action("Index")" class="btn btn-secondary">Quay lại</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

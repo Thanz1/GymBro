@@ -1,0 +1,23 @@
+@{
+    ViewBag.Title = "Tao don hang";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h4 class="mb-0 text-primary"><i class="bi bi-lock"></i> Tao don hang thu cong da bi khoa</h4>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">
+                    Don hang moi chi duoc tao tu luong checkout de giu dung ton kho, thanh toan va audit.
+                </p>
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary">Quay lai danh sach</a>
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-primary">Ve trang chu admin</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

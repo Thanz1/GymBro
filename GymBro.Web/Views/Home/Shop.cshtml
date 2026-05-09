@@ -1,104 +1,51 @@
-﻿@model IEnumerable<GymBro.Core.Product>
+@using GymBro.Contracts
+@model IEnumerable<ProductDto>
+
 @{
     ViewBag.Title = "Cửa hàng";
-    var categories = ViewBag.Categories as List<GymBro.Core.Category>;
-    var activeCategoryId = ViewBag.CategoryId as int?;
-    var keyword = ViewBag.Keyword as string;
 }
 
-<div class="container py-5">
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")" class="text-decoration-none text-dark">Trang chủ</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Cửa hàng</li>
-        </ol>
-    </nav>
-
-    <div class="row g-4">
-        @* SIDEBAR BỘ LỌC *@
+<div class="container py-4">
+    <div class="row">
+        @* Sidebar lọc (Thành có thể mở rộng thêm các Category tại đây) *@
         <div class="col-lg-3">
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3">
-                    <h5 class="card-title m-0 fw-bold"><i class="bi bi-funnel"></i> Bộ lọc</h5>
-                </div>
-                <div class="card-body">
-                    <form action="@Url.Action("Shop", "Home")" method="GET">
-                        @if (!string.IsNullOrEmpty(keyword))
-                        {
-                            <input type="hidden" name="keyword" value="@keyword" />
-                        }
-
-                        @* Danh mục *@
-                        <div class="mb-4">
-                            <h6 class="fw-bold text-uppercase text-muted small mb-3">Danh mục</h6>
-                            <div class="list-group list-group-flush">
-                                <a href="@Url.Action("Shop", "Home", new { keyword })"
-                                   class="list-group-item list-group-item-action border-0 px-0 @(!activeCategoryId.HasValue ? "text-danger fw-bold" : "text-dark")">
-                                    <i class="bi bi-grid-fill me-2"></i> Tất cả
-                                </a>
-                                @if (categories != null)
-                                {
-                                    foreach (var cat in categories)
-                                    {
-                                        // SỬA: CategoryID -> Id
-                                        <a href="@Url.Action("Shop", "Home", new { categoryId = cat.Id, keyword })"
-                                           class="list-group-item list-group-item-action border-0 px-0 @(activeCategoryId == cat.Id ? "text-danger fw-bold" : "text-dark")">
-                                            <i class="bi bi-chevron-right small me-2"></i> @cat.CategoryName
-                                        </a>
-                                    }
-                                }
-                            </div>
-                        </div>
-                    </form>
+            <div class="card border-0 shadow-sm p-3 mb-4">
+                <h5 class="fw-bold mb-3"><i class="bi bi-funnel"></i> Bộ lọc</h5>
+                <div class="list-group list-group-flush">
+                    <a href="@Url.Action("Shop")" class="list-group-item list-group-item-action border-0 px-0">Tất cả sản phẩm</a>
                 </div>
             </div>
         </div>
 
-        @* DANH SÁCH SẢN PHẨM *@
+        @* Danh sách sản phẩm *@
         <div class="col-lg-9">
-            @if (!Model.Any())
-            {
-                <div class="text-center py-5">
-                    <i class="bi bi-search display-1 text-muted mb-3"></i>
-                    <h4>Không tìm thấy sản phẩm nào</h4>
-                    <a href="@Url.Action("Shop", "Home")" class="btn btn-outline-primary rounded-pill mt-3">Xem tất cả</a>
-                </div>
-            }
-            else
-            {
-                <div class="row g-4">
-                    @foreach (var item in Model)
+            <div class="row g-4">
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
                     {
                         <div class="col-md-4 col-sm-6">
-                            <div class="card h-100 product-card border-0 shadow-sm">
-                                <div class="position-relative overflow-hidden bg-light rounded-top" style="height: 220px;">
-                                    @* SỬA: ProductID -> Id *@
-                                    <a href="@Url.Action("Details", "Home", new { id = item.Id })">
-                                        @if (!string.IsNullOrEmpty(item.ImageURL))
-                                        {
-                                            <img src="~/Content/Images/@item.ImageURL" alt="@item.ProductName" class="w-100 h-100 object-fit-cover" onerror="this.src='/Content/Images/no-image.png'" />
-                                        }
-                                        else
-                                        {
-                                            <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted"><i class="bi bi-image fs-1"></i></div>
-                                        }
-                                    </a>
-                                </div>
-                                <div class="card-body d-flex flex-column p-3">
-                                    <h6 class="card-title mb-2 text-truncate">
-                                        <a href="@Url.Action("Details", "Home", new { id = item.Id })" class="text-decoration-none text-dark fw-bold">@item.ProductName</a>
-                                    </h6>
-                                    <div class="mt-auto d-flex justify-content-between align-items-end">
-                                        <span class="text-primary fw-bold fs-5">@item.Price.ToString("N0") ₫</span>
-                                        @* SỬA: ProductID -> Id *@
-                                        <a href="@Url.Action("Details", "Home", new { id = item.Id })" class="btn btn-outline-primary btn-sm rounded-circle"><i class="bi bi-cart-plus"></i></a>
-                                    </div>
+                            <div class="card h-100 border-0 shadow-sm product-card">
+                                <a href="@Url.Action("Details", "Home", new { id = item.Id })">
+                                    <img src="~/Content/Images/@item.ImageURL" class="card-img-top p-2" style="height: 200px; object-fit: contain;" onerror="this.src='/Content/Images/no-image.png'" />
+                                </a>
+                                <div class="card-body">
+                                    <h6 class="fw-bold text-dark text-truncate">@item.ProductName</h6>
+                                    <p class="text-danger fw-bold mb-0">@item.Price.ToString("N0") ₫</p>
+                                    <a href="@Url.Action("Details", "Home", new { id = item.Id })" class="btn btn-primary btn-sm w-100 mt-3">Xem chi tiết</a>
                                 </div>
                             </div>
                         </div>
                     }
-                </div>
-            }
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <i class="bi bi-search display-1 text-muted"></i>
+                        <p class="mt-3 fs-5">Không tìm thấy sản phẩm nào.</p>
+                    </div>
+                }
+            </div>
         </div>
     </div>
 </div>

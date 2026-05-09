@@ -1,0 +1,275 @@
+@model GymBro.Web.Controllers.ShopViewModel
+
+@{
+    ViewBag.Title = "Cửa hàng";
+    var filters = Model.Filters ?? new GymBro.Web.Controllers.ShopFilterViewModel();
+    var categories = Model.Categories ?? new List<GymBro.Core.Category>();
+    var pagination = Model.Pagination ?? new GymBro.Web.Controllers.PaginationViewModel();
+    var activeCategoryId = filters.CategoryId;
+    var currentCategory = activeCategoryId.HasValue
+        ? categories.FirstOrDefault(category => category.Id == activeCategoryId.Value)
+        : null;
+    var defaultSortUrl = Url.Action("Shop", "Home", new
+    {
+        categoryId = activeCategoryId,
+        keyword = filters.Keyword,
+        minPrice = filters.MinPrice,
+        maxPrice = filters.MaxPrice,
+        availability = filters.Availability,
+        sortOrder = "default"
+    });
+    var priceAscUrl = Url.Action("Shop", "Home", new
+    {
+        categoryId = activeCategoryId,
+        keyword = filters.Keyword,
+        minPrice = filters.MinPrice,
+        maxPrice = filters.MaxPrice,
+        availability = filters.Availability,
+        sortOrder = "price_asc"
+    });
+    var priceDescUrl = Url.Action("Shop", "Home", new
+    {
+        categoryId = activeCategoryId,
+        keyword = filters.Keyword,
+        minPrice = filters.MinPrice,
+        maxPrice = filters.MaxPrice,
+        availability = filters.Availability,
+        sortOrder = "price_desc"
+    });
+    var nameAscUrl = Url.Action("Shop", "Home", new
+    {
+        categoryId = activeCategoryId,
+        keyword = filters.Keyword,
+        minPrice = filters.MinPrice,
+        maxPrice = filters.MaxPrice,
+        availability = filters.Availability,
+        sortOrder = "name_asc"
+    });
+    var nameDescUrl = Url.Action("Shop", "Home", new
+    {
+        categoryId = activeCategoryId,
+        keyword = filters.Keyword,
+        minPrice = filters.MinPrice,
+        maxPrice = filters.MaxPrice,
+        availability = filters.Availability,
+        sortOrder = "name_desc"
+    });
+}
+
+<div class="container py-5 shop-page">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")" class="text-decoration-none text-dark">Trang chủ</a></li>
+            @if (currentCategory != null)
+            {
+                <li class="breadcrumb-item"><a href="@Url.Action("Shop", "Home")" class="text-decoration-none text-dark">Cửa hàng</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@currentCategory.CategoryName</li>
+            }
+            else
+            {
+                <li class="breadcrumb-item active" aria-current="page">Cửa hàng</li>
+            }
+        </ol>
+    </nav>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 overflow-hidden shadow-sm rounded-4 position-relative shop-top-banner">
+                <div class="banner-image-wrapper-top">
+                    <img src="@Url.Content("~/Content/Images/shopping.webp")"
+                         class="w-100 h-100 object-fit-cover banner-img"
+                         alt="Banner cửa hàng"
+                         onerror="this.onerror=null; this.src='https://via.placeholder.com/1600x600?text=GYMBRO+Shop';" />
+                </div>
+                <div class="card-img-overlay d-flex flex-column justify-content-end p-3 p-sm-4">
+                    <div class="banner-content p-3 p-sm-4 rounded-3 text-white d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
+                        <div class="text-start">
+                            <span class="badge bg-danger bg-gradient mb-2 shadow-sm text-uppercase fw-bold">Hot Deal</span>
+                            <h4 class="fw-bold mb-1">Phụ kiện gym và thực phẩm bổ sung</h4>
+                            <p class="small mb-0 opacity-90">Tìm nhanh sản phẩm theo danh mục, giá, tồn kho và xem nhanh ngay trên danh sách.</p>
+                        </div>
+                        <div class="text-sm-end w-100 w-sm-auto">
+                            <a href="#product-list" class="btn btn-light rounded-pill fw-bold shadow-sm px-4">
+                                Mua ngay <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>@Model.ErrorMessage
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title m-0 fw-bold"><i class="bi bi-funnel"></i> Bộ lọc</h5>
+                </div>
+                <div class="card-body">
+                    <form action="@Url.Action("Shop", "Home")" method="get" id="filterForm">
+                        @if (!string.IsNullOrWhiteSpace(filters.Keyword))
+                        {
+                            <input type="hidden" name="keyword" value="@filters.Keyword" />
+                        }
+                        @if (!string.IsNullOrWhiteSpace(filters.SortOrder))
+                        {
+                            <input type="hidden" name="sortOrder" value="@filters.SortOrder" />
+                        }
+
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-uppercase text-muted small mb-3">Danh mục</h6>
+                            <div class="list-group list-group-flush">
+                                <a href="@Url.Action("Shop", "Home", new { keyword = filters.Keyword, minPrice = filters.MinPrice, maxPrice = filters.MaxPrice, sortOrder = filters.SortOrder, availability = filters.Availability })"
+                                   class="list-group-item list-group-item-action border-0 px-0 @(!activeCategoryId.HasValue ? "text-danger fw-bold" : "text-dark")">
+                                    <i class="bi bi-grid-fill me-2"></i> Tất cả sản phẩm
+                                </a>
+                                @foreach (var category in categories)
+                                {
+                                    <a href="@Url.Action("Shop", "Home", new { categoryId = category.Id, keyword = filters.Keyword, minPrice = filters.MinPrice, maxPrice = filters.MaxPrice, sortOrder = filters.SortOrder, availability = filters.Availability })"
+                                       class="list-group-item list-group-item-action border-0 px-0 @(activeCategoryId == category.Id ? "text-danger fw-bold" : "text-dark")">
+                                        <i class="bi bi-chevron-right small me-2"></i> @category.CategoryName
+                                    </a>
+                                }
+                            </div>
+
+                            @if (activeCategoryId.HasValue)
+                            {
+                                <input type="hidden" name="categoryId" value="@activeCategoryId" />
+                            }
+                        </div>
+
+                        <hr class="text-muted opacity-25" />
+
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-uppercase text-muted small mb-3">Khoảng giá</h6>
+                            <div class="mb-2">
+                                <label class="form-label small text-muted">Từ (VND)</label>
+                                <input type="number"
+                                       name="minPrice"
+                                       class="form-control form-control-sm"
+                                       value="@(filters.MinPrice.HasValue ? filters.MinPrice.Value.ToString("0") : string.Empty)"
+                                       placeholder="0"
+                                       min="0" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Đến (VND)</label>
+                                <input type="number"
+                                       name="maxPrice"
+                                       class="form-control form-control-sm"
+                                       value="@(filters.MaxPrice.HasValue ? filters.MaxPrice.Value.ToString("0") : string.Empty)"
+                                       placeholder="10000000"
+                                       min="0" />
+                            </div>
+                            <button type="submit" class="btn btn-dark w-100 btn-sm rounded-pill">Áp dụng</button>
+                        </div>
+
+                        <hr class="text-muted opacity-25" />
+
+                        <div class="mb-0">
+                            <h6 class="fw-bold text-uppercase text-muted small mb-3">Tình trạng</h6>
+                            <div class="list-group list-group-flush">
+                                <a href="@Url.Action("Shop", "Home", new { keyword = filters.Keyword, categoryId = filters.CategoryId, minPrice = filters.MinPrice, maxPrice = filters.MaxPrice, sortOrder = filters.SortOrder, availability = "in_stock" })"
+                                   class="list-group-item list-group-item-action border-0 px-0 @(filters.Availability == "in_stock" ? "text-danger fw-bold" : "text-dark")">
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i> Còn hàng
+                                </a>
+                                <a href="@Url.Action("Shop", "Home", new { keyword = filters.Keyword, categoryId = filters.CategoryId, minPrice = filters.MinPrice, maxPrice = filters.MaxPrice, sortOrder = filters.SortOrder, availability = "out_of_stock" })"
+                                   class="list-group-item list-group-item-action border-0 px-0 @(filters.Availability == "out_of_stock" ? "text-danger fw-bold" : "text-dark")">
+                                    <i class="bi bi-x-circle-fill text-danger me-2"></i> Hết hàng
+                                </a>
+                                <a href="@Url.Action("Shop", "Home", new { keyword = filters.Keyword, categoryId = filters.CategoryId, minPrice = filters.MinPrice, maxPrice = filters.MaxPrice, sortOrder = filters.SortOrder, availability = "low_stock" })"
+                                   class="list-group-item list-group-item-action border-0 px-0 @(filters.Availability == "low_stock" ? "text-danger fw-bold" : "text-dark")">
+                                    <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Sắp hết hàng
+                                </a>
+                                <a href="@Url.Action("Shop", "Home", new { keyword = filters.Keyword, categoryId = filters.CategoryId, minPrice = filters.MinPrice, maxPrice = filters.MaxPrice, sortOrder = filters.SortOrder })"
+                                   class="list-group-item list-group-item-action border-0 px-0 @(string.IsNullOrWhiteSpace(filters.Availability) ? "text-danger fw-bold" : "text-dark")">
+                                    <i class="bi bi-grid-fill me-2"></i> Tất cả
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9" id="product-list">
+            <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm gap-3 flex-wrap">
+                <div class="text-muted small">
+                    Hiển thị <strong>@pagination.TotalItems</strong> sản phẩm
+                    @if (!string.IsNullOrWhiteSpace(filters.Keyword))
+                    {
+                        <span> cho từ khóa "<strong>@filters.Keyword</strong>"</span>
+                    }
+                </div>
+                <div class="d-flex align-items-center">
+                    <label class="me-2 small text-muted d-none d-sm-block">Sắp xếp:</label>
+                    <select class="form-select form-select-sm border-0 bg-light sort-select" onchange="location = this.value;">
+                        <option value="@defaultSortUrl" selected="@(string.IsNullOrWhiteSpace(filters.SortOrder) || filters.SortOrder == "default" ? "selected" : null)">Mặc định (Mới nhất)</option>
+                        <option value="@priceAscUrl" selected="@(filters.SortOrder == "price_asc" ? "selected" : null)">Giá: Thấp đến cao</option>
+                        <option value="@priceDescUrl" selected="@(filters.SortOrder == "price_desc" ? "selected" : null)">Giá: Cao đến thấp</option>
+                        <option value="@nameAscUrl" selected="@(filters.SortOrder == "name_asc" ? "selected" : null)">Tên: A-Z</option>
+                        <option value="@nameDescUrl" selected="@(filters.SortOrder == "name_desc" ? "selected" : null)">Tên: Z-A</option>
+                    </select>
+                </div>
+            </div>
+
+            @if (Model.Products.Count == 0)
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-search display-1 text-muted mb-3"></i>
+                    <h4>Không tìm thấy sản phẩm nào</h4>
+                    <p class="text-muted">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm của bạn.</p>
+                    <a href="@Url.Action("Shop", "Home")" class="btn btn-outline-primary rounded-pill mt-3">Xem tất cả sản phẩm</a>
+                </div>
+            }
+            else
+            {
+                <div class="row g-4">
+                    @foreach (var item in Model.Products)
+                    {
+                        <div class="col-md-4 col-sm-6">
+                            @await Html.PartialAsync("_ProductCard", item)
+                        </div>
+                    }
+                </div>
+
+                @if (pagination.TotalPages > 1)
+                {
+                    <div class="d-flex justify-content-center mt-5">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination pagination-circle justify-content-center">
+                                <li class="page-item @(pagination.PageNumber <= 1 ? "disabled" : null)">
+                                    <a class="page-link border-0 shadow-sm mx-1 rounded-circle d-flex align-items-center justify-content-center pagination-link"
+                                       href="@Url.Action("Shop", new { page = pagination.PageNumber - 1, keyword = filters.Keyword, categoryId = activeCategoryId, minPrice = filters.MinPrice, maxPrice = filters.MaxPrice, availability = filters.Availability, sortOrder = filters.SortOrder })">
+                                        <i class="bi bi-chevron-left small"></i>
+                                    </a>
+                                </li>
+
+                                @for (var i = 1; i <= pagination.TotalPages; i++)
+                                {
+                                    <li class="page-item @(pagination.PageNumber == i ? "active" : null)">
+                                        <a class="page-link border-0 shadow-sm mx-1 rounded-circle d-flex align-items-center justify-content-center pagination-link @(pagination.PageNumber == i ? "bg-primary text-white" : "text-dark")"
+                                           href="@Url.Action("Shop", new { page = i, keyword = filters.Keyword, categoryId = activeCategoryId, minPrice = filters.MinPrice, maxPrice = filters.MaxPrice, availability = filters.Availability, sortOrder = filters.SortOrder })">@i</a>
+                                    </li>
+                                }
+
+                                <li class="page-item @(pagination.PageNumber >= pagination.TotalPages ? "disabled" : null)">
+                                    <a class="page-link border-0 shadow-sm mx-1 rounded-circle d-flex align-items-center justify-content-center pagination-link"
+                                       href="@Url.Action("Shop", new { page = pagination.PageNumber + 1, keyword = filters.Keyword, categoryId = activeCategoryId, minPrice = filters.MinPrice, maxPrice = filters.MaxPrice, availability = filters.Availability, sortOrder = filters.SortOrder })">
+                                        <i class="bi bi-chevron-right small"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>

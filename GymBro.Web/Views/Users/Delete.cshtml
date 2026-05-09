@@ -1,4 +1,5 @@
-﻿@model GymBro.Core.User
+﻿@using GymBro.Contracts
+@model UserDto
 
 @{
     ViewBag.Title = "Xóa Người dùng";
@@ -7,37 +8,52 @@
 
 <div class="row justify-content-center">
     <div class="col-md-6">
-        <div class="card border-0 shadow-sm mt-4">
-            <div class="card-header bg-danger text-white py-3">
-                <h4 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Xác nhận xóa</h4>
+        <div class="card border-0 shadow-sm mt-4 border-top border-danger border-4">
+            <div class="card-header bg-white py-3">
+                <h4 class="mb-0 text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> Xác nhận xóa tài khoản</h4>
             </div>
-            <div class="card-body">
-                <div class="alert alert-warning border-warning">
-                    <strong>Cảnh báo:</strong> Bạn có chắc chắn muốn xóa tài khoản này? Hành động này không thể hoàn tác.
+            <div class="card-body text-center p-4">
+                <div class="alert alert-warning border-warning shadow-sm mb-4">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    <strong>Cảnh báo:</strong> Hành động này sẽ xóa vĩnh viễn tài khoản và không thể hoàn tác[cite: 45].
                 </div>
 
-                <div class="mb-4 text-center">
-                    <div class="avatar bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                        <i class="bi bi-person-x text-danger" style="font-size: 40px;"></i>
+                <div class="mb-4">
+                    <div class="avatar bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-sm" style="width: 100px; height: 100px;">
+                        <i class="bi bi-person-x-fill text-danger" style="font-size: 50px;"></i>
                     </div>
-                    <h5 class="mb-1">@Model.Username</h5>
+                    <h3 class="fw-bold mb-1">@Model.Username</h3>
                     <p class="text-muted">@Model.Email</p>
                 </div>
 
-                <dl class="row mb-4 px-3">
-                    <dt class="col-sm-4 text-end">Họ tên:</dt>
-                    <dd class="col-sm-8">@(string.IsNullOrEmpty(Model.FullName) ? "---" : Model.FullName)</dd>
-
-                    <dt class="col-sm-4 text-end">Vai trò:</dt>
-                    <dd class="col-sm-8">@Model.Role</dd>
-                </dl>
+                <div class="bg-light rounded p-3 mb-4 text-start">
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted small text-uppercase">Họ và tên:</div>
+                        <div class="col-7 fw-bold">@(string.IsNullOrEmpty(Model.FullName) ? "Chưa cập nhật" : Model.FullName)[cite: 45]</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 text-muted small text-uppercase">Vai trò hiện tại:</div>
+                        <div class="col-7">
+                            <span class="badge @(Model.Role == "Admin" ? "bg-danger" : "bg-info text-dark")">
+                                @(Model.Role == "Admin" ? "Quản trị viên" : "Người dùng")[cite: 45]
+                            </span>
+                        </div>
+                    </div>
+                </div>
 
                 @using (Html.BeginForm())
                 {
                     @Html.AntiForgeryToken()
-                    <div class="d-flex justify-content-center gap-3">
-                        <a href="@Url.Action("Index")" class="btn btn-secondary">Hủy bỏ</a>
-                        <button type="submit" class="btn btn-danger">Xác nhận Xóa</button>
+                    @* Quan trọng: Giữ Id để Controller biết cần xóa ai *@
+                    @Html.HiddenFor(model => model.Id)
+
+                    <div class="d-flex justify-content-center gap-3 mt-2">
+                        <button type="submit" class="btn btn-danger btn-lg px-5 shadow-sm fw-bold">
+                            XÁC NHẬN XÓA
+                        </button>
+                        <a href="@Url.Action("Index")" class="btn btn-outline-secondary btn-lg px-4">
+                            HỦY BỎ
+                        </a>[cite: 45]
                     </div>
                 }
             </div>

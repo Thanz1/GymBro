@@ -1,75 +1,39 @@
-﻿@model GymBro.Core.Order
+﻿@using GymBro.Contracts
+@model OrderDto
 
 @{
-    ViewData["Title"] = "Cập nhật đơn hàng";
+    ViewBag.Title = "Cập nhật Đơn hàng #" + Model.Id;
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
 }
 
 <div class="row justify-content-center">
-    <div class="col-md-8">
+    <div class="col-md-6">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white py-3">
-                <h4 class="mb-0 text-primary">
-                    <i class="bi bi-pencil-square"></i> Cập nhật Đơn hàng #@Model.Id
-                </h4>
+                <h4 class="mb-0 text-primary fw-bold"><i class="bi bi-pencil-square"></i> Cập nhật trạng thái đơn hàng</h4>
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 <form asp-action="Edit" method="post">
-                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-                    @* Giữ ID của đơn hàng và UserId để không bị mất khi submit *@
                     <input type="hidden" asp-for="Id" />
                     <input type="hidden" asp-for="UserId" />
 
-                    @* 1. KHÁCH HÀNG (Chỉ đọc) *@
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Khách hàng</label>
-                        <input type="text" class="form-control bg-light"
-                               value="@(Model.User != null ? Model.User.FullName : "ID: " + Model.UserId)"
-                               readonly />
-                        <small class="text-muted">Không thể thay đổi khách hàng của đơn đã đặt.</small>
+                        <label class="form-label text-muted">Khách hàng:</label>
+                        <div class="form-control bg-light fw-bold">@Model.CustomerName</div>
                     </div>
 
-                    @* 2. NGÀY ĐẶT (Chỉ đọc) *@
                     <div class="mb-3">
-                        <label asp-for="OrderDate" class="form-label fw-bold">Ngày đặt hàng</label>
-                        <input asp-for="OrderDate" class="form-control" type="datetime-local" readonly />
-                    </div>
-
-                    @* 3. TỔNG TIỀN (Chỉ đọc) *@
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Tổng tiền</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control fw-bold text-danger"
-                                   value="@Model.TotalAmount.ToString("N0")" readonly />
-                            <span class="input-group-text">VNĐ</span>
-                        </div>
-                    </div>
-
-                    @* 4. TRẠNG THÁI (Cho phép sửa) *@
-                    <div class="mb-3">
-                        <label asp-for="Status" class="form-label fw-bold">Trạng thái đơn hàng <span class="text-danger">*</span></label>
-                        <select asp-for="Status" class="form-select" asp-items="ViewBag.Status"></select>
+                        <label asp-for="Status" class="form-label fw-bold">Trạng thái mới <span class="text-danger">*</span></label>
+                        <select asp-for="Status" class="form-select shadow-sm border-primary" asp-items="ViewBag.Status"></select>
                         <span asp-validation-for="Status" class="text-danger"></span>
                     </div>
 
-                    @* NÚT BẤM *@
                     <div class="d-flex justify-content-end gap-2 mt-4">
-                        <a asp-action="Index" class="btn btn-secondary">
-                            <i class="bi bi-arrow-left"></i> Quay lại
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-save"></i> Lưu thay đổi
-                        </button>
+                        <a asp-action="Index" class="btn btn-secondary px-4">Quay lại</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">LƯU THAY ĐỔI</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
-
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-}

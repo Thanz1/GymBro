@@ -1,22 +1,28 @@
-﻿using GymBro.Core;
-using GymBro.Infrastructure;
+﻿using GymBro.Contracts;
+using GymBro.Service;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace GymBro.Web.Controllers
 {
     public class PaymentsController : BaseAdminController
     {
-        private readonly GymBroDbContext _context;
-        public PaymentsController(GymBroDbContext context) { _context = context; }
+        private readonly IPaymentService _paymentService;
 
+        public PaymentsController(IPaymentService paymentService)
+        {
+            _paymentService = paymentService;
+        }
+
+        // Hiển thị danh sách lịch sử thanh toán
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Payments
-                .Include(p => p.Order)
-                // SỬA: NgayThanhToan -> PaymentDate
-                .OrderByDescending(p => p.PaymentDate)
-                .ToListAsync());
+            // Gọi API thông qua Service thay vì truy vấn trực tiếp DB
+            var payments = await _paymentService.GetAllPaymentsAsync();
+
+            // Sắp xếp giảm dần theo ngày thanh toán ngay tại tầng Web
+            var sortedPayments = payments.OrderByDescending(p => p.PaymentDate).ToList();
+
+            return View(sortedPayments);
         }
     }
 }

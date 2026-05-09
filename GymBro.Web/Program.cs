@@ -1,5 +1,5 @@
-﻿using GymBro.Infrastructure;
-using Microsoft.EntityFrameworkCore;
+using GymBro.Service;
+using GymBro.Contracts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,18 +9,52 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
-// Đăng ký kết nối Database
-builder.Services.AddDbContext<GymBroDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+// --- [SOA] Đăng ký HttpClient cho các Microservices ---
 
-// Cấu hình Session (Dùng cho Đăng nhập và Giỏ hàng)
+// Nhóm 1: Identity API (Port 7001) - Quản lý Tài khoản & Người dùng
+builder.Services.AddHttpClient<IIdentityService, IdentityService>(client => {
+    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:IdentityApi"] ?? "https://localhost:7001");
+});
+builder.Services.AddHttpClient<IUserService, UserService>(client => {
+    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:IdentityApi"] ?? "https://localhost:7001");
+});
+
+// Nhóm 2: Product API (Port 7002) - Quản lý Sản phẩm, Danh mục, Đánh giá, NCC
+builder.Services.AddHttpClient<IProductService, ProductService>(client => {
+    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:ProductApi"] ?? "https://localhost:7002");
+});
+builder.Services.AddHttpClient<ICategoryService, CategoryService>(client => {
+    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:ProductApi"] ?? "https://localhost:7002");
+});
+builder.Services.AddHttpClient<IReviewService, ReviewService>(client => {
+    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:ProductApi"] ?? "https://localhost:7002");
+});
+builder.Services.AddHttpClient<ISupplierService, SupplierService>(client => {
+    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:ProductApi"] ?? "https://localhost:7002");
+});
+// Nếu có InventoryService để chỉnh sửa kho:
+// builder.Services.AddHttpClient<IInventoryService, InventoryService>(client => {
+//    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:ProductApi"] ?? "https://localhost:7002");
+// });
+
+// Nhóm 3: Order API (Port 7003) - Quản lý Đơn hàng, Thanh toán, Wishlist
+builder.Services.AddHttpClient<IOrderService, OrderService>(client => {
+    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:OrderApi"] ?? "https://localhost:7003");
+});
+builder.Services.AddHttpClient<IPaymentService, PaymentService>(client => {
+    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:OrderApi"] ?? "https://localhost:7003");
+});
+builder.Services.AddHttpClient<IWishlistService, WishlistService>(client => {
+    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:OrderApi"] ?? "https://localhost:7003");
+});
+
+// --- Cấu hình Session & Helper ---
 builder.Services.AddSession(options => {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Session hết hạn sau 30 phút
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
 
-// Đăng ký HttpContextAccessor để truy cập Session từ các Class Helper (nếu có)
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
@@ -37,21 +71,16 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
 
-// QUAN TRỌNG: Thứ tự middleware - UseSession PHẢI nằm trước UseAuthorization
+// Cần UseSession trước UseAuthorization để lấy được User từ Session
 app.UseSession();
-
 app.UseAuthorization();
 
-// =========================================================
-// 3. CẤU HÌNH ĐƯỜNG DẪN (ROUTING)
-// =========================================================
-
-// SỬA LỖI 404: Route cho vùng quản trị Admin (Area)
-// Thiết lập mặc định controller=Admin và action=Dashboard để khớp với AdminController.cs của bạn
-
+// Route cho Area Admin (Dành cho các Controller kế thừa BaseAdminController)
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Admin}/{action=Dashboard}/{id?}");
 
 // Route mặc định cho khách hàng
 app.MapControllerRoute(

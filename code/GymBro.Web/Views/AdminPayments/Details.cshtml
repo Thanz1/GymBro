@@ -1,0 +1,307 @@
+@model GymBro.Web.Features.AdminPayments.AdminPaymentDetailsViewModel
+@using GymBro.Web.Features.AdminPayments
+
+@{
+    ViewBag.Title = "Chi tiết Thanh toán #" + Model.Payment.Id;
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+
+    var payment = Model.Payment;
+    var order = payment.Order;
+    var user = order?.User;
+    var canApprove = PaymentStatus.CanApprove(payment.Status);
+    var canReject = PaymentStatus.CanReject(payment.Status);
+    var remainingTime = TimeSpan.FromHours(24) - TimeSpan.FromHours(Model.HoursSinceOrder);
+}
+
+<div class="container pb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="@Url.Action("Index")" class="btn btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-arrow-left"></i> Quay lại danh sách
+            </a>
+        </div>
+        <div class="d-flex gap-2">
+            @if (canApprove)
+            {
+                <button type="button" class="btn btn-success rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#approveModal">
+                    <i class="bi bi-check-circle"></i> Duyệt thanh toán
+                </button>
+            }
+            @if (canReject)
+            {
+                <button type="button" class="btn btn-danger rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                    <i class="bi bi-x-circle"></i> Từ chối
+                </button>
+            }
+        </div>
+    </div>
+
+    @await Html.PartialAsync("~/Views/Shared/_Messages.cshtml")
+
+    @if (Model.IsExpired && canApprove)
+    {
+        <div class="alert alert-danger mb-4">
+            <h5><i class="bi bi-exclamation-triangle-fill"></i> Đơn hàng đã quá hạn thanh toán</h5>
+            <p class="mb-0">Đơn hàng này đã vượt quá 24 giờ kể từ khi tạo. Bạn nên kiểm tra kỹ trước khi duyệt.</p>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-credit-card"></i> Thông tin Thanh toán</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tbody>
+                            <tr>
+                                <td class="text-muted">Mã thanh toán:</td>
+                                <td class="fw-bold">#@payment.Id</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Mã đơn hàng:</td>
+                                <td>
+                                    <a href="@Url.Action("Details", "Orders", new { id = payment.OrderId })" class="fw-bold text-primary text-decoration-none">
+                                        #@payment.OrderId <i class="bi bi-box-arrow-up-right"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Phương thức:</td>
+                                <td><span class="badge bg-secondary">@payment.PaymentMethod</span></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Số tiền:</td>
+                                <td class="fw-bold text-primary fs-5">@string.Format("{0:N0}", payment.Amount) ₫</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Ngày tạo đơn:</td>
+                                <td>@(order != null ? order.OrderDate.ToString("dd/MM/yyyy HH:mm:ss") : "N/A")</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Lần cập nhật gần nhất:</td>
+                                <td>@payment.PaymentDate.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Thời gian còn lại:</td>
+                                <td>
+                                    @if (!Model.IsExpired)
+                                    {
+                                        <span class="@(remainingTime.TotalHours < 2 ? "text-danger fw-bold" : string.Empty)">
+                                            @Math.Max(0, (int)remainingTime.TotalHours) giờ @Math.Max(0, remainingTime.Minutes) phút
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-danger fw-bold">
+                                            <i class="bi bi-exclamation-triangle"></i> Đã quá hạn
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Trạng thái:</td>
+                                <td>
+                                    @if (PaymentStatus.Equals(payment.Status, PaymentStatus.PendingVerification))
+                                    {
+                                        <span class="badge bg-warning text-dark fs-6 px-3 py-2">@payment.Status</span>
+                                    }
+                                    else if (PaymentStatus.Equals(payment.Status, PaymentStatus.AwaitingPayment))
+                                    {
+                                        <span class="badge bg-info text-dark fs-6 px-3 py-2">@payment.Status</span>
+                                    }
+                                    else if (PaymentStatus.Equals(payment.Status, PaymentStatus.Paid))
+                                    {
+                                        <span class="badge bg-success fs-6 px-3 py-2">@payment.Status</span>
+                                    }
+                                    else if (PaymentStatus.Equals(payment.Status, PaymentStatus.Failed) || PaymentStatus.Equals(payment.Status, PaymentStatus.Cancelled))
+                                    {
+                                        <span class="badge bg-danger fs-6 px-3 py-2">@payment.Status</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary fs-6 px-3 py-2">@payment.Status</span>
+                                    }
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-circle"></i> Thông tin Khách hàng</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tbody>
+                            <tr>
+                                <td class="text-muted">Họ tên:</td>
+                                <td class="fw-bold">@(user?.FullName ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Username:</td>
+                                <td>@(user?.Username ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Email:</td>
+                                <td>@(user?.Email ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Địa chỉ:</td>
+                                <td>@(user?.Address ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Trạng thái đơn:</td>
+                                <td>
+                                    <span class="badge bg-secondary">@(order?.Status ?? "N/A")</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Lịch sử Giao dịch</h5>
+                </div>
+                <div class="card-body">
+                    @await Html.PartialAsync("_PaymentHistory", Model.AuditLogs)
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-cart3"></i> Chi tiết Đơn hàng</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Sản phẩm</th>
+                                    <th class="text-center">Số lượng</th>
+                                    <th class="text-end">Đơn giá</th>
+                                    <th class="text-end">Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (order?.OrderDetails != null && order.OrderDetails.Any())
+                                {
+                                    foreach (var detail in order.OrderDetails)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold">@(detail.Product?.ProductName ?? "Sản phẩm đã xóa")</div>
+                                                <small class="text-muted">Mã SP: #@detail.ProductId</small>
+                                            </td>
+                                            <td class="text-center">x @detail.Quantity</td>
+                                            <td class="text-end">@detail.Price.ToString("N0") ₫</td>
+                                            <td class="text-end fw-bold">@((detail.Price * detail.Quantity).ToString("N0")) ₫</td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-4">Không có chi tiết sản phẩm.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold fs-5">Tổng cộng:</td>
+                                    <td class="text-end fw-bold fs-5 text-primary">@((order?.TotalAmount ?? 0).ToString("N0")) ₫</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="approveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="bi bi-check-circle"></i> Xác nhận Duyệt thanh toán</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            @using (Html.BeginForm("Approve", "AdminPayments", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@payment.Id" />
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Bạn xác nhận đã nhận được tiền từ khách hàng?
+                    </div>
+                    <p>Thanh toán: <strong>#@payment.Id</strong></p>
+                    <p>Đơn hàng: <strong>#@payment.OrderId</strong></p>
+                    <p>Số tiền: <strong class="text-success">@string.Format("{0:N0}", payment.Amount) ₫</strong></p>
+                    <p>Khách hàng: <strong>@(user?.FullName ?? "N/A")</strong></p>
+
+                    <hr />
+
+                    <div class="mb-3">
+                        <label class="form-label">Ghi chú của Admin (tùy chọn):</label>
+                        <textarea name="adminNote" class="form-control" rows="3" placeholder="Ví dụ: Đã kiểm tra giao dịch ngân hàng và xác nhận khớp số tiền."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Xác nhận Duyệt
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-x-circle"></i> Từ chối Thanh toán</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            @using (Html.BeginForm("Reject", "AdminPayments", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@payment.Id" />
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> Hành động này sẽ đánh dấu thanh toán thất bại và hủy đơn hàng hiện tại.
+                    </div>
+                    <p>Thanh toán: <strong>#@payment.Id</strong></p>
+                    <p>Đơn hàng: <strong>#@payment.OrderId</strong></p>
+                    <p>Khách hàng: <strong>@(user?.FullName ?? "N/A")</strong></p>
+
+                    <hr />
+
+                    <div class="mb-3">
+                        <label class="form-label text-danger">Lý do từ chối <span class="text-danger">*</span>:</label>
+                        <textarea name="rejectReason" class="form-control" rows="3" required placeholder="Ví dụ: Không tìm thấy giao dịch chuyển khoản tương ứng hoặc số tiền không khớp."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-x-circle"></i> Xác nhận Từ chối
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,86 +1,75 @@
-﻿@model GymBro.Core.Payment
+﻿@using GymBro.Contracts
+@model PaymentDto
 
 @{
     ViewBag.Title = "Chi tiết Thanh toán #" + Model.Id;
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
-    var order = Model.Order;
-    var user = order?.User;
 }
 
-<div class="container pb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <a href="@Url.Action("Index")" class="btn btn-outline-secondary rounded-pill px-3">
-                <i class="bi bi-arrow-left"></i> Quay lại
-            </a>
-        </div>
+<div class="container py-4">
+    <div class="mb-4">
+        <a href="@Url.Action("Index")" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm">
+            <i class="bi bi-arrow-left"></i> Quay lại danh sách
+        </a>
     </div>
 
-    <div class="row">
-        @* Payment Info *@
-        <div class="col-md-6 mb-4">
+    <div class="row g-4">
+        @* Cột trái: Thông tin thanh toán *@
+        <div class="col-md-6">
             <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-credit-card"></i> Thông tin Thanh toán</h5>
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-credit-card"></i> Giao dịch #@Model.Id</h5>
                 </div>
                 <div class="card-body">
-                    <table class="table table-borderless mb-0">
-                        <tbody>
-                            <tr>
-                                <td class="text-muted">Mã thanh toán:</td>
-                                <td class="fw-bold">#@Model.Id</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Mã đơn hàng:</td>
-                                <td>
-                                    <a href="@Url.Action("Details", "Orders", new { id = Model.OrderId })" class="fw-bold text-primary text-decoration-none">
-                                        #@Model.OrderId
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Số tiền:</td>
-                                <td class="fw-bold text-primary fs-5">@string.Format("{0:N0}", Model.Amount) ₫</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Ngày thanh toán:</td>
-                                <td>@Model.PaymentDate.ToString("dd/MM/yyyy HH:mm:ss")</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Trạng thái:</td>
-                                <td>
-                                    <span class="badge bg-info text-dark">@Model.Status</span>
-                                </td>
-                            </tr>
-                        </tbody>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td class="text-muted w-40">Mã đơn hàng:</td>
+                            <td><a href="@Url.Action("Details", "Orders", new { id = Model.OrderId })" class="fw-bold text-primary">#@Model.OrderId</a></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Số tiền:</td>
+                            <td class="fw-bold text-danger fs-4">@Model.Amount.ToString("N0") ₫</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Ngày thực hiện:</td>
+                            <td class="small">@Model.PaymentDate.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Phương thức:</td>
+                            <td><span class="badge bg-secondary">@Model.PaymentMethodName</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Trạng thái:</td>
+                            <td>
+                                <span class="badge @(Model.Status == "Completed" ? "bg-success" : "bg-warning text-dark") px-3">
+                                    @Model.Status
+                                </span>
+                            </td>
+                        </tr>
                     </table>
                 </div>
             </div>
         </div>
 
-        @* Customer Info *@
-        <div class="col-md-6 mb-4">
+        @* Cột phải: Thông tin khách hàng *@
+        <div class="col-md-6">
             <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="bi bi-person-circle"></i> Thông tin Khách hàng</h5>
+                <div class="card-header bg-dark text-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-person-circle"></i> Khách hàng thanh toán</h5>
                 </div>
                 <div class="card-body">
-                    <table class="table table-borderless mb-0">
-                        <tbody>
-                            <tr>
-                                <td class="text-muted">Họ tên:</td>
-                                <td class="fw-bold">@(user?.FullName ?? "N/A")</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Email:</td>
-                                <td>@(user?.Email ?? "N/A")</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Địa chỉ:</td>
-                                <td>@(user?.Address ?? "N/A")</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="mb-3">
+                        <label class="text-muted small d-block">Họ và tên</label>
+                        <span class="fw-bold fs-5">@Model.CustomerName</span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small d-block">Email liên hệ</label>
+                        <span>@Model.CustomerEmail</span>
+                    </div>
+                    <div class="mb-0">
+                        <label class="text-muted small d-block">Địa chỉ giao hàng</label>
+                        <p class="mb-0 small">@Model.CustomerAddress</p>
+                    </div>
                 </div>
             </div>
         </div>

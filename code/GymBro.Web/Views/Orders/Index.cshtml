@@ -1,0 +1,191 @@
+@model OrderManagementIndexViewModel
+
+@{
+    ViewBag.Title = "Quan ly don hang";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h2 class="mb-0 text-primary"><i class="bi bi-receipt"></i> Quan ly don hang</h2>
+    </div>
+    <div class="card-body">
+        @await Html.PartialAsync("~/Views/Shared/_Messages.cshtml")
+
+        <div class="row mb-4 align-items-end">
+            <div class="col-md-10">
+                <form action="@Url.Action("Index")" method="get" class="row g-2">
+                    <div class="col-auto">
+                        <input type="text"
+                               name="searchString"
+                               value="@Model.SearchString"
+                               class="form-control"
+                               placeholder="Tim theo ma don, ten khach hang..."
+                               style="width: 250px;" />
+                    </div>
+                    <div class="col-auto">
+                        <select name="status" class="form-select" onchange="this.form.submit();">
+                            <option value="">Tat ca trang thai</option>
+                            @foreach (var status in Model.StatusOptions)
+                            {
+                                var isSelected = string.Equals(Model.CurrentStatus, status, StringComparison.OrdinalIgnoreCase);
+                                <option value="@status" selected="@(isSelected ? "selected" : null)">@status</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search"></i> Tim kiem
+                        </button>
+                        @if (!string.IsNullOrEmpty(Model.SearchString) || !string.IsNullOrEmpty(Model.CurrentStatus))
+                        {
+                            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-lg"></i> Xoa loc
+                            </a>
+                        }
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-2 text-end">
+                <span class="text-muted small">Don moi duoc tao tu luong checkout</span>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Ma don</th>
+                        <th>Ngay dat</th>
+                        <th>Khach hang</th>
+                        <th>Tong tien</th>
+                        <th>Trang thai don</th>
+                        <th>Thanh toan</th>
+                        <th class="text-center">Hanh dong</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">Khong tim thay don hang nao.</td>
+                        </tr>
+                    }
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td class="fw-bold text-primary">#@item.Id</td>
+                            <td>@item.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-light rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                        <i class="bi bi-person text-secondary"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">@item.CustomerDisplayName</div>
+                                        <small class="text-muted">@item.CustomerUsername</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="fw-bold">@string.Format("{0:N0}", item.TotalAmount) VND</td>
+                            <td>
+                                <span class="badge @item.OrderStatus.CssClass">@item.OrderStatus.Text</span>
+                            </td>
+                            <td>
+                                @if (item.Payment == null)
+                                {
+                                    <span class="text-muted">Chua co</span>
+                                }
+                                else
+                                {
+                                    <div class="d-flex flex-column gap-1">
+                                        <span class="badge @item.Payment.Status.CssClass">@item.Payment.Status.Text</span>
+                                        <small class="text-muted">@item.Payment.Method</small>
+                                    </div>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <a href="@Url.Action("Details", new { id = item.Id })" class="btn btn-sm btn-info me-1" title="Chi tiet">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-sm btn-primary me-1" title="Cap nhat">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="@Url.Action("Delete", new { id = item.Id })" class="btn btn-sm btn-danger" title="Xoa">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { page = Model.PageNumber - 1, searchString = Model.SearchString, status = Model.CurrentStatus })">Truoc</a>
+                    </li>
+
+                    @{
+                        var startPage = Math.Max(1, Model.PageNumber - 3);
+                        var endPage = Math.Min(Model.TotalPages, Model.PageNumber + 3);
+
+                        if (endPage - startPage + 1 < 7)
+                        {
+                            if (startPage == 1)
+                            {
+                                endPage = Math.Min(Model.TotalPages, startPage + 6);
+                            }
+                            else if (endPage == Model.TotalPages)
+                            {
+                                startPage = Math.Max(1, endPage - 6);
+                            }
+                        }
+
+                        if (startPage > 1)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="@Url.Action("Index", new { page = 1, searchString = Model.SearchString, status = Model.CurrentStatus })">1</a>
+                            </li>
+
+                            if (startPage > 2)
+                            {
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            }
+                        }
+
+                        for (var i = startPage; i <= endPage; i++)
+                        {
+                            <li class="page-item @(Model.PageNumber == i ? "active" : "")">
+                                <a class="page-link" href="@Url.Action("Index", new { page = i, searchString = Model.SearchString, status = Model.CurrentStatus })">@i</a>
+                            </li>
+                        }
+
+                        if (endPage < Model.TotalPages)
+                        {
+                            if (endPage < Model.TotalPages - 1)
+                            {
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            }
+
+                            <li class="page-item">
+                                <a class="page-link" href="@Url.Action("Index", new { page = Model.TotalPages, searchString = Model.SearchString, status = Model.CurrentStatus })">@Model.TotalPages</a>
+                            </li>
+                        }
+                    }
+
+                    <li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { page = Model.PageNumber + 1, searchString = Model.SearchString, status = Model.CurrentStatus })">Sau</a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="text-center text-muted mt-2 small">
+                Trang @Model.PageNumber / @Model.TotalPages (@Model.TotalItems don hang)
+            </div>
+        }
+    </div>
+</div>

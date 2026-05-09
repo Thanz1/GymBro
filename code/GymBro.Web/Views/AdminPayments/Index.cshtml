@@ -1,0 +1,198 @@
+@model GymBro.Web.Features.AdminPayments.AdminPaymentsIndexViewModel
+@using GymBro.Web.Features.AdminPayments
+
+@{
+    ViewBag.Title = "Quản lý Thanh toán";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h2 class="mb-0 text-primary">
+            <i class="bi bi-credit-card-2-front"></i> Quản lý Thanh toán
+        </h2>
+    </div>
+    <div class="card-body">
+        @await Html.PartialAsync("~/Views/Shared/_Messages.cshtml")
+
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 bg-warning bg-opacity-10 border-start border-warning border-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted text-uppercase mb-1">Chờ xác minh</h6>
+                                <h3 class="mb-0 text-warning fw-bold">@Model.PendingCount</h3>
+                            </div>
+                            <div class="text-warning">
+                                <i class="bi bi-clock-history fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card border-0 bg-info bg-opacity-10 border-start border-info border-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted text-uppercase mb-1">Chờ thanh toán</h6>
+                                <h3 class="mb-0 text-info fw-bold">@Model.WaitingCount</h3>
+                            </div>
+                            <div class="text-info">
+                                <i class="bi bi-hourglass-split fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card border-0 bg-success bg-opacity-10 border-start border-success border-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted text-uppercase mb-1">Đã thanh toán</h6>
+                                <h3 class="mb-0 text-success fw-bold">@Model.CompletedCount</h3>
+                            </div>
+                            <div class="text-success">
+                                <i class="bi bi-check-circle fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card border-0 bg-danger bg-opacity-10 border-start border-danger border-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted text-uppercase mb-1">Không thành công</h6>
+                                <h3 class="mb-0 text-danger fw-bold">@Model.FailedCount</h3>
+                            </div>
+                            <div class="text-danger">
+                                <i class="bi bi-x-circle fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="btn-group flex-wrap" role="group">
+                    <a href="@Url.Action("Index")"
+                       class="btn @(string.IsNullOrEmpty(Model.CurrentStatus) ? "btn-primary" : "btn-outline-primary")">
+                        <i class="bi bi-list"></i> Tất cả (@Model.TotalCount)
+                    </a>
+                    <a href="@Url.Action("Index", new { status = PaymentStatus.PendingVerification })"
+                       class="btn @(PaymentStatus.Equals(Model.CurrentStatus, PaymentStatus.PendingVerification) ? "btn-warning" : "btn-outline-warning")">
+                        <i class="bi bi-exclamation-circle"></i> Chờ xác minh (@Model.PendingCount)
+                    </a>
+                    <a href="@Url.Action("Index", new { status = PaymentStatus.AwaitingPayment })"
+                       class="btn @(PaymentStatus.Equals(Model.CurrentStatus, PaymentStatus.AwaitingPayment) ? "btn-info" : "btn-outline-info")">
+                        <i class="bi bi-hourglass"></i> Chờ thanh toán (@Model.WaitingCount)
+                    </a>
+                    <a href="@Url.Action("Index", new { status = PaymentStatus.Paid })"
+                       class="btn @(PaymentStatus.Equals(Model.CurrentStatus, PaymentStatus.Paid) ? "btn-success" : "btn-outline-success")">
+                        <i class="bi bi-check-circle"></i> Đã thanh toán (@Model.CompletedCount)
+                    </a>
+                    <a href="@Url.Action("Index", new { status = PaymentStatus.Failed })"
+                       class="btn @(PaymentStatus.Equals(Model.CurrentStatus, PaymentStatus.Failed) ? "btn-danger" : "btn-outline-danger")">
+                        <i class="bi bi-x-circle"></i> Thất bại (@Model.FailedCount)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã ĐH</th>
+                        <th>Khách hàng</th>
+                        <th>Phương thức</th>
+                        <th>Số tiền</th>
+                        <th>Thời điểm cập nhật</th>
+                        <th>Trạng thái</th>
+                        <th class="text-center">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Payments.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">Không tìm thấy thanh toán nào.</td>
+                        </tr>
+                    }
+
+                    @foreach (var item in Model.Payments)
+                    {
+                        var isExpired = item.Order != null && (DateTime.Now - item.Order.OrderDate).TotalHours > 24;
+
+                        <tr class="@(PaymentStatus.CanApprove(item.Status) ? "table-warning" : string.Empty)">
+                            <td>
+                                <a href="@Url.Action("Details", "Orders", new { id = item.OrderId })"
+                                   class="text-decoration-none fw-bold text-primary">
+                                    #@item.OrderId
+                                </a>
+                            </td>
+                            <td>
+                                <div class="fw-bold">@(item.Order?.User?.FullName ?? "Không rõ")</div>
+                                <small class="text-muted">@(item.Order?.User?.Username ?? string.Empty)</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">@item.PaymentMethod</span>
+                            </td>
+                            <td class="fw-bold text-primary">
+                                @string.Format("{0:N0}", item.Amount) ₫
+                            </td>
+                            <td>
+                                @item.PaymentDate.ToString("dd/MM/yyyy HH:mm")
+                                @if (isExpired && PaymentStatus.CanApprove(item.Status))
+                                {
+                                    <br />
+                                    <small class="text-danger">
+                                        <i class="bi bi-exclamation-triangle"></i> Quá hạn
+                                    </small>
+                                }
+                            </td>
+                            <td>
+                                @if (PaymentStatus.Equals(item.Status, PaymentStatus.PendingVerification))
+                                {
+                                    <span class="badge bg-warning text-dark">@item.Status</span>
+                                }
+                                else if (PaymentStatus.Equals(item.Status, PaymentStatus.AwaitingPayment))
+                                {
+                                    <span class="badge bg-info text-dark">@item.Status</span>
+                                }
+                                else if (PaymentStatus.Equals(item.Status, PaymentStatus.Paid))
+                                {
+                                    <span class="badge bg-success">@item.Status</span>
+                                }
+                                else if (PaymentStatus.Equals(item.Status, PaymentStatus.Failed) || PaymentStatus.Equals(item.Status, PaymentStatus.Cancelled))
+                                {
+                                    <span class="badge bg-danger">@item.Status</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@item.Status</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <a href="@Url.Action("Details", new { id = item.Id })"
+                                   class="btn btn-sm @(PaymentStatus.CanApprove(item.Status) ? "btn-warning" : "btn-info")"
+                                   title="@(PaymentStatus.CanApprove(item.Status) ? "Xem & Duyệt" : "Chi tiết")">
+                                    <i class="bi @(PaymentStatus.CanApprove(item.Status) ? "bi-clipboard-check" : "bi-eye")"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

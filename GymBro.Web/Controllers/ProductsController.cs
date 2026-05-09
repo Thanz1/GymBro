@@ -1,167 +1,106 @@
-using GymBro.Core;
-using GymBro.Infrastructure;
+using GymBro.Contracts;
+using GymBro.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 
 namespace GymBro.Web.Controllers
 {
     public class ProductsController : BaseAdminController
     {
-        private readonly GymBroDbContext _context;
+        private readonly IProductService _productService;
+        private readonly ICategoryService _categoryService; // Đã thêm để chuẩn SOA
         private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public ProductsController(GymBroDbContext context, IWebHostEnvironment webHostEnvironment)
+        public ProductsController(
+            IProductService productService,
+            ICategoryService categoryService,
+            IWebHostEnvironment webHostEnvironment)
         {
-            _context = context;
+            _productService = productService;
+            _categoryService = categoryService;
             _webHostEnvironment = webHostEnvironment;
         }
 
         // GET: Admin/Products
         public async Task<IActionResult> Index()
         {
-            var products = await _context.Products.Include(p => p.Category).ToListAsync();
+            var products = await _productService.GetAllProductsAsync();
             return View(products);
         }
 
         // GET: Admin/Products/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "CategoryName");
+            // Lấy danh sách danh mục từ API để hiển thị DropdownList
+            var categories = await _categoryService.GetAllCategoriesAsync();
+            ViewBag.CategoryId = new SelectList(categories, "Id", "Name");
             return View();
         }
 
         // POST: Admin/Products/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Product product, IFormFile imageFile)
+        public async Task<IActionResult> Create(CreateProductDto productDto, IFormFile imageFile)
         {
             if (ModelState.IsValid)
             {
                 if (imageFile != null && imageFile.Length > 0)
                 {
-                    // 1. Tạo đường dẫn thư mục
-                    string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "Content", "Images");
-
-                    // 2. Tự động tạo thư mục nếu chưa có
-                    if (!Directory.Exists(uploadsFolder))
-                    {
-                        Directory.CreateDirectory(uploadsFolder);
-                    }
-
-                    // 3. Tạo tên file và lưu file
-                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + imageFile.FileName;
-                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await imageFile.CopyToAsync(fileStream);
-                    }
-
-                    // 4. Lưu tên file ảnh vào Product (view sẽ tự ghép đường dẫn /Content/Images/)
-                    product.ImageURL = uniqueFileName;
+                    productDto.ImageURL = await SaveImage(imageFile);
                 }
 
-                _context.Add(product);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                var success = await _productService.CreateProductAsync(productDto);
+                if (success)
+                {
+                    TempData["SuccessMessage"] = "Thêm sản phẩm thành công!";
+                    return RedirectToAction(nameof(Index));
+                }
             }
 
-            ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "CategoryName", product.CategoryId);
-            return View(product);
-        }
-
-        // GET: Admin/Products/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (product == null) return NotFound();
-
-            return View(product);
+            // Nếu lỗi, phải nạp lại danh sách danh mục trước khi trả về View
+            var categories = await _categoryService.GetAllCategoriesAsync();
+            ViewBag.CategoryId = new SelectList(categories, "Id", "Name", productDto.CategoryId);
+            return View(productDto);
         }
 
         // GET: Admin/Products/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id == null) return NotFound();
-
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(m => m.Id == id);
-
+            var product = await _productService.GetProductByIdAsync(id);
             if (product == null) return NotFound();
 
-            ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "CategoryName", product.CategoryId);
+            // Nạp danh sách danh mục cho Dropdown
+            var categories = await _categoryService.GetAllCategoriesAsync();
+            ViewBag.CategoryId = new SelectList(categories, "Id", "Name", product.CategoryId);
+
             return View(product);
         }
 
         // POST: Admin/Products/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Product product, IFormFile? imageFile)
+        public async Task<IActionResult> Edit(int id, ProductDto productDto, IFormFile? imageFile)
         {
-            if (id != product.Id) return NotFound();
+            if (id != productDto.Id) return BadRequest();
 
             if (ModelState.IsValid)
             {
-                var existingProduct = await _context.Products.FindAsync(id);
-                if (existingProduct == null) return NotFound();
-
-                existingProduct.ProductName = product.ProductName;
-                existingProduct.Description = product.Description;
-                existingProduct.Price = product.Price;
-                existingProduct.StockQuantity = product.StockQuantity;
-                existingProduct.CategoryId = product.CategoryId;
-
                 if (imageFile != null && imageFile.Length > 0)
                 {
-                    string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "Content", "Images");
-
-                    if (!Directory.Exists(uploadsFolder))
-                    {
-                        Directory.CreateDirectory(uploadsFolder);
-                    }
-
-                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + imageFile.FileName;
-                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await imageFile.CopyToAsync(fileStream);
-                    }
-
-                    // Cập nhật tên file ảnh mới
-                    existingProduct.ImageURL = uniqueFileName;
+                    productDto.ImageURL = await SaveImage(imageFile);
                 }
 
-                _context.Update(existingProduct);
-                await _context.SaveChangesAsync();
-
-                TempData["SuccessMessage"] = "Cập nhật sản phẩm thành công!";
-                return RedirectToAction(nameof(Index));
+                var success = await _productService.UpdateProductAsync(id, productDto);
+                if (success)
+                {
+                    TempData["SuccessMessage"] = "Cập nhật sản phẩm thành công!";
+                    return RedirectToAction(nameof(Index));
+                }
             }
 
-            ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "CategoryName", product.CategoryId);
-            return View(product);
-        }
-
-        // GET: Admin/Products/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (product == null) return NotFound();
-
-            return View(product);
+            var categories = await _categoryService.GetAllCategoriesAsync();
+            ViewBag.CategoryId = new SelectList(categories, "Id", "Name", productDto.CategoryId);
+            return View(productDto);
         }
 
         // POST: Admin/Products/Delete/5
@@ -169,14 +108,25 @@ namespace GymBro.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null) return NotFound();
-
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
-
-            TempData["SuccessMessage"] = "Xóa sản phẩm thành công!";
+            var success = await _productService.DeleteProductAsync(id);
+            if (success) TempData["SuccessMessage"] = "Xóa sản phẩm thành công!";
             return RedirectToAction(nameof(Index));
+        }
+
+        // Helper xử lý lưu ảnh
+        private async Task<string> SaveImage(IFormFile imageFile)
+        {
+            string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "Content", "Images");
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+            string uniqueFileName = Guid.NewGuid().ToString() + "_" + imageFile.FileName;
+            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await imageFile.CopyToAsync(fileStream);
+            }
+            return uniqueFileName;
         }
     }
 }

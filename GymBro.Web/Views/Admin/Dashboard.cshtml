@@ -1,7 +1,6 @@
-﻿@{
-    ViewBag.Title = "Dashboard";
-    // Nếu bạn có layout riêng cho admin thì để dòng dưới, không thì comment lại
-    // Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+﻿@using GymBro.Contracts
+@{
+    ViewBag.Title = "Bảng điều khiển";
 }
 
 <div class="container-fluid py-2">
@@ -15,7 +14,7 @@
                     </div>
                     <div>
                         <h6 class="fw-bold text-dark mb-0">Đơn hàng</h6>
-                        <small class="text-muted">Quản lý đơn hàng</small>
+                        <small class="text-muted">Quản lý bán hàng</small>
                     </div>
                 </div>
             </a>
@@ -41,13 +40,12 @@
                     </div>
                     <div>
                         <h6 class="fw-bold text-dark mb-0">Kho hàng</h6>
-                        <small class="text-muted">Tồn kho & Lịch sử</small>
+                        <small class="text-muted">Tồn kho & Nhập hàng</small>
                     </div>
                 </div>
             </a>
         </div>
         <div class="col-md-3">
-            @* Tạm thời để link về Products vì chưa có PurchaseOrders *@
             <a href="@Url.Action("Index", "Products")" class="card text-decoration-none h-100 border-0 shadow-sm hover-shadow transition-all">
                 <div class="card-body d-flex align-items-center p-3">
                     <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3 text-success">
@@ -55,27 +53,24 @@
                     </div>
                     <div>
                         <h6 class="fw-bold text-dark mb-0">Sản phẩm</h6>
-                        <small class="text-muted">Quản lý sản phẩm</small>
+                        <small class="text-muted">Quản lý danh mục</small>
                     </div>
                 </div>
             </a>
         </div>
     </div>
 
-    @* --- THỐNG KÊ --- *@
-    <h5 class="fw-bold text-dark mb-3">Thống kê nhanh</h5>
+    @* --- THỐNG KÊ NHANH --- *@
     <div class="row g-4 mb-5">
         <div class="col-xl-3 col-md-6">
             <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(45deg, #4e73df, #224abe);">
                 <div class="card-body text-white p-4">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <h6 class="text-uppercase mb-1 opacity-75">Tổng Doanh Thu</h6>
+                            <h6 class="text-uppercase mb-1 opacity-75">Doanh Thu</h6>
                             <h3 class="fw-bold mb-0">@Convert.ToDecimal(ViewBag.TotalRevenue).ToString("N0") ₫</h3>
                         </div>
-                        <div class="bg-white bg-opacity-25 rounded p-2">
-                            <i class="bi bi-cash-stack fs-4"></i>
-                        </div>
+                        <i class="bi bi-cash-stack fs-4 opacity-50"></i>
                     </div>
                 </div>
             </div>
@@ -85,13 +80,10 @@
                 <div class="card-body text-white p-4">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <h6 class="text-uppercase mb-1 opacity-75">Đơn Hàng Mới</h6>
+                            <h6 class="text-uppercase mb-1 opacity-75">Đơn Mới</h6>
                             <h3 class="fw-bold mb-0">@ViewBag.NewOrdersCount</h3>
-                            <small class="opacity-75">Đang chờ xử lý</small>
                         </div>
-                        <div class="bg-white bg-opacity-25 rounded p-2">
-                            <i class="bi bi-cart-check fs-4"></i>
-                        </div>
+                        <i class="bi bi-cart-check fs-4 opacity-50"></i>
                     </div>
                 </div>
             </div>
@@ -104,9 +96,7 @@
                             <h6 class="text-uppercase mb-1 opacity-75">Thành Viên</h6>
                             <h3 class="fw-bold mb-0">@ViewBag.TotalMembersCount</h3>
                         </div>
-                        <div class="bg-white bg-opacity-25 rounded p-2">
-                            <i class="bi bi-people fs-4"></i>
-                        </div>
+                        <i class="bi bi-people fs-4 opacity-50"></i>
                     </div>
                 </div>
             </div>
@@ -116,83 +106,70 @@
                 <div class="card-body text-white p-4">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <h6 class="text-uppercase mb-1 opacity-75">Cảnh Báo Kho</h6>
+                            <h6 class="text-uppercase mb-1 opacity-75">Hết Hàng</h6>
                             <h3 class="fw-bold mb-0">@ViewBag.LowStockCount</h3>
-                            <small class="opacity-75">Sắp hết hàng</small>
                         </div>
-                        <div class="bg-white bg-opacity-25 rounded p-2">
-                            <i class="bi bi-exclamation-triangle fs-4"></i>
-                        </div>
+                        <i class="bi bi-exclamation-triangle fs-4 opacity-50"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    @* --- BIỂU ĐỒ DOANH THU --- *@
-    <div class="row mb-5">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm h-100">
+    @* --- BIỂU ĐỒ --- *@
+    <div class="row g-4">
+        <div class="col-lg-12">
+            <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3">
-                    <h6 class="m-0 fw-bold text-primary"><i class="bi bi-graph-up"></i> Biểu đồ doanh thu (7 ngày gần nhất)</h6>
+                    <h6 class="m-0 fw-bold text-primary"><i class="bi bi-graph-up"></i> Doanh thu 7 ngày qua</h6>
                 </div>
                 <div class="card-body">
-                    <canvas id="revenueChart" style="max-height: 350px; width: 100%;"></canvas>
+                    <canvas id="revenueChart" style="max-height: 300px;"></canvas>
                 </div>
             </div>
         </div>
-    </div>
 
-    @* --- ĐƠN HÀNG GẦN ĐÂY --- *@
-    <div class="row g-4">
-        <div class="col-lg-12 mb-4">
-            <div class="card shadow-sm border-0 h-100">
+        @* BẢNG ĐƠN HÀNG GẦN ĐÂY *@
+        <div class="col-lg-12">
+            <div class="card shadow-sm border-0">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 fw-bold text-primary"><i class="bi bi-receipt"></i> Đơn hàng gần đây</h6>
-                    <a href="@Url.Action("Index", "Orders")" class="btn btn-sm btn-outline-primary rounded-pill px-3">Xem tất cả</a>
+                    <h6 class="m-0 fw-bold text-primary"><i class="bi bi-receipt"></i> Đơn hàng vừa đặt</h6>
+                    <a href="@Url.Action("Index", "Orders")" class="btn btn-sm btn-outline-primary rounded-pill">Xem tất cả</a>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="bg-light text-muted">
                                 <tr>
-                                    <th class="ps-4 py-3">Mã ĐH</th>
-                                    <th class="py-3">Khách hàng</th>
-                                    <th class="py-3">Ngày đặt</th>
-                                    <th class="py-3">Tổng tiền</th>
-                                    <th class="py-3">Trạng thái</th>
-                                    <th class="py-3"></th>
+                                    <th class="ps-4">Mã ĐH</th>
+                                    <th>Khách hàng (ID)</th>
+                                    <th>Ngày đặt</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Trạng thái</th>
+                                    <th class="text-end pe-4"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @if (ViewBag.RecentOrders != null)
                                 {
-                                    foreach (var order in (List<GymBro.Core.Order>)ViewBag.RecentOrders)
+                                    foreach (var order in (IEnumerable<OrderDto>)ViewBag.RecentOrders)
                                     {
                                         <tr>
-                                            <td class="ps-4 fw-bold text-primary">#@order.Id</td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <div class="avatar-sm bg-light rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                                        <i class="bi bi-person text-secondary"></i>
-                                                    </div>
-                                                    @(order.User != null ? order.User.FullName : "Unknown")
-                                                </div>
-                                            </td>
+                                            <td class="ps-4 fw-bold">#@order.Id</td>
+                                            @* SỬA LỖI CS1061: Dùng UserId vì OrderDto thường chứa UserId *@
+                                            <td>User ID: @order.UserId</td>
                                             <td>@order.OrderDate.ToString("dd/MM/yyyy")</td>
                                             <td class="fw-bold">@order.TotalAmount.ToString("N0") ₫</td>
                                             <td>
-                                                @if (order.Status == "Chờ xử lý")
-                                                {
-                                                    <span class="badge bg-warning text-dark">@order.Status</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge bg-success">@order.Status</span>
-                                                }
+                                                <span class="badge @(order.Status == "Chờ xử lý" ? "bg-warning text-dark" : "bg-success")">
+                                                    @order.Status
+                                                </span>
                                             </td>
                                             <td class="text-end pe-4">
-                                                <a href="@Url.Action("Details", "Orders", new { id = order.Id })" class="btn btn-sm btn-light text-primary" title="Chi tiết"><i class="bi bi-eye"></i></a>
+                                                @* SỬA LỖI RZ1025: Đổi </div> thành </a> *@
+                                                <a href="@Url.Action("Details", "Orders", new { id = order.Id })" class="btn btn-sm btn-light text-primary" title="Chi tiết">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
                                             </td>
                                         </tr>
                                     }
@@ -208,8 +185,8 @@
 
 <style>
     .hover-shadow:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+        transform: translateY(-4px);
+        box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.1) !important;
     }
 
     .transition-all {
@@ -217,51 +194,33 @@
     }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        var ctx = document.getElementById('revenueChart').getContext('2d');
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var ctx = document.getElementById('revenueChart').getContext('2d');
+            var labels = @Html.Raw(Json.Serialize(ViewBag.ChartLabels));
+            var data = @Html.Raw(Json.Serialize(ViewBag.ChartData));
 
-        // SỬA: Dùng Json.Serialize cho .NET Core
-        var labels = @Html.Raw(Json.Serialize(ViewBag.ChartLabels));
-        var data = @Html.Raw(Json.Serialize(ViewBag.ChartData));
-
-        var revenueChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Doanh thu',
-                    data: data,
-                    borderColor: '#4e73df',
-                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
-                    borderWidth: 3,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: '#4e73df',
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Doanh thu (VNĐ)',
+                        data: data,
+                        borderColor: '#4e73df',
+                        backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                        fill: true,
+                        tension: 0.3
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                if (value >= 1000000) return (value / 1000000) + 'M';
-                                if (value >= 1000) return (value / 1000) + 'k';
-                                return value;
-                            }
-                        }
-                    }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
                 }
-            }
+            });
         });
-    });
-</script>
+    </script>
+}

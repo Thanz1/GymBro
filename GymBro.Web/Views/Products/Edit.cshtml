@@ -1,4 +1,5 @@
-﻿@model GymBro.Core.Product
+﻿@using GymBro.Contracts
+@model ProductDto
 
 @{
     ViewBag.Title = "Chỉnh sửa Sản phẩm";
@@ -9,77 +10,53 @@
     <div class="col-md-10">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white py-3">
-                <h3 class="mb-0 text-primary"><i class="bi bi-pencil-square"></i> Chỉnh sửa Sản phẩm</h3>
+                <h4 class="mb-0 text-primary fw-bold"><i class="bi bi-pencil-square"></i> Cập nhật Sản phẩm</h4>
             </div>
-            <div class="card-body">
-                @using (Html.BeginForm("Edit", "Products", FormMethod.Post, new { enctype = "multipart/form-data" }))
+            <div class="card-body p-4">
+                @using (Html.BeginForm("Edit", "Products", FormMethod.Post, new { enctype = "multipart/form-data" })) 
                 {
-                    @Html.AntiForgeryToken()
-                    @* SỬA: ProductID -> Id *@
-                    @Html.HiddenFor(model => model.Id)
-                    @* Giữ lại tên ảnh cũ nếu không upload ảnh mới *@
-                    @Html.HiddenFor(model => model.ImageURL)
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(model => model.Id)
+                @Html.HiddenFor(model => model.ImageURL)
 
-                    <div class="form-horizontal">
-                        @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
-
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên sản phẩm</label>
+                            @Html.EditorFor(model => model.ProductName, new { htmlAttributes = new { @class = "form-control" } })
+                        </div>
                         <div class="row">
-                            <div class="col-md-8">
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Tên sản phẩm <span class="text-danger">*</span></label>
-                                    @Html.EditorFor(model => model.ProductName, new { htmlAttributes = new { @class = "form-control" } })
-                                    @Html.ValidationMessageFor(model => model.ProductName, "", new { @class = "text-danger" })
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label fw-bold">Giá bán (VNĐ)</label>
-                                        @Html.EditorFor(model => model.Price, new { htmlAttributes = new { @class = "form-control", type = "number", min = "0", step = "1000" } })
-                                        @Html.ValidationMessageFor(model => model.Price, "", new { @class = "text-danger" })
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label fw-bold">Số lượng tồn</label>
-                                        @Html.EditorFor(model => model.StockQuantity, new { htmlAttributes = new { @class = "form-control", type = "number", min = "0" } })
-                                        @Html.ValidationMessageFor(model => model.StockQuantity, "", new { @class = "text-danger" })
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Danh mục</label>
-                                    @* SỬA: CategoryID -> CategoryId *@
-                                    @Html.DropDownList("CategoryId", null, htmlAttributes: new { @class = "form-control form-select" })
-                                    @Html.ValidationMessageFor(model => model.CategoryId, "", new { @class = "text-danger" })
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Giá bán (₫)</label>
+                                @Html.EditorFor(model => model.Price, new { htmlAttributes = new { @class = "form-control", type = "number" } })
                             </div>
-
-                            <div class="col-md-4">
-                                <div class="card">
-                                    <div class="card-header bg-light">Hình ảnh sản phẩm</div>
-                                    <div class="card-body text-center">
-                                        @* Hiển thị ảnh cũ nếu có *@
-                                        @{
-                                            var imgSrc = string.IsNullOrEmpty(Model.ImageURL) ? "/Content/Images/no-image.png" : "/Content/Images/" + Model.ImageURL;
-                                        }
-                                        <img id="preview" src="@imgSrc" class="img-fluid mb-3" style="max-height: 200px; object-fit: contain;" onerror="this.src='/Content/Images/no-image.png'" />
-
-                                        <input type="file" name="imageFile" class="form-control" onchange="previewImage(this)" accept="image/*" />
-                                        <small class="text-muted">Chọn ảnh mới để thay thế (nếu cần)</small>
-                                    </div>
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Tồn kho</label>
+                                @Html.EditorFor(model => model.StockQuantity, new { htmlAttributes = new { @class = "form-control", type = "number" } })
                             </div>
                         </div>
-
-                        <div class="mb-3 mt-3">
-                            <label class="form-label fw-bold">Mô tả chi tiết</label>
-                            @Html.TextAreaFor(model => model.Description, new { @class = "form-control", id = "Description" })
-                            @Html.ValidationMessageFor(model => model.Description, "", new { @class = "text-danger" })
-                        </div>
-
-                        <div class="d-flex justify-content-end gap-2 mt-4">
-                            <a href="@Url.Action("Index")" class="btn btn-secondary">Hủy bỏ</a>
-                            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Cập nhật</button>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Danh mục</label>
+                            @Html.DropDownList("CategoryId", null, new { @class = "form-select" })
                         </div>
                     </div>
+                    <div class="col-md-4 text-center">
+                        <label class="form-label fw-bold">Hình ảnh sản phẩm</label>
+                        <div class="border rounded p-2 mb-2">
+                            <img id="preview" src="~/Content/Images/@(string.IsNullOrEmpty(Model.ImageURL) ? "no-image.png" : Model.ImageURL)"
+                                 class="img-fluid" style="max-height: 200px;" onerror="this.src='/Content/Images/no-image.png'" />[cite: 43]
+                        </div>
+                        <input type="file" name="imageFile" class="form-control" onchange="previewImage(this)" accept="image/*" />[cite: 43]
+                    </div>
+                    <div class="col-12 mt-3">
+                        <label class="form-label fw-bold">Mô tả chi tiết</label>
+                        @Html.TextAreaFor(model => model.Description, new { @class = "form-control", id = "Description" })
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-4 border-top pt-3">
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">LƯU THAY ĐỔI</button>
+                    <a href="@Url.Action("Index")" class="btn btn-secondary px-4">HỦY BỎ</a>
+                </div>
                 }
             </div>
         </div>
@@ -87,20 +64,14 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-    <script src="https://cdn.ckeditor.com/4.16.2/standard/ckeditor.js"></script>
+    <script src="https://cdn.ckeditor.com/4.16.2/standard/ckeditor.js"></script>[cite: 43]
     <script>
-        CKEDITOR.replace('Description');
-
+        CKEDITOR.replace('Description');[cite: 43]
         function previewImage(input) {
             var preview = document.getElementById('preview');
             if (input.files && input.files[0]) {
                 var reader = new FileReader();
-                reader.onload = function (e) {
-                    preview.src = e.target.result;
-                }
+                reader.onload = function (e) { preview.src = e.target.result; }
                 reader.readAsDataURL(input.files[0]);
             }
         }

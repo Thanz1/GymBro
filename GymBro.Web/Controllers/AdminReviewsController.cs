@@ -1,27 +1,36 @@
-﻿using GymBro.Core;
-using GymBro.Infrastructure;
+﻿using GymBro.Contracts; // Đảm bảo đã có ReviewDto ở đây
+using GymBro.Service;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace GymBro.Web.Controllers
 {
     public class AdminReviewsController : BaseAdminController
     {
-        private readonly GymBroDbContext _context;
-        public AdminReviewsController(GymBroDbContext context) { _context = context; }
+        private readonly IReviewService _reviewService; // Dùng Service thay vì DbContext
+
+        public AdminReviewsController(IReviewService reviewService)
+        {
+            _reviewService = reviewService;
+        }
 
         public async Task<IActionResult> Index()
         {
-            var reviews = _context.Reviews.Include(r => r.Product).Include(r => r.User);
+            // Gọi API để lấy danh sách đánh giá
+            var reviews = await _reviewService.GetAllReviewsAsync();
 
-            // 👇 ĐÃ SỬA: Đổi 'NgayTao' thành 'CreatedDate' cho khớp với Model
-            return View(await reviews.OrderByDescending(r => r.CreatedDate).ToListAsync());
+            // Logic sắp xếp nên thực hiện ở API hoặc thực hiện tại đây trên List DTO
+            return View(reviews.OrderByDescending(r => r.CreatedDate).ToList());
         }
 
         public async Task<IActionResult> Delete(int id)
         {
-            var review = await _context.Reviews.FindAsync(id);
-            if (review != null) { _context.Reviews.Remove(review); await _context.SaveChangesAsync(); }
+            // Gọi lệnh xóa qua API
+            var success = await _reviewService.DeleteReviewAsync(id);
+
+            if (success)
+            {
+                TempData["SuccessMessage"] = "Đã xóa đánh giá thành công.";
+            }
             return RedirectToAction(nameof(Index));
         }
     }

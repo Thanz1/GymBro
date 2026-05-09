@@ -1,0 +1,177 @@
+@using System.Collections.Generic
+@using System.Linq
+@model CartCheckoutViewModel
+
+@{
+    ViewBag.Title = "Xac nhan thanh toan";
+
+    var user = Model.User;
+    var selectableMethods = Model.PaymentMethods.Where(method => method.IsSupported).ToList();
+    var unsupportedMethods = Model.PaymentMethods.Where(method => !method.IsSupported).ToList();
+}
+
+<div class="checkout-page">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 style="font-weight: 700; color: #2c3e50; margin-bottom: 10px;">
+                <i class="bi bi-check-circle"></i> Xac nhan don hang
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb" style="background: transparent; padding: 0;">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")" style="text-decoration: none; color: #dc3545;">Trang chu</a></li>
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Cart")" style="text-decoration: none; color: #dc3545;">Gio hang</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Xac nhan don hang</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 col-md-12 mb-4">
+            <div style="background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 30px;">
+                <h4 style="font-weight: 700; color: #2c3e50; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+                    <i class="bi bi-truck"></i> Thong tin giao hang
+                </h4>
+
+                <div class="delivery-info">
+                    <div class="mb-3">
+                        <strong style="color: #6c757d; display: block; margin-bottom: 5px;">
+                            <i class="bi bi-person"></i> Khach hang:
+                        </strong>
+                        <span style="font-size: 1.1rem; color: #2c3e50;">
+                            @user.DisplayName
+                        </span>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong style="color: #6c757d; display: block; margin-bottom: 5px;">
+                            <i class="bi bi-envelope"></i> Email:
+                        </strong>
+                        <span style="font-size: 1.1rem; color: #2c3e50;">
+                            @(string.IsNullOrWhiteSpace(user.Email) ? "Chua cap nhat" : user.Email)
+                        </span>
+                    </div>
+
+                    <div class="mb-4">
+                        <strong style="color: #6c757d; display: block; margin-bottom: 5px;">
+                            <i class="bi bi-geo-alt"></i> Dia chi giao hang:
+                        </strong>
+                        <span style="font-size: 1.1rem; color: #2c3e50;">
+                            @(string.IsNullOrWhiteSpace(user.Address) ? "Chua cap nhat" : user.Address)
+                        </span>
+                    </div>
+                </div>
+
+                @if (string.IsNullOrWhiteSpace(user.Address) || string.IsNullOrWhiteSpace(user.Email))
+                {
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Vui long cap nhat day du thong tin giao hang trong
+                        <a href="@Url.Action("MyAccount", "Account")" style="text-decoration: none; font-weight: 600;">Tai khoan cua toi</a>.
+                    </div>
+                }
+
+                @if (unsupportedMethods.Any())
+                {
+                    <div class="mb-4">
+                        @foreach (var method in unsupportedMethods)
+                        {
+                            <div class="alert alert-info mb-2" style="border-left: 4px solid #17a2b8;">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>@method.MethodName</strong>
+                                <span class="d-block small">Chuc nang nay se duoc bo sung o cac buoc tiep theo.</span>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @using (Html.BeginForm("PlaceOrder", "Cart", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+
+                    <h4 style="font-weight: 700; color: #2c3e50; margin-bottom: 15px; margin-top: 30px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+                        <i class="bi bi-credit-card"></i> Phuong thuc thanh toan
+                    </h4>
+
+                    @if (selectableMethods.Any())
+                    {
+                        <div class="payment-methods mb-4">
+                            @for (var i = 0; i < selectableMethods.Count; i++)
+                            {
+                                var method = selectableMethods[i];
+                                var description = string.IsNullOrWhiteSpace(method.Description)
+                                    ? (method.IsBankTransfer ? "Thanh toan bang QR/VietQR sau khi dat hang." : "Thanh toan khi nhan hang.")
+                                    : method.Description;
+
+                                <label class="d-block border rounded-3 p-3 mb-3" style="cursor: pointer;">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="radio" name="paymentMethodId" id="method_@method.Id" value="@method.Id" @(i == 0 ? "checked=\"checked\"" : string.Empty)>
+                                        <span class="form-check-label ms-2" for="method_@method.Id">
+                                            <strong>@method.MethodName</strong>
+                                            <span class="d-block text-muted small mt-1">@description</span>
+                                        </span>
+                                    </div>
+                                </label>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-danger">
+                            Khong co phuong thuc thanh toan nao kha dung de dat hang.
+                        </div>
+                    }
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-success btn-lg" style="padding: 15px; font-size: 1.1rem; font-weight: 600;" @(selectableMethods.Any() ? null : "disabled")>
+                            <i class="bi bi-check-circle"></i> Xac nhan dat hang
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-6 col-md-12">
+            <div style="background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 30px;">
+                <h4 style="font-weight: 700; color: #2c3e50; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+                    <i class="bi bi-receipt"></i> Tom tat don hang
+                </h4>
+
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>San pham</th>
+                                <th class="text-end">Thanh tien</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@item.ProductName</strong><br />
+                                        <small class="text-muted">So luong: @item.Quantity</small>
+                                    </td>
+                                    <td class="text-end">
+                                        <span style="color: #dc3545; font-weight: 600;">
+                                            @string.Format("{0:N0}", item.ThanhTien) VNĐ
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: linear-gradient(135deg, #fff5f5, #ffe5e5); border-top: 2px solid #dc3545;">
+                                <td style="font-weight: 700; font-size: 1.2rem; padding: 15px;">TONG TIEN</td>
+                                <td class="text-end" style="font-weight: 800; font-size: 1.5rem; color: #dc3545; padding: 15px;">
+                                    @string.Format("{0:N0}", Model.TotalPrice) VNĐ
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

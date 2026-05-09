@@ -1,4 +1,5 @@
-﻿@model GymBro.Core.PurchaseOrder
+﻿@using GymBro.Contracts
+@model PurchaseOrderDto
 
 @{
     ViewBag.Title = "Tạo Phiếu nhập kho";
@@ -6,53 +7,33 @@
 }
 
 <div class="row justify-content-center">
-    <div class="col-md-8">
+    <div class="col-md-6">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white py-3">
-                <h4 class="mb-0 text-primary">Tạo Phiếu nhập kho (Bước 1)</h4>
+                <h4 class="mb-0 text-primary fw-bold">Bước 1: Thông tin chung</h4>
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 @using (Html.BeginForm())
                 {
                     @Html.AntiForgeryToken()
+                    <div class="alert alert-info small">
+                        <i class="bi bi-info-circle"></i> Sau khi nhấn "Tiếp tục", bạn sẽ được chuyển sang màn hình thêm sản phẩm chi tiết[cite: 44].
+                    </div>
 
-                    <div class="form-horizontal">
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle"></i> Vui lòng chọn Nhà cung cấp và Ngày lập. Sau đó bạn sẽ được chuyển sang màn hình thêm sản phẩm chi tiết.
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nhà cung cấp <span class="text-danger">*</span></label>
+                        @Html.DropDownList("SupplierId", null, "--- Chọn nhà cung cấp ---", new { @class = "form-select border-primary" })
+                        @Html.ValidationMessageFor(model => model.SupplierId, "", new { @class = "text-danger small" })
+                    </div>
 
-                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Ngày lập phiếu</label>
+                        <input asp-for="OrderDate" class="form-control" type="datetime-local" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                    </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Nhà cung cấp <span class="text-danger">*</span></label>
-                            @* SỬA: SupplierID -> SupplierId *@
-                            @if (ViewBag.SupplierId != null)
-                            {
-                                @Html.DropDownList("SupplierId", (SelectList)ViewBag.SupplierId, "Chọn nhà cung cấp", new { @class = "form-control form-select" })
-                            }
-                            else
-                            {
-                                <div class="alert alert-warning mt-2">
-                                    <i class="bi bi-exclamation-triangle"></i>
-                                    Chưa có nhà cung cấp nào. Vui lòng
-                                    <a href="@Url.Action("Create", "Supplier")" class="alert-link">tạo nhà cung cấp</a>
-                                    trước.
-                                </div>
-                            }
-                            @Html.ValidationMessageFor(model => model.SupplierId, "", new { @class = "text-danger" })
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Ngày lập</label>
-                            @* Value: DateTime.Now *@
-                            @Html.TextBoxFor(model => model.OrderDate, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local", Value = DateTime.Now.ToString("yyyy-MM-ddTHH:mm") })
-                            @Html.ValidationMessageFor(model => model.OrderDate, "", new { @class = "text-danger" })
-                        </div>
-
-                        <div class="d-flex justify-content-end gap-2 mt-4">
-                            <a href="@Url.Action("Index")" class="btn btn-secondary">Hủy bỏ</a>
-                            <input type="submit" value="Tiếp tục (Thêm chi tiết)" class="btn btn-primary" />
-                        </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary w-100 fw-bold">TIẾP TỤC (THÊM SẢN PHẨM)</button>
+                        <a href="@Url.Action("Index")" class="btn btn-secondary px-4">HỦY</a>
                     </div>
                 }
             </div>

@@ -2,10 +2,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Copy csproj files and restore dependencies
+# Copy all csproj files to maintain structure for restore
+COPY ["GymBro.Web/GymBro.Web.csproj", "GymBro.Web/"]
 COPY ["GymBro.API/GymBro.API.csproj", "GymBro.API/"]
 COPY ["GymBro.Core/GymBro.Core.csproj", "GymBro.Core/"]
 COPY ["GymBro.Infrastructure/GymBro.Infrastructure.csproj", "GymBro.Infrastructure/"]
+
+# Restore dependencies
 RUN dotnet restore "GymBro.API/GymBro.API.csproj"
 
 # Copy the remaining source code

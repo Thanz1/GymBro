@@ -1,0 +1,65 @@
+@model AccountDashboardViewModel
+
+@{
+    ViewBag.Title = "Tai khoan cua toi";
+    var account = Model.User;
+    var orderHistory = Model.RecentOrders;
+}
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Thong tin tai khoan</h4>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Ten dang nhap</dt>
+                    <dd class="col-sm-7">@account.Username</dd>
+
+                    <dt class="col-sm-5">Ho va ten</dt>
+                    <dd class="col-sm-7">@(string.IsNullOrWhiteSpace(account.FullName) ? "Chua cap nhat" : account.FullName)</dd>
+
+                    <dt class="col-sm-5">Email</dt>
+                    <dd class="col-sm-7">@(string.IsNullOrWhiteSpace(account.Email) ? "Chua cap nhat" : account.Email)</dd>
+
+                    <dt class="col-sm-5">Dia chi</dt>
+                    <dd class="col-sm-7">@(string.IsNullOrWhiteSpace(account.Address) ? "Chua cap nhat" : account.Address)</dd>
+
+                    <dt class="col-sm-5">Vai tro</dt>
+                    <dd class="col-sm-7">
+                        <span class="badge @(account.Role == "Admin" ? "bg-danger" : "bg-info text-dark")">@account.Role</span>
+                    </dd>
+                </dl>
+            </div>
+            <div class="card-footer bg-white">
+                <div class="d-grid gap-2">
+                    @Html.ActionLink("Sua thong tin", "EditProfile", "Account", null, new { @class = "btn btn-primary" })
+                    @Html.ActionLink("Doi mat khau", "ChangePassword", "Account", null, new { @class = "btn btn-warning" })
+                    @Html.ActionLink("Lich su don hang", "OrderHistory", "Account", null, new { @class = "btn btn-outline-primary" })
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Don hang gan day</h4>
+                <a href="@Url.Action("OrderHistory", "Account")" class="btn btn-sm btn-light">Xem tat ca</a>
+            </div>
+            <div class="card-body">
+                @if (!orderHistory.Any())
+                {
+                    <div class="alert alert-info mb-0">
+                        Ban chua co don hang nao. <a href="@Url.Action("Shop", "Home")">Mua sam ngay</a>
+                    </div>
+                }
+                else
+                {
+                    @await Html.PartialAsync("~/Views/Shared/_OrderSummaryTable.cshtml", orderHistory)
+                }
+            </div>
+        </div>
+    </div>
+</div>

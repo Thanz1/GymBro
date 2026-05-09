@@ -4,11 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GymBro.Core;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace GymBro.Infrastructure
 {
-    public class GymBroDbContext : DbContext
+    public class GymBroDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     {
         public GymBroDbContext(DbContextOptions<GymBroDbContext> options) : base(options)
         {

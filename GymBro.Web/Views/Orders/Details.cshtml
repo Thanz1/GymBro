@@ -1,4 +1,5 @@
-﻿@model GymBro.Core.Order
+﻿@using GymBro.Contracts
+@model OrderDto
 
 @{
     ViewBag.Title = "Chi tiết Đơn hàng #" + Model.Id;
@@ -6,17 +7,13 @@
 }
 
 <div class="container pb-5">
-    @* --- Toolbar --- *@
     <div class="d-flex justify-content-between align-items-center mb-4 no-print">
-        <div>
-            <a href="@Url.Action("Index")" class="btn btn-outline-secondary rounded-pill px-3">
-                <i class="bi bi-arrow-left"></i> Quay lại danh sách
-            </a>
-        </div>
+        <a href="@Url.Action("Index")" class="btn btn-outline-secondary rounded-pill px-3">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
         <div class="d-flex gap-2">
             @if (Model.Status == "Chờ xử lý")
             {
-                @* SỬA: OrderID -> Id *@
                 <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-primary rounded-pill px-4">
                     <i class="bi bi-pencil"></i> Cập nhật trạng thái
                 </a>
@@ -27,63 +24,35 @@
         </div>
     </div>
 
-    @* --- Invoice Card --- *@
     <div class="card border-0 shadow-sm" id="invoice-card">
         <div class="card-body p-5">
-
-            @* --- Header --- *@
             <div class="row mb-5 border-bottom pb-4">
-                <div class="col-md-6">
-                    <h2 class="text-danger fw-bold mb-2"><i class="bi bi-dumbbell"></i> GYMBRO</h2>
-                    <p class="text-muted mb-0">Cửa hàng dụng cụ thể thao hàng đầu</p>
+                <div class="col-6">
+                    <h2 class="text-danger fw-bold mb-2"><i class="bi bi-dumbbell"></i> GYMBRO Store</h2>
+                    <p class="text-muted mb-0">Hệ thống quản lý thực phẩm bổ sung</p>
                 </div>
-                <div class="col-md-6 text-md-end">
+                <div class="col-6 text-end">
                     <h4 class="text-uppercase mb-2">Hóa đơn bán hàng</h4>
-                    @* SỬA: OrderID -> Id *@
                     <div class="text-muted">Mã đơn: <span class="fw-bold text-dark">#@Model.Id</span></div>
                     <div class="text-muted">Ngày đặt: <span class="fw-bold text-dark">@Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</span></div>
-                    <div class="mt-2">
-                        Trạng thái:
-                        @if (Model.Status == "Chờ xử lý")
-                        {
-                            <span class="badge bg-warning text-dark">@Model.Status</span>
-                        }
-                        else if (Model.Status == "Đã giao hàng")
-                        {
-                            <span class="badge bg-success">@Model.Status</span>
-                        }
-                        else if (Model.Status == "Đã hủy")
-                        {
-                            <span class="badge bg-danger">@Model.Status</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-info text-dark">@Model.Status</span>
-                        }
-                    </div>
                 </div>
             </div>
 
-            @* --- Info --- *@
             <div class="row mb-5">
-                <div class="col-md-6">
+                <div class="col-6">
                     <h6 class="text-uppercase text-muted fw-bold small mb-3">Thông tin khách hàng</h6>
-                    <h5 class="fw-bold">@(Model.User != null ? Model.User.FullName : "Khách vãng lai")</h5>
-                    <p class="mb-1"><i class="bi bi-envelope me-2"></i> @(Model.User != null ? Model.User.Email : "---")</p>
-                    <p class="mb-1"><i class="bi bi-geo-alt me-2"></i> @(Model.User != null ? Model.User.Address : "---")</p>
+                    <h5 class="fw-bold">@Model.CustomerName</h5>
+                    <p class="mb-1"><i class="bi bi-envelope me-2"></i> @Model.CustomerEmail</p>
+                    <p class="mb-1"><i class="bi bi-geo-alt me-2"></i> @Model.CustomerAddress</p>
                 </div>
-                <div class="col-md-6">
-                    <h6 class="text-uppercase text-muted fw-bold small mb-3">Thông tin người gửi</h6>
-                    <h5 class="fw-bold">GYMBRO Store</h5>
-                    <p class="mb-1">77 Đường số 26A, Phường 10, Quận 6, TPHCM</p>
-                    <p class="mb-1">Hotline: 0902 662 298</p>
-                    <p class="mb-1">Email: storethietbi@gmail.com</p>
+                <div class="col-6 text-end">
+                    <h6 class="text-uppercase text-muted fw-bold small mb-3">Trạng thái hiện tại</h6>
+                    <span class="badge @(Model.Status == "Đã giao hàng" ? "bg-success" : "bg-warning text-dark") fs-6 px-4">@Model.Status</span>
                 </div>
             </div>
 
-            @* --- Items --- *@
             <div class="table-responsive mb-4">
-                <table class="table table-borderless mb-0">
+                <table class="table table-borderless">
                     <thead class="bg-light">
                         <tr>
                             <th class="py-3 ps-4">Sản phẩm</th>
@@ -93,47 +62,23 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (Model.OrderDetails != null && Model.OrderDetails.Any())
+                        @foreach (var item in Model.OrderDetails)
                         {
-                            foreach (var item in Model.OrderDetails)
-                            {
-                                <tr class="border-bottom">
-                                    <td class="ps-4 py-3">
-                                        <div class="fw-bold text-primary">@(item.Product != null ? item.Product.ProductName : "Sản phẩm đã xóa")</div>
-                                        @if (item.Product != null)
-                                        {
-                                            @* SỬA: ProductID -> ProductId *@
-                                            <small class="text-muted">Mã SP: #@item.ProductId</small>
-                                        }
-                                    </td>
-                                    <td class="text-center py-3">x @item.Quantity</td>
-                                    <td class="text-end py-3">@item.Price.ToString("N0") ₫</td>
-                                    <td class="text-end pe-4 py-3 fw-bold">@((item.Price * item.Quantity).ToString("N0")) ₫</td>
-                                </tr>
-                            }
-                        }
-                        else
-                        {
-                            <tr>
-                                <td colspan="4" class="text-center py-4 text-muted">Không có chi tiết sản phẩm.</td>
+                            <tr class="border-bottom">
+                                <td class="ps-4 py-3 fw-bold text-primary">@item.ProductName</td>
+                                <td class="text-center py-3">x @item.Quantity</td>
+                                <td class="text-end py-3">@item.UnitPrice.ToString("N0") ₫</td>
+                                <td class="text-end pe-4 py-3 fw-bold">@item.Total.ToString("N0") ₫</td>
                             </tr>
                         }
                     </tbody>
-                    <tfoot class="bg-light">
-                        <tr>
-                            <td colspan="3" class="text-end fw-bold py-3 fs-5">Tổng cộng:</td>
+                    <tfoot>
+                        <tr class="bg-light">
+                            <td colspan="3" class="text-end fw-bold py-3 fs-5">TỔNG THANH TOÁN:</td>
                             <td class="text-end pe-4 py-3 fw-bold fs-5 text-danger">@Model.TotalAmount.ToString("N0") ₫</td>
                         </tr>
                     </tfoot>
                 </table>
-            </div>
-
-            @* --- Footer --- *@
-            <div class="row mt-5">
-                <div class="col-12 text-center text-muted small">
-                    <p>Cảm ơn quý khách đã mua hàng tại GYMBRO!</p>
-                    <p>Vui lòng giữ lại hóa đơn để đổi trả trong vòng 7 ngày nếu có lỗi từ nhà sản xuất.</p>
-                </div>
             </div>
         </div>
     </div>
@@ -141,24 +86,13 @@
 
 <style>
     @@media print {
-        .no-print, header, footer, .navbar, .footer {
+        .no-print {
             display: none !important;
-        }
-
-        body {
-            background-color: white !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-
-        .container {
-            max-width: 100% !important;
-            padding: 0 !important;
         }
 
         #invoice-card {
             box-shadow: none !important;
-            border: none !important;
+            border: 1px solid #eee;
         }
     }
 </style>

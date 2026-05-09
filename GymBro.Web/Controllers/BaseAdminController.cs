@@ -1,4 +1,4 @@
-﻿using GymBro.Core;
+﻿using GymBro.Contracts; // Đã có using chuẩn này rồi
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using GymBro.Web.Helpers;
@@ -10,7 +10,8 @@ namespace GymBro.Web.Controllers
     {
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            var user = context.HttpContext.Session.GetObject<User>("User");
+            // SỬA: Thay 'User' thành 'UserDto'
+            var user = context.HttpContext.Session.GetObject<UserDto>("User");
 
             // Nếu chưa đăng nhập hoặc không phải Admin -> Đá về trang Login
             if (user == null || user.Role != "Admin")

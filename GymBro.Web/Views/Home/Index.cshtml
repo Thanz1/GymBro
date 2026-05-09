@@ -1,155 +1,53 @@
-﻿@{
-    ViewBag.Title = "Trang chủ";
-    // Cast dữ liệu từ ViewBag sang List chuẩn
-    var newProducts = ViewBag.NewProducts as IEnumerable<GymBro.Core.Product>;
-    var bestSellingProducts = ViewBag.BestSellingProducts as IEnumerable<GymBro.Core.Product>;
+@using GymBro.Contracts
+@{
+    ViewBag.Title = "Trang chủ - GYMBRO";
+    var newProducts = ViewBag.NewProducts as IEnumerable<ProductDto>;
+    var bestSellingProducts = ViewBag.BestSellingProducts as IEnumerable<ProductDto>;
 }
 
-<main>
-    @* Hero Banner *@
-    <div class="hero-banner mb-5">
-        <img src="~/Content/Images/Postter.jpg"
-             class="hero-image"
-             alt="GymBro Banner"
-             style="width: 100%; height: 400px; object-fit: cover;" />
-        <div class="hero-overlay">
-            <div class="text-center text-white hero-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                <h1 class="hero-title display-3 fw-bold">GYMBRO</h1>
-                <p class="hero-subtitle fs-4">Thiết bị thể thao chất lượng cao</p>
+@* Hero Banner *@
+<div class="hero-banner position-relative mb-5">
+    <img src="~/Content/Images/Postter.jpg" class="w-100 shadow" style="height: 450px; object-fit: cover;" alt="Banner" onerror="this.src='https://via.placeholder.com/1200x450'" />
+    <div class="position-absolute top-50 start-50 translate-middle text-center text-white">
+        <h1 class="display-2 fw-bold text-uppercase shadow-sm">GYMBRO</h1>
+        <p class="fs-4 fw-light">Sức mạnh từ sự kiên trì</p>
+        <a href="@Url.Action("Shop", "Home")" class="btn btn-danger btn-lg px-5 mt-3 shadow">MUA SẮM NGAY</a>
+    </div>
+</div>
+
+<div class="container">
+    @* Sản phẩm Mới *@
+    <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <h2 class="fw-bold text-primary mb-0"><i class="bi bi-stars text-warning"></i> Sản phẩm mới nhất</h2>
+                <p class="text-muted mb-0">Những thiết bị vừa cập bến tại cửa hàng</p>
             </div>
+            <a href="@Url.Action("Shop", "Home")" class="text-decoration-none text-danger fw-bold">Xem tất cả <i class="bi bi-arrow-right"></i></a>
         </div>
-    </div>
 
-    @* Section Sản phẩm Mới nhất *@
-    <div class="row mb-4">
-        <div class="col-12">
-            <h2 class="text-gradient text-primary fw-bold">
-                <i class="bi bi-star-fill text-warning"></i> Sản phẩm Mới nhất
-            </h2>
-            <p class="text-muted">Khám phá những sản phẩm mới nhất của chúng tôi</p>
-        </div>
-    </div>
-
-    <div class="row g-4 mb-5">
-        @if (newProducts != null && newProducts.Any())
-        {
-            foreach (var item in newProducts)
+        <div class="row g-4">
+            @if (newProducts != null && newProducts.Any())
             {
-                <div class="col-md-3 col-sm-6">
-                    <div class="card h-100 product-card border-0 shadow-sm">
-                        <div class="position-relative overflow-hidden bg-light rounded-top shop-img-container" style="height: 250px;">
-                            <a href="@Url.Action("Details", "Home", new { id = item.Id })">
-                                @if (!string.IsNullOrEmpty(item.ImageURL))
-                                {
-                                    <img src="~/Content/Images/@item.ImageURL"
-                                         alt="@item.ProductName"
-                                         class="w-100 h-100 object-fit-cover"
-                                         loading="lazy"
-                                         onerror="this.src='/Content/Images/no-image.png'" />
-                                }
-                                else
-                                {
-                                    <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
-                                        <i class="bi bi-image fs-1"></i>
-                                    </div>
-                                }
+                foreach (var item in newProducts)
+                {
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="card h-100 border-0 shadow-sm product-card">
+                            <a href="@Url.Action("Details", "Home", new { id = item.Id })" class="text-decoration-none">
+                                <img src="~/Content/Images/@item.ImageURL" class="card-img-top p-2" style="height: 220px; object-fit: contain;" onerror="this.src='/Content/Images/no-image.png'" />
                             </a>
-                            <div class="position-absolute top-0 start-0 m-2 d-flex flex-column gap-1">
-                                <span class="badge bg-danger">
-                                    <i class="bi bi-star-fill"></i> MỚI
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="card-body d-flex flex-column p-3">
-                            <div class="mb-2">
-                                <span class="text-muted small text-uppercase">
-                                    @(item.Category != null ? item.Category.CategoryName : "GYM")
-                                </span>
-                            </div>
-                            <h6 class="card-title mb-2">
-                                <a href="@Url.Action("Details", "Home", new { id = item.Id })" class="text-decoration-none text-dark fw-bold">
-                                    @item.ProductName
-                                </a>
-                            </h6>
-                            <div class="mt-auto d-flex justify-content-between align-items-end">
-                                <div>
-                                    <span class="text-primary fw-bold fs-5">@item.Price.ToString("N0") ₫</span>
-                                </div>
-                                <div>
-                                    <a href="@Url.Action("Details", "Home", new { id = item.Id })" class="btn btn-outline-primary btn-sm rounded-circle" title="Xem chi tiết">
-                                        <i class="bi bi-cart-plus"></i>
-                                    </a>
+                            <div class="card-body">
+                                <small class="text-muted text-uppercase">@(item.CategoryName ?? "Thiết bị")</small>
+                                <h6 class="fw-bold text-dark mt-1 text-truncate">@item.ProductName</h6>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <span class="text-danger fw-bold fs-5">@item.Price.ToString("N0") ₫</span>
+                                    <a href="@Url.Action("Details", "Home", new { id = item.Id })" class="btn btn-outline-danger btn-sm rounded-circle"><i class="bi bi-cart-plus"></i></a>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                }
             }
-        }
-        else
-        {
-            <div class="col-12">
-                <div class="alert alert-warning text-center">Chưa có sản phẩm mới.</div>
-            </div>
-        }
-    </div>
-
-    @* Section Sản phẩm Bán chạy *@
-    <div class="row mb-4">
-        <div class="col-12">
-            <h2 class="text-gradient text-danger fw-bold">
-                <i class="bi bi-trophy-fill text-warning"></i> Sản phẩm Bán chạy
-            </h2>
-            <p class="text-muted">Những sản phẩm được yêu thích nhất</p>
         </div>
-    </div>
-
-    <div class="row g-4 mb-5">
-        @if (bestSellingProducts != null && bestSellingProducts.Any())
-        {
-            foreach (var item in bestSellingProducts)
-            {
-                <div class="col-md-3 col-sm-6">
-                    <div class="card h-100 product-card border-0 shadow-sm">
-                        <div class="position-relative overflow-hidden bg-light rounded-top shop-img-container" style="height: 250px;">
-                            <a href="@Url.Action("Details", "Home", new { id = item.Id })">
-                                @if (!string.IsNullOrEmpty(item.ImageURL))
-                                {
-                                    <img src="~/Content/Images/@item.ImageURL"
-                                         alt="@item.ProductName"
-                                         class="w-100 h-100 object-fit-cover"
-                                         loading="lazy"
-                                         onerror="this.src='/Content/Images/no-image.png'" />
-                                }
-                                else
-                                {
-                                    <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
-                                        <i class="bi bi-image fs-1"></i>
-                                    </div>
-                                }
-                            </a>
-                            <div class="position-absolute top-0 start-0 m-2">
-                                <span class="badge bg-warning text-dark"><i class="bi bi-fire"></i> HOT</span>
-                            </div>
-                        </div>
-
-                        <div class="card-body d-flex flex-column p-3">
-                            <h6 class="card-title mb-2">
-                                <a href="@Url.Action("Details", "Home", new { id = item.Id })" class="text-decoration-none text-dark fw-bold">
-                                    @item.ProductName
-                                </a>
-                            </h6>
-                            <div class="mt-auto d-flex justify-content-between align-items-end">
-                                <span class="text-primary fw-bold fs-5">@item.Price.ToString("N0") ₫</span>
-                                <a href="@Url.Action("Details", "Home", new { id = item.Id })" class="btn btn-outline-primary btn-sm rounded-circle">
-                                    <i class="bi bi-cart-plus"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-        }
-    </div>
-</main>
+    </section>
+</div>

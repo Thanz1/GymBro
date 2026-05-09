@@ -1,4 +1,5 @@
-﻿@model IEnumerable<GymBro.Core.Payment>
+﻿@using GymBro.Contracts
+@model IEnumerable<PaymentDto>
 
 @{
     ViewBag.Title = "Quản lý Thanh toán";
@@ -7,88 +8,78 @@
 
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white py-3">
-        <h2 class="mb-0 text-primary"><i class="bi bi-credit-card-2-front"></i> Quản lý Thanh toán</h2>
+        <h2 class="mb-0 text-primary fw-bold"><i class="bi bi-credit-card-2-front"></i> Quản lý Thanh toán</h2>
     </div>
     <div class="card-body">
-
         @if (TempData["SuccessMessage"] != null)
         {
-            <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+            <div class="alert alert-success alert-dismissible fade show">
+                <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
         }
 
-        @* Statistics Cards *@
+        @* Thẻ thống kê nhanh *@
         <div class="row mb-4">
             <div class="col-md-3">
-                <div class="card border-0 bg-warning bg-opacity-10 border-start border-warning border-4">
+                <div class="card border-0 bg-warning bg-opacity-10 border-start border-warning border-4 shadow-sm">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="text-muted text-uppercase mb-1">Chờ xác minh</h6>
+                                <h6 class="text-muted text-uppercase small mb-1">Chờ xác minh</h6>
                                 <h3 class="mb-0 text-warning fw-bold">@ViewBag.PendingCount</h3>
                             </div>
-                            <div class="text-warning"><i class="bi bi-clock-history fs-1"></i></div>
+                            <i class="bi bi-clock-history fs-1 text-warning opacity-50"></i>
                         </div>
                     </div>
                 </div>
             </div>
-            @* ... Các thẻ thống kê khác giữ nguyên logic nhưng sửa tên biến nếu cần ... *@
         </div>
 
         <div class="table-responsive">
             <table class="table table-hover table-bordered align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Mã ĐH</th>
+                        <th class="text-center">Mã ĐH</th>
                         <th>Khách hàng</th>
                         <th>Phương thức</th>
                         <th>Số tiền</th>
                         <th>Ngày thanh toán</th>
-                        <th>Trạng thái</th>
-                        <th class="text-center">Hành động</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th class="text-center">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @if (!Model.Any())
+                    @if (Model == null || !Model.Any())
                     {
-                        <tr><td colspan="7" class="text-center py-4 text-muted">Không tìm thấy thanh toán nào.</td></tr>
+                        <tr><td colspan="7" class="text-center py-4 text-muted">Chưa có dữ liệu thanh toán nào.</td></tr>
                     }
-                    @foreach (var item in Model)
+                    else
                     {
-                        <tr>
-                            <td>
-                                <a href="@Url.Action("Details", "Orders", new { id = item.OrderId })" class="text-decoration-none fw-bold text-primary">
-                                    #@item.OrderId
-                                </a>
-                            </td>
-                            <td>
-                                <div class="fw-bold">@(item.Order?.User?.FullName ?? "Unknown")</div>
-                            </td>
-                            <td>
-                                <span class="badge bg-secondary">@item.PaymentMethod</span>
-                            </td>
-                            <td class="fw-bold text-primary">
-                                @string.Format("{0:N0}", item.Amount) ₫
-                            </td>
-                            <td>
-                                @item.PaymentDate.ToString("dd/MM/yyyy HH:mm")
-                            </td>
-                            <td>
-                                @if (item.Status == "Completed")
-                                {
-                                    <span class="badge bg-success">Đã thanh toán</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-warning text-dark">@item.Status</span>
-                                }
-                            </td>
-                            <td class="text-center">
-                                @* Sửa PaymentID -> Id *@
-                                <a href="@Url.Action("Details", new { id = item.Id })" class="btn btn-sm btn-info" title="Chi tiết">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                            </td>
-                        </tr>
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="text-center">
+                                    <a href="@Url.Action("Details", "Orders", new { id = item.OrderId })" class="fw-bold text-decoration-none">
+                                        #@item.OrderId
+                                    </a>
+                                </td>
+                                <td class="fw-bold">@item.CustomerName</td>
+                                <td><span class="badge bg-secondary">@item.PaymentMethodName</span></td>
+                                <td class="fw-bold text-primary">@item.Amount.ToString("N0") ₫</td>
+                                <td class="small">@item.PaymentDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-center">
+                                    <span class="badge @(item.Status == "Completed" ? "bg-success" : "bg-warning text-dark") rounded-pill px-3">
+                                        @(item.Status == "Completed" ? "Đã thanh toán" : item.Status)
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <a href="@Url.Action("Details", new { id = item.Id })" class="btn btn-sm btn-outline-info" title="Xem chi tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
                     }
                 </tbody>
             </table>

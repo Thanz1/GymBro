@@ -1,4 +1,5 @@
-﻿@model IEnumerable<GymBro.Core.PurchaseOrder>
+﻿@using GymBro.Contracts
+@model IEnumerable<PurchaseOrderDto>
 
 @{
     ViewBag.Title = "Danh sách Phiếu nhập kho";
@@ -7,22 +8,14 @@
 
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <h2 class="mb-0 text-primary"><i class="bi bi-box-arrow-in-down"></i> Danh sách Phiếu nhập kho</h2>
-        <a href="@Url.Action("Create")" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Tạo phiếu mới</a>
+        <h2 class="mb-0 text-primary fw-bold"><i class="bi bi-box-arrow-in-down"></i> Quản lý Nhập kho</h2>
+        <a href="@Url.Action("Create")" class="btn btn-primary shadow-sm"><i class="bi bi-plus-lg"></i> Tạo phiếu mới</a>
     </div>
     <div class="card-body">
-
         @if (TempData["Success"] != null)
         {
             <div class="alert alert-success alert-dismissible fade show">
                 <i class="bi bi-check-circle"></i> @TempData["Success"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        }
-        @if (TempData["Error"] != null)
-        {
-            <div class="alert alert-danger alert-dismissible fade show">
-                <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         }
@@ -31,45 +24,36 @@
             <table class="table table-hover table-bordered align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Mã phiếu</th>
+                        <th class="text-center">Mã phiếu</th>
                         <th>Nhà cung cấp</th>
                         <th>Ngày lập</th>
                         <th>Tổng tiền</th>
-                        <th>Trạng thái</th>
-                        <th class="text-center">Hành động</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th class="text-center">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var item in Model)
                     {
                         <tr>
-                            @* SỬA: PurchaseOrderID -> Id *@
-                            <td class="fw-bold text-primary">#@item.Id</td>
-                            <td>@(item.Supplier != null ? item.Supplier.SupplierName : "N/A")</td>
-                            <td>@item.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
-                            <td class="fw-bold">@string.Format("{0:N0}", item.TotalAmount) đ</td>
-                            <td>
-                                @if (item.Status == "Đã nhập kho")
-                                {
-                                    <span class="badge bg-success">@item.Status</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-warning text-dark">@item.Status</span>
-                                }
+                            <td class="text-center fw-bold text-primary">#@item.Id</td>
+                            <td>@item.SupplierName</td>
+                            <td class="small">@item.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="fw-bold text-danger">@item.TotalAmount.ToString("N0") đ</td>
+                            <td class="text-center">
+                                <span class="badge @(item.Status == "Đã nhập kho" ? "bg-success" : "bg-warning text-dark") rounded-pill px-3">
+                                    @item.Status
+                                </span>
                             </td>
                             <td class="text-center">
-                                @* SỬA: PurchaseOrderID -> Id *@
-                                <a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-sm btn-info me-1" title="Chi tiết / Sửa">
-                                    <i class="bi bi-pencil-square"></i> Chi tiết
-                                </a>
-
-                                @if (item.Status != "Đã nhập kho")
-                                {
-                                    <a href="@Url.Action("Delete", new { id = item.Id })" class="btn btn-sm btn-danger" title="Xóa">
-                                        <i class="bi bi-trash"></i>
-                                    </a>
-                                }
+                                <div class="btn-group">
+                                    @* Link Edit thực chất là trang Details để thêm sản phẩm chi tiết *@
+                                    <a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-sm btn-outline-info" title="Chi tiết"><i class="bi bi-pencil-square"></i></a>
+                                    @if (item.Status != "Đã nhập kho")
+                                    {
+                                        <a href="@Url.Action("Delete", new { id = item.Id })" class="btn btn-sm btn-outline-danger" title="Xóa"><i class="bi bi-trash"></i></a>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }

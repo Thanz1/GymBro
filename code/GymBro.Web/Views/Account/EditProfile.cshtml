@@ -1,0 +1,55 @@
+@model GymBro.Web.Features.Account.AccountProfileViewModel
+
+@{
+    ViewBag.Title = "Cập nhật tài khoản";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 mt-4">
+            <div class="card-header bg-primary text-white">
+                <h2 class="h4 mb-0">Cập nhật thông tin tài khoản</h2>
+            </div>
+            <div class="card-body p-4">
+                @using (Html.BeginForm("EditProfile", "Account", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên đăng nhập <span class="text-danger">*</span></label>
+                        @Html.TextBoxFor(model => model.Username, new { @class = "form-control", placeholder = "Nhập tên đăng nhập" })
+                        @Html.ValidationMessageFor(model => model.Username, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Họ và tên</label>
+                        @Html.TextBoxFor(model => model.FullName, new { @class = "form-control", placeholder = "Nhập họ và tên" })
+                        @Html.ValidationMessageFor(model => model.FullName, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email</label>
+                        @Html.TextBoxFor(model => model.Email, new { @class = "form-control", type = "email", placeholder = "Nhập địa chỉ email" })
+                        @Html.ValidationMessageFor(model => model.Email, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Địa chỉ</label>
+                        @Html.TextBoxFor(model => model.Address, new { @class = "form-control", placeholder = "Nhập địa chỉ" })
+                        @Html.ValidationMessageFor(model => model.Address, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check2-circle"></i> Lưu thay đổi
+                        </button>
+                        <a href="@Url.Action("MyAccount", "Account")" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Quay lại
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

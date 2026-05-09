@@ -1,7 +1,8 @@
-﻿@model GymBro.Core.Order
+﻿@using GymBro.Contracts
+@model OrderDto
 
 @{
-    ViewBag.Title = "Thêm Đơn hàng mới";
+    ViewBag.Title = "Tạo Đơn hàng mới";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
 }
 
@@ -9,49 +10,59 @@
     <div class="col-md-8">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white py-3">
-                <h4 class="mb-0 text-success">Thêm Đơn hàng mới</h4>
+                <h4 class="mb-0 text-success fw-bold"><i class="bi bi-plus-circle"></i> Tạo Đơn hàng mới</h4>
             </div>
-            <div class="card-body">
-                @using (Html.BeginForm())
-                {
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post">
                     @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-                    <div class="form-horizontal">
-                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Ngày đặt hàng</label>
-                            @Html.EditorFor(model => model.OrderDate, new { htmlAttributes = new { @class = "form-control", type = "datetime-local" } })
-                            <small class="text-muted">Để trống sẽ tự động lấy ngày hiện tại</small>
-                            @Html.ValidationMessageFor(model => model.OrderDate, "", new { @class = "text-danger" })
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Trạng thái</label>
-                            @Html.DropDownListFor(model => model.Status, new SelectList(new[] { "Chờ xử lý", "Đang giao hàng", "Đã giao hàng", "Đã hủy" }, Model.Status ?? "Chờ xử lý"), new { @class = "form-control form-select" })
-                            @Html.ValidationMessageFor(model => model.Status, "", new { @class = "text-danger" })
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Tổng tiền <span class="text-danger">*</span></label>
-                            @Html.EditorFor(model => model.TotalAmount, new { htmlAttributes = new { @class = "form-control", type = "number", min = "0", step = "1000" } })
-                            <small class="text-muted">Nhập tổng tiền bằng VNĐ (ví dụ: 1000000)</small>
-                            @Html.ValidationMessageFor(model => model.TotalAmount, "", new { @class = "text-danger" })
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Người dùng</label>
-                            @* SỬA: UserID -> UserId *@
-                            @Html.DropDownList("UserId", null, htmlAttributes: new { @class = "form-control form-select" })
-                            @Html.ValidationMessageFor(model => model.UserId, "", new { @class = "text-danger" })
-                        </div>
-
-                        <div class="d-flex gap-2 justify-content-end">
-                            <a href="@Url.Action("Index")" class="btn btn-secondary">Hủy</a>
-                            <input type="submit" value="Tạo mới" class="btn btn-success" />
-                        </div>
+                    @* 1. Ngày đặt hàng *@
+                    <div class="mb-3">
+                        <label asp-for="OrderDate" class="form-label fw-bold">Ngày lập đơn</label>
+                        <input asp-for="OrderDate" class="form-control" type="datetime-local" />
+                        <small class="text-muted">Hệ thống sẽ mặc định lấy giờ hiện tại nếu để trống.</small>
+                        <span asp-validation-for="OrderDate" class="text-danger"></span>
                     </div>
-                }
+
+                    @* 2. Khách hàng *@
+                    <div class="mb-3">
+                        <label asp-for="UserId" class="form-label fw-bold">Khách hàng đặt hàng</label>
+                        <select asp-for="UserId" class="form-select border-primary" asp-items="ViewBag.UserId">
+                            <option value="">-- Chọn khách hàng --</option>
+                        </select>
+                        <span asp-validation-for="UserId" class="text-danger"></span>
+                    </div>
+
+                    @* 3. Trạng thái *@
+                    <div class="mb-3">
+                        <label asp-for="Status" class="form-label fw-bold">Trạng thái ban đầu</label>
+                        <select asp-for="Status" class="form-select">
+                            <option value="Chờ xử lý">Chờ xử lý</option>
+                            <option value="Đang giao hàng">Đang giao hàng</option>
+                            <option value="Đã giao hàng">Đã giao hàng</option>
+                            <option value="Đã hủy">Đã hủy</option>
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                    </div>
+
+                    @* 4. Tổng tiền *@
+                    <div class="mb-4">
+                        <label asp-for="TotalAmount" class="form-label fw-bold">Tổng tiền đơn hàng (VNĐ)</label>
+                        <div class="input-group">
+                            <input asp-for="TotalAmount" class="form-control fw-bold text-danger" type="number" step="1000" placeholder="0" />
+                            <span class="input-group-text">₫</span>
+                        </div>
+                        <span asp-validation-for="TotalAmount" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                        <a asp-action="Index" class="btn btn-secondary px-4">Hủy bỏ</a>
+                        <button type="submit" class="btn btn-success px-4 fw-bold shadow-sm">
+                            <i class="bi bi-check-lg"></i> TẠO ĐƠN HÀNG
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

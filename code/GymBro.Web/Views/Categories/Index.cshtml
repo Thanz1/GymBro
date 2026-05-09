@@ -1,0 +1,58 @@
+﻿@model IEnumerable<GymBro.Core.Category>
+
+@{
+    ViewBag.Title = "Quản lý Danh mục";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h2 class="mb-0 text-primary"><i class="bi bi-tags"></i> Quản lý Danh mục</h2>
+        <a href="@Url.Action("Create")" class="btn btn-success"><i class="bi bi-plus-lg"></i> Thêm mới</a>
+    </div>
+    <div class="card-body">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show">
+                <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show">
+                <i class="bi bi-exclamation-triangle"></i> @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Tên danh mục</th>
+                        <th style="width: 250px;" class="text-center">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.CategoryName</td>
+                            <td class="text-center">
+                                <a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-sm btn-primary"><i class="bi bi-pencil"></i> Sửa</a>
+                                <a href="@Url.Action("Details", new { id = item.Id })" class="btn btn-sm btn-info"><i class="bi bi-eye"></i> Chi tiết</a>
+
+                                @using (Html.BeginForm("Delete", "Categories", new { id = item.Id }, FormMethod.Post, null, new { style = "display:inline;", onsubmit = "return confirm('Bạn có chắc chắn muốn xóa danh mục này không?');" }))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i> Xóa</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

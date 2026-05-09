@@ -1,108 +1,47 @@
-﻿@model GymBro.Core.User
+@model GymBro.Contracts.RegisterDto
 
 @{
-    ViewBag.Title = "Đăng ký";
+    ViewBag.Title = "Đăng ký tài khoản";
 }
 
 <div class="auth-page">
     <div class="row justify-content-center">
-        <div class="col-lg-6 col-md-8 col-sm-10">
-            <div style="background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); padding: 40px; margin-top: 30px;">
-                <div class="text-center mb-4">
-                    <i class="bi bi-person-plus" style="font-size: 4rem; color: #dc3545; margin-bottom: 15px;"></i>
-                    <h2 style="font-weight: 700; color: #2c3e50; margin-bottom: 10px;">Đăng ký tài khoản</h2>
-                    <p class="text-muted">Tạo tài khoản mới để bắt đầu mua sắm</p>
-                </div>
+        <div class="col-lg-6 col-md-8">
+            <div class="card shadow border-0 rounded-3 p-4 mt-4">
+                <h2 class="text-center fw-bold text-danger">Đăng ký tài khoản</h2>
+                <hr />
 
-                @using (Html.BeginForm())
+                @using (Html.BeginForm()) 
                 {
-                    @Html.AntiForgeryToken()
-                    @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
+                @Html.AntiForgeryToken()
+                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
 
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #2c3e50; margin-bottom: 8px;">
-                                <i class="bi bi-person"></i> Tên đăng nhập <span class="text-danger">*</span>
-                            </label>
-                            @Html.EditorFor(model => model.Username, new { htmlAttributes = new {
-                            @class = "form-control",
-                                                placeholder = "Nhập tên đăng nhập",
-                                                style = "padding: 12px 15px; font-size: 1rem;"
-                                                } })
-                        @Html.ValidationMessageFor(model => model.Username, "", new { @class = "text-danger" })
-                    </div>
-
-                    <div class="col-md-12 mb-3">
-                        <label class="form-label" style="font-weight: 600; color: #2c3e50; margin-bottom: 8px;">
-                            <i class="bi bi-lock"></i> Mật khẩu <span class="text-danger">*</span>
-                        </label>
-                        @Html.EditorFor(model => model.Password, new { htmlAttributes = new {
-                                                @class = "form-control",
-                                                type = "password",
-                                                minlength = "6",
-                                                placeholder = "Nhập mật khẩu (tối thiểu 6 ký tự)",
-                                                style = "padding: 12px 15px; font-size: 1rem;"
-                                                } })
-                        @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
-                    </div>
-
-                    <div class="col-md-12 mb-3">
-                        <label class="form-label" style="font-weight: 600; color: #2c3e50; margin-bottom: 8px;">
-                            <i class="bi bi-person-badge"></i> Họ và tên
-                        </label>
-                        @Html.EditorFor(model => model.FullName, new { htmlAttributes = new {
-                                                @class = "form-control",
-                                                placeholder = "Nhập họ và tên",
-                                                style = "padding: 12px 15px; font-size: 1rem;"
-                                                } })
-                        @Html.ValidationMessageFor(model => model.FullName, "", new { @class = "text-danger" })
-                    </div>
-
-                    <div class="col-md-12 mb-3">
-                        <label class="form-label" style="font-weight: 600; color: #2c3e50; margin-bottom: 8px;">
-                            <i class="bi bi-envelope"></i> Email
-                        </label>
-                        @Html.EditorFor(model => model.Email, new { htmlAttributes = new {
-                                                @class = "form-control",
-                                                type = "email",
-                                                placeholder = "Nhập địa chỉ email",
-                                                style = "padding: 12px 15px; font-size: 1rem;"
-                                                } })
-                        @Html.ValidationMessageFor(model => model.Email, "", new { @class = "text-danger" })
-                    </div>
-
-                    <div class="col-md-12 mb-4">
-                        <label class="form-label" style="font-weight: 600; color: #2c3e50; margin-bottom: 8px;">
-                            <i class="bi bi-geo-alt"></i> Địa chỉ
-                        </label>
-                        @Html.EditorFor(model => model.Address, new { htmlAttributes = new {
-                                                @class = "form-control",
-                                                placeholder = "Nhập địa chỉ",
-                                                style = "padding: 12px 15px; font-size: 1rem;"
-                                                } })
-                        @Html.ValidationMessageFor(model => model.Address, "", new { @class = "text-danger" })
-                    </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tên đăng nhập *</label>
+                    @Html.EditorFor(model => model.Username, new { htmlAttributes = new { @class = "form-control" } })
+                    @Html.ValidationMessageFor(model => model.Username, "", new { @class = "text-danger" })
                 </div>
 
-                <div class="form-group mb-4">
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-success btn-lg"
-                                style="padding: 15px; font-size: 1.1rem; font-weight: 600; border-radius: 10px;">
-                            <i class="bi bi-person-plus"></i> Đăng ký
-                        </button>
-                    </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Mật khẩu * (Tối thiểu 6 ký tự)</label>
+                    @Html.EditorFor(model => model.Password, new { htmlAttributes = new { @class = "form-control", type = "password" } })
+                    @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
                 </div>
-                                }
 
-                <div class="text-center" style="padding-top: 20px; border-top: 1px solid #e0e0e0;">
-                    <p class="mb-0" style="color: #6c757d;">
-                        Đã có tài khoản?
-                        @Html.ActionLink("Đăng nhập ngay", "Login", null, new {
-                                                @class = "text-decoration-none",
-                                                style = "color: #dc3545; font-weight: 600;"
-                                                })
-                    </p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Họ và tên</label>
+                    @Html.EditorFor(model => model.FullName, new { htmlAttributes = new { @class = "form-control" } })
                 </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Email</label>
+                    @Html.EditorFor(model => model.Email, new { htmlAttributes = new { @class = "form-control", type = "email" } })
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-success fw-bold">Tạo tài khoản</button>
+                </div>
+                }
             </div>
         </div>
     </div>

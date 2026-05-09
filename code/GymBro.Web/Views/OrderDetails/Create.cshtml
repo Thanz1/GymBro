@@ -1,0 +1,20 @@
+@{
+    ViewBag.Title = "Them chi tiet don hang";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h4 class="mb-0 text-primary"><i class="bi bi-lock"></i> Them chi tiet don hang da bi khoa</h4>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">
+                    Chi tiet don hang khong con duoc tao thu cong. Hay de he thong tao tu checkout de tranh lech ton kho.
+                </p>
+                <a href="@Url.Action("Index", "Orders")" class="btn btn-primary">Ve quan ly don hang</a>
+            </div>
+        </div>
+    </div>
+</div>

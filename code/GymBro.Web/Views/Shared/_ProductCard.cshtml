@@ -1,0 +1,116 @@
+@model GymBro.Web.Controllers.ProductCardViewModel
+
+@functions {
+    private const string FallbackImageUrl = "/Content/Images/shopping.webp";
+
+    private static string ResolveImageUrl(string? imageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl))
+        {
+            return FallbackImageUrl;
+        }
+
+        if (imageUrl.StartsWith("/Content/", System.StringComparison.OrdinalIgnoreCase)
+            || imageUrl.StartsWith("http://", System.StringComparison.OrdinalIgnoreCase)
+            || imageUrl.StartsWith("https://", System.StringComparison.OrdinalIgnoreCase))
+        {
+            return imageUrl;
+        }
+
+        return imageUrl.StartsWith("/", System.StringComparison.Ordinal)
+            ? imageUrl
+            : "/Content/Images/" + imageUrl;
+    }
+}
+
+@{
+    var cardModel = Model;
+    var product = cardModel?.Product;
+}
+
+@if (product != null && cardModel != null)
+{
+    var detailUrl = Url.Action("Details", "Home", new { id = product.Id });
+    var imageUrl = ResolveImageUrl(product.ImageURL);
+    var categoryName = product.Category?.CategoryName ?? "Chưa phân loại";
+    var isOutOfStock = product.StockQuantity <= 0;
+    var isLowStock = product.StockQuantity > 0 && product.StockQuantity <= 5;
+    var highlightBadgeCssClass = string.IsNullOrWhiteSpace(cardModel.HighlightBadgeCssClass)
+        ? "bg-danger"
+        : cardModel.HighlightBadgeCssClass;
+
+    <div class="card h-100 product-card border-0 shadow-sm">
+        <div class="position-relative overflow-hidden bg-light rounded-top product-card-media">
+            <a href="@detailUrl">
+                <img src="@Url.Content(imageUrl)"
+                     alt="@product.ProductName"
+                     class="w-100 h-100 object-fit-cover transition-transform product-card-image"
+                     loading="lazy"
+                     onerror="this.onerror=null; this.style.display='none'; this.parentElement.querySelector('.product-card-placeholder').classList.remove('is-hidden');" />
+                <div class="product-card-placeholder is-hidden text-muted">
+                    <i class="bi bi-image fs-1"></i>
+                </div>
+            </a>
+
+            <div class="position-absolute top-0 start-0 m-2 d-flex flex-column gap-1 badge-wrapper">
+                @if (isOutOfStock)
+                {
+                    <span class="badge bg-danger">
+                        <i class="bi bi-x-circle"></i> Hết hàng
+                    </span>
+                }
+                else if (isLowStock)
+                {
+                    <span class="badge bg-warning text-dark">
+                        <i class="bi bi-exclamation-triangle"></i> Sắp hết
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-success">
+                        <i class="bi bi-check-circle"></i> Còn hàng
+                    </span>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(cardModel.HighlightText))
+                {
+                    <span class="badge @highlightBadgeCssClass">
+                        @if (!string.IsNullOrWhiteSpace(cardModel.HighlightIconCssClass))
+                        {
+                            <i class="@cardModel.HighlightIconCssClass"></i>
+                        }
+                        @cardModel.HighlightText
+                    </span>
+                }
+            </div>
+        </div>
+
+        <div class="card-body d-flex flex-column p-3">
+            <div class="mb-2">
+                <span class="text-muted small text-uppercase">@categoryName</span>
+            </div>
+            <h6 class="card-title mb-2">
+                <a href="@detailUrl" class="text-decoration-none text-dark fw-bold text-truncate-2">@product.ProductName</a>
+            </h6>
+            <div class="mt-auto d-flex justify-content-between align-items-end gap-2">
+                <div>
+                    <span class="text-primary fw-bold fs-5">@product.Price.ToString("N0") ₫</span>
+                </div>
+                <div class="d-flex gap-1">
+                    @if (cardModel.ShowQuickViewAction)
+                    {
+                        <button type="button"
+                                class="btn btn-outline-info btn-sm rounded-circle js-quick-view-trigger"
+                                data-product-id="@product.Id"
+                                title="Xem nhanh">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    }
+                    <a href="@detailUrl" class="btn btn-outline-primary btn-sm rounded-circle" title="Xem chi tiết">
+                        <i class="bi bi-cart-plus"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+}

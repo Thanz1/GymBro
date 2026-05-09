@@ -1,120 +1,113 @@
+@model GymBro.Contracts.RegisterDto
 @{
-    ViewBag.Title = "Tạo Tài Khoản Admin";
+    ViewBag.Title = "Thiết lập hệ thống";
+    // Sử dụng layout mặc định của Web
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0">Tạo Tài Khoản Admin</h3>
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-danger text-white py-3">
+                    <h3 class="mb-0 fw-bold"><i class="bi bi-shield-lock"></i> Khởi tạo Admin</h3>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
+
+                    @* Hiển thị thông báo phản hồi từ API *@
                     @if (!string.IsNullOrEmpty(ViewBag.Message))
                     {
                         <div class="alert alert-@ViewBag.MessageType alert-dismissible fade show" role="alert">
                             @ViewBag.Message
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     }
 
                     @if (ViewBag.MessageType != "success")
                     {
-                        using (Html.BeginForm("CreateAdmin", "AdminSetup", FormMethod.Post, new { @class = "needs-validation", novalidate = "novalidate" }))
-                        {
+                        <form asp-action="CreateAdmin" asp-controller="AdminSetup" method="post" class="needs-validation" novalidate>
                             @Html.AntiForgeryToken()
 
                             <div class="mb-3">
-                                <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="username" name="username" required />
-                                <div class="invalid-feedback">
-                                    Vui lòng nhập username.
-                                </div>
+                                <label asp-for="Username" class="form-label fw-bold">Tên đăng nhập *</label>
+                                <input asp-for="Username" class="form-control" required placeholder="Ví dụ: admin_tdmu" />
+                                <span asp-validation-for="Username" class="text-danger small"></span>
                             </div>
 
                             <div class="mb-3">
-                                <label for="fullName" class="form-label">Họ và Tên</label>
-                                <input type="text" class="form-control" id="fullName" name="fullName" value="Administrator" />
+                                <label asp-for="FullName" class="form-label fw-bold">Họ và Tên</label>
+                                <input asp-for="FullName" class="form-control" placeholder="Họ tên người quản trị" />
                             </div>
 
                             <div class="mb-3">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" />
+                                <label asp-for="Email" class="form-label fw-bold">Email liên hệ</label>
+                                <input asp-for="Email" type="email" class="form-control" placeholder="admin@gymbro.com" />
                             </div>
 
                             <div class="mb-3">
-                                <label for="password" class="form-label">Mật khẩu <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control" id="password" name="password" required minlength="6" />
-                                <div class="invalid-feedback">
-                                    Mật khẩu phải có ít nhất 6 ký tự.
-                                </div>
+                                <label asp-for="Password" class="form-label fw-bold">Mật khẩu quản trị *</label>
+                                <input asp-for="Password" type="password" class="form-control" required minlength="6" id="pwd" />
+                                <div class="form-text">Mật khẩu nên có cả chữ và số để bảo mật.</div>
                             </div>
 
                             <div class="mb-3">
-                                <label for="confirmPassword" class="form-label">Xác nhận mật khẩu <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required />
-                                <div class="invalid-feedback">
-                                    Mật khẩu xác nhận không khớp.
-                                </div>
+                                <label class="form-label fw-bold">Xác nhận mật khẩu *</label>
+                                <input type="password" class="form-control" id="confirm_pwd" required />
+                                <div class="invalid-feedback">Mật khẩu nhập lại không khớp!</div>
                             </div>
 
-                            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
-
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-person-plus"></i> Tạo Tài Khoản Admin
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-danger btn-lg shadow-sm">
+                                    <i class="bi bi-person-plus-fill"></i> Kích hoạt hệ thống
                                 </button>
                             </div>
-                        }
+                        </form>
                     }
                     else
                     {
-                        <div class="text-center mb-3">
-                            <a href="@Url.Action("Login", "Account")" class="btn btn-success">
-                                <i class="bi bi-box-arrow-in-right"></i> Đăng nhập ngay
+                        <div class="text-center py-3">
+                            <p class="text-success fw-bold">Hệ thống đã sẵn sàng!</p>
+                            <a href="@Url.Action("Login", "Account")" class="btn btn-outline-primary">
+                                <i class="bi bi-box-arrow-in-right"></i> Tới trang Đăng nhập
                             </a>
                         </div>
                     }
                 </div>
-                <div class="card-footer text-muted">
-                    <small>
-                        <i class="bi bi-info-circle"></i>
-                        Lưu ý: Trang này chỉ dùng để tạo tài khoản admin đầu tiên.
-                        Nếu hệ thống đã có admin, bạn không thể tạo thêm qua trang này.
-                    </small>
+                <div class="card-footer bg-light text-muted small">
+                    <i class="bi bi-info-circle-fill"></i>
+                    Trang này chỉ hoạt động khi hệ thống chưa có tài khoản Admin nào.
+                    Mọi yêu cầu sẽ được chuyển đến <strong>Identity.API</strong> để xử lý bảo mật.
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-    // Validation form
-    (function() {
-        'use strict';
-        window.addEventListener('load', function() {
-            var forms = document.getElementsByClassName('needs-validation');
-            var validation = Array.prototype.filter.call(forms, function(form) {
-                form.addEventListener('submit', function(event) {
-                    var password = document.getElementById('password').value;
-                    var confirmPassword = document.getElementById('confirmPassword').value;
-                    
-                    if (password !== confirmPassword) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        document.getElementById('confirmPassword').setCustomValidity('Mật khẩu xác nhận không khớp');
-                    } else {
-                        document.getElementById('confirmPassword').setCustomValidity('');
-                    }
-                    
-                    if (form.checkValidity() === false) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                    }
-                    form.classList.add('was-validated');
-                }, false);
-            });
-        }, false);
-    })();
-</script>
+@section Scripts {
+    <script>
+        // Logic kiểm tra mật khẩu khớp nhau ngay tại trình duyệt
+        (function () {
+            'use strict'
+            const form = document.querySelector('.needs-validation');
+            const pwd = document.getElementById('pwd');
+            const confirm = document.getElementById('confirm_pwd');
+
+            form.addEventListener('submit', function (event) {
+                if (pwd.value !== confirm.value) {
+                    confirm.setCustomValidity('Invalid');
+                    event.preventDefault();
+                    event.stopPropagation();
+                } else {
+                    confirm.setCustomValidity('');
+                }
+
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+
+                form.classList.add('was-validated');
+            }, false);
+        })();
+    </script>
+}

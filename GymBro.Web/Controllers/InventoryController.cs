@@ -1,57 +1,57 @@
-﻿using GymBro.Core;
-using GymBro.Infrastructure;
+﻿using GymBro.Contracts;
+using GymBro.Service;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace GymBro.Web.Controllers
 {
     public class InventoryController : BaseAdminController
     {
-        private readonly GymBroDbContext _context;
-        public InventoryController(GymBroDbContext context) { _context = context; }
+        private readonly IProductService _productService;
 
-        // Danh sách tồn kho
-        public async Task<IActionResult> Index(string searchString)
+        public InventoryController(IProductService productService)
         {
-            var products = _context.Products.Include(p => p.Category).AsQueryable();
-
-            if (!string.IsNullOrEmpty(searchString))
-                // SỬA: TenSanPham -> ProductName
-                products = products.Where(p => p.ProductName.Contains(searchString));
-
-            // SỬA: TenSanPham -> ProductName
-            return View(await products.OrderBy(p => p.ProductName).ToListAsync());
+            _productService = productService;
         }
 
-        // Điều chỉnh kho thủ công (Nhập/Xuất)
+        // 1. Danh sách tồn kho
+        public async Task<IActionResult> Index(string searchString)
+        {
+            // Gọi API để lấy danh sách sản phẩm thay vì truy vấn DB
+            var products = await _productService.GetAllProductsAsync();
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                products = products.Where(p => p.ProductName.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+                ViewBag.SearchString = searchString;
+            }
+
+            return View(products.OrderBy(p => p.ProductName).ToList());
+        }
+
+        // 2. Giao diện điều chỉnh kho (GET)
         public async Task<IActionResult> Adjust(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            var product = await _productService.GetProductByIdAsync(id);
             return product == null ? NotFound() : View(product);
         }
 
+        // 3. Xử lý điều chỉnh kho (POST)
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Adjust(int id, int NewQuantity, string Note)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null) return NotFound();
+            // Đẩy trách nhiệm tính toán Diff và lưu Transaction sang API
+            var success = await _productService.AdjustStockAsync(id, NewQuantity, Note);
 
-            // SỬA: SoLuongTon -> StockQuantity
-            int diff = NewQuantity - product.StockQuantity;
-            product.StockQuantity = NewQuantity;
-
-            // ĐÃ MỞ COMMENT VÀ SỬA TÊN BIẾN CHO KHỚP MODEL
-            _context.InventoryTransactions.Add(new InventoryTransaction
+            if (success)
             {
-                ProductId = id,              // Đã sửa ProductID -> ProductId (nếu cần)
-                QuantityChange = diff,
-                Note = Note ?? "Kiểm kê kho",
-                CreatedDate = DateTime.Now,  // Đã sửa Date -> CreatedDate
-                TransactionType = "Điều chỉnh"
-            });
+                TempData["SuccessMessage"] = "Cập nhật kho thành công!";
+                return RedirectToAction(nameof(Index));
+            }
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            ModelState.AddModelError("", "Không thể cập nhật kho. Vui lòng thử lại.");
+            var product = await _productService.GetProductByIdAsync(id);
+            return View(product);
         }
     }
 }

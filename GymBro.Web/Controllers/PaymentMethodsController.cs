@@ -1,26 +1,80 @@
-﻿using GymBro.Core;
-using GymBro.Infrastructure;
+﻿using GymBro.Contracts;
+using GymBro.Service;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace GymBro.Web.Controllers
 {
     public class PaymentMethodsController : BaseAdminController
     {
-        private readonly GymBroDbContext _context;
-        public PaymentMethodsController(GymBroDbContext context) { _context = context; }
+        private readonly IPaymentService _paymentService;
 
-        public async Task<IActionResult> Index() => View(await _context.PaymentMethods.ToListAsync());
+        public PaymentMethodsController(IPaymentService paymentService)
+        {
+            _paymentService = paymentService;
+        }
 
+        // 1. Danh sách phương thức thanh toán
+        public async Task<IActionResult> Index()
+        {
+            var methods = await _paymentService.GetAllPaymentMethodsAsync();
+            return View(methods);
+        }
+
+        // 2. Thêm mới (GET)
         public IActionResult Create() => View();
 
+        // 3. Thêm mới (POST)
         [HttpPost]
-        public async Task<IActionResult> Create(PaymentMethod method)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(PaymentMethodDto methodDto)
         {
-            if (ModelState.IsValid) { _context.Add(method); await _context.SaveChangesAsync(); return RedirectToAction(nameof(Index)); }
+            if (ModelState.IsValid)
+            {
+                var success = await _paymentService.CreatePaymentMethodAsync(methodDto);
+                if (success)
+                {
+                    TempData["SuccessMessage"] = "Thêm phương thức thanh toán thành công!";
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+            return View(methodDto);
+        }
+
+        // 4. Cập nhật (GET)
+        public async Task<IActionResult> Edit(int id)
+        {
+            var method = await _paymentService.GetPaymentMethodByIdAsync(id);
+            if (method == null) return NotFound();
             return View(method);
         }
 
-        // Edit/Delete tương tự các controller khác
+        // 5. Cập nhật (POST)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, PaymentMethodDto methodDto)
+        {
+            if (id != methodDto.Id) return BadRequest();
+
+            if (ModelState.IsValid)
+            {
+                var success = await _paymentService.UpdatePaymentMethodAsync(id, methodDto);
+                if (success)
+                {
+                    TempData["SuccessMessage"] = "Cập nhật thành công!";
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+            return View(methodDto);
+        }
+
+        // 6. Xóa (POST)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var success = await _paymentService.DeletePaymentMethodAsync(id);
+            if (success) TempData["SuccessMessage"] = "Đã xóa phương thức thanh toán!";
+            return RedirectToAction(nameof(Index));
+        }
     }
 }

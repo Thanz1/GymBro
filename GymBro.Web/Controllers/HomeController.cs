@@ -1,63 +1,57 @@
-﻿using GymBro.Core;
-using GymBro.Infrastructure;
+﻿﻿using GymBro.Contracts;
+using GymBro.Service;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using GymBro.Web.Helpers; // Để dùng Session
+using System.Linq;
 
 namespace GymBro.Web.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly GymBroDbContext _context;
+        private readonly IProductService _productService;
+        private readonly ICategoryService _categoryService; // Thêm để lấy danh mục cho trang Shop
 
-        public HomeController(GymBroDbContext context)
+        public HomeController(IProductService productService, ICategoryService categoryService)
         {
-            _context = context;
+            _productService = productService;
+            _categoryService = categoryService;
         }
 
+        // Trang chủ: Hiển thị sản phẩm mới và bán chạy
         public async Task<IActionResult> Index()
         {
-            // Sản phẩm mới nhất
-            ViewBag.NewProducts = await _context.Products
-                .Include(p => p.Category)
-                .OrderByDescending(p => p.Id)
-                .Take(8)
-                .ToListAsync();
-
-            // Sản phẩm bán chạy (Demo logic)
-            ViewBag.BestSellingProducts = await _context.Products
-                .Include(p => p.Category)
-                .Take(8)
-                .ToListAsync();
-
+            // Lấy 8 sản phẩm mới nhất và 8 sản phẩm bán chạy qua API Port 7002
+            ViewBag.NewProducts = await _productService.GetNewProductsAsync(8);
+            ViewBag.BestSellingProducts = await _productService.GetBestSellingProductsAsync(8);
             return View();
         }
 
-        // TRANG CỬA HÀNG (SHOP)
-        public async Task<IActionResult> Shop(string keyword, int? categoryId, decimal? minPrice, decimal? maxPrice, string sortOrder, string availability, int? page)
+        // Trang cửa hàng: Tìm kiếm, lọc và sắp xếp
+        public async Task<IActionResult> Shop(string keyword, int? categoryId, decimal? minPrice, decimal? maxPrice, string sortOrder, int? page)
         {
-            var query = _context.Products.Include(p => p.Category).AsQueryable();
+            // 1. Lấy dữ liệu từ các API
+            var allProducts = await _productService.GetAllProductsAsync();
+            var categories = await _categoryService.GetAllCategoriesAsync(); // Lấy danh sách thực tế
 
-            // 1. Lọc theo từ khóa
+            var query = allProducts.AsQueryable();
+
+            // 2. Logic Lọc sản phẩm (Thực hiện tại tầng Web)
             if (!string.IsNullOrEmpty(keyword))
             {
-                // SỬA: TenSanPham -> ProductName, MoTa -> Description
-                query = query.Where(p => p.ProductName.Contains(keyword) || p.Description.Contains(keyword));
+                query = query.Where(p => p.ProductName.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+                                     || (p.Description != null && p.Description.Contains(keyword, StringComparison.OrdinalIgnoreCase)));
                 ViewBag.Keyword = keyword;
             }
 
-            // 2. Lọc danh mục
             if (categoryId.HasValue)
             {
                 query = query.Where(p => p.CategoryId == categoryId);
                 ViewBag.CategoryId = categoryId;
             }
 
-            // 3. Lọc giá (SỬA: Gia -> Price)
             if (minPrice.HasValue) query = query.Where(p => p.Price >= minPrice);
             if (maxPrice.HasValue) query = query.Where(p => p.Price <= maxPrice);
 
-            // 4. Sắp xếp (SỬA: Gia -> Price, TenSanPham -> ProductName)
+            // 3. Logic Sắp xếp
             query = sortOrder switch
             {
                 "price_asc" => query.OrderBy(p => p.Price),
@@ -66,31 +60,20 @@ namespace GymBro.Web.Controllers
                 _ => query.OrderByDescending(p => p.Id),
             };
 
-            // 5. Lưu ViewBag để giữ trạng thái bộ lọc
+            // 4. Đưa dữ liệu ra View
             ViewBag.SortOrder = sortOrder;
             ViewBag.MinPrice = minPrice;
             ViewBag.MaxPrice = maxPrice;
-            ViewBag.Categories = await _context.Categories.ToListAsync();
+            ViewBag.Categories = categories.ToList(); // Đưa danh sách danh mục thật ra sidebar
 
-            return View(await query.ToListAsync());
+            return View(query.ToList());
         }
 
-        // CHI TIẾT SẢN PHẨM
+        // Trang chi tiết sản phẩm
         public async Task<IActionResult> Details(int id)
         {
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
+            var product = await _productService.GetProductByIdAsync(id);
             if (product == null) return NotFound();
-
-            // Kiểm tra yêu thích
-            var user = HttpContext.Session.GetObject<User>("User");
-            if (user != null)
-            {
-                ViewBag.IsWishlisted = await _context.Wishlists
-                    .AnyAsync(w => w.UserId == user.Id && w.ProductId == id);
-            }
 
             return View(product);
         }

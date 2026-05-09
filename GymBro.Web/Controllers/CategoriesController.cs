@@ -1,22 +1,22 @@
-﻿using GymBro.Core;
-using GymBro.Infrastructure;
+using GymBro.Contracts;
+using GymBro.Service;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace GymBro.Web.Controllers
 {
     public class CategoriesController : BaseAdminController
     {
-        private readonly GymBroDbContext _context;
+        private readonly ICategoryService _categoryService;
 
-        public CategoriesController(GymBroDbContext context)
+        public CategoriesController(ICategoryService categoryService)
         {
-            _context = context;
+            _categoryService = categoryService;
         }
 
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Categories.ToListAsync());
+            var categories = await _categoryService.GetAllCategoriesAsync();
+            return View(categories);
         }
 
         public IActionResult Create()
@@ -25,17 +25,54 @@ namespace GymBro.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(Category category)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CategoryDto categoryDto)
         {
             if (ModelState.IsValid)
             {
-                _context.Categories.Add(category);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                var success = await _categoryService.CreateCategoryAsync(categoryDto);
+                if (success)
+                {
+                    TempData["SuccessMessage"] = "Thêm danh mục thành công!";
+                    return RedirectToAction(nameof(Index));
+                }
             }
+            return View(categoryDto);
+        }
+
+        public async Task<IActionResult> Edit(int id)
+        {
+            var category = await _categoryService.GetCategoryByIdAsync(id);
+            if (category == null) return NotFound();
             return View(category);
         }
 
-        // Edit, Delete làm tương tự...
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, CategoryDto categoryDto)
+        {
+            if (ModelState.IsValid)
+            {
+                var success = await _categoryService.UpdateCategoryAsync(id, categoryDto);
+                if (success)
+                {
+                    TempData["SuccessMessage"] = "Cập nhật danh mục thành công!";
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+            return View(categoryDto);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var success = await _categoryService.DeleteCategoryAsync(id);
+            if (success)
+            {
+                TempData["SuccessMessage"] = "Xóa danh mục thành công!";
+            }
+            return RedirectToAction(nameof(Index));
+        }
     }
 }

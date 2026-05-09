@@ -1,58 +1,51 @@
-﻿using GymBro.Core;
-using GymBro.Infrastructure;
+﻿using GymBro.Contracts;
+using GymBro.Service;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using GymBro.Web.Helpers;
 
 namespace GymBro.Web.Controllers
 {
     public class WishlistController : Controller
     {
-        private readonly GymBroDbContext _context;
+        private readonly IWishlistService _wishlistService;
 
-        public WishlistController(GymBroDbContext context)
+        public WishlistController(IWishlistService wishlistService)
         {
-            _context = context;
+            _wishlistService = wishlistService;
         }
 
+        // GET: Hiển thị danh sách sản phẩm yêu thích
         public async Task<IActionResult> Index()
         {
-            var user = HttpContext.Session.GetObject<User>("User");
+            // Lấy UserDto từ Session
+            var user = HttpContext.Session.GetObject<UserDto>("User");
             if (user == null) return RedirectToAction("Login", "Account");
 
-            var wishlist = await _context.Wishlists
-                .Include(w => w.Product)
-                .Where(w => w.UserId == user.Id)
-                .OrderByDescending(w => w.NgayTao)
-                .ToListAsync();
+            var wishlist = await _wishlistService.GetWishlistByUserIdAsync(user.Id);
 
-            return View(wishlist);
+            // Sắp xếp theo ngày tạo mới nhất
+            return View(wishlist.OrderByDescending(w => w.CreatedDate).ToList());
         }
 
+        // POST: Thêm/Xóa sản phẩm khỏi danh sách yêu thích
         [HttpPost]
         public async Task<IActionResult> Toggle(int productId)
         {
-            var user = HttpContext.Session.GetObject<User>("User");
+            var user = HttpContext.Session.GetObject<UserDto>("User");
             if (user == null)
             {
                 return Json(new { success = false, message = "Vui lòng đăng nhập!", requireLogin = true });
             }
 
-            var existingItem = await _context.Wishlists
-                .FirstOrDefaultAsync(w => w.UserId == user.Id && w.ProductId == productId);
+            // Đẩy logic xử lý (Check tồn tại -> Thêm/Xóa) sang API
+            var isAdded = await _wishlistService.ToggleWishlistAsync(user.Id, productId);
 
-            if (existingItem == null)
+            return Json(new
             {
-                _context.Wishlists.Add(new Wishlist { UserId = user.Id, ProductId = productId, NgayTao = DateTime.Now });
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, isAdded = true, message = "Đã thích!" });
-            }
-            else
-            {
-                _context.Wishlists.Remove(existingItem);
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, isAdded = false, message = "Đã bỏ thích." });
-            }
+                success = true,
+                isAdded = isAdded,
+                message = isAdded ? "Đã thêm vào danh sách yêu thích!" : "Đã xóa khỏi danh sách yêu thích."
+            });
         }
     }
 }

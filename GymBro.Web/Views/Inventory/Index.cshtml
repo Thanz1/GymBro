@@ -1,4 +1,5 @@
-﻿@model IEnumerable<GymBro.Core.Product>
+﻿@using GymBro.Contracts
+@model IEnumerable<ProductDto>
 
 @{
     ViewBag.Title = "Báo cáo Tồn kho";
@@ -7,7 +8,7 @@
 
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white py-3">
-        <h2 class="mb-0 text-primary"><i class="bi bi-boxes"></i> Báo cáo Tồn kho</h2>
+        <h2 class="mb-0 text-primary fw-bold"><i class="bi bi-boxes"></i> Báo cáo Tồn kho</h2>
     </div>
     <div class="card-body">
 
@@ -21,15 +22,14 @@
 
         <div class="row mb-4">
             <div class="col-md-6">
-                @using (Html.BeginForm("Index", "Inventory", FormMethod.Get, new { @class = "d-flex" }))
-                {
+                <form asp-action="Index" method="get" class="d-flex">
                     <input type="text" name="searchString" class="form-control me-2" placeholder="Tìm tên sản phẩm..." value="@Context.Request.Query["searchString"]" />
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Tìm</button>
-                }
+                    <button type="submit" class="btn btn-primary px-4"><i class="bi bi-search"></i> Lọc</button>
+                </form>
             </div>
             <div class="col-md-6 text-end">
-                <a href="@Url.Action("History", "Inventory")" class="btn btn-info text-white">
-                    <i class="bi bi-clock-history"></i> Xem Lịch sử Biến động kho (Toàn bộ)
+                <a href="@Url.Action("History", "Inventory")" class="btn btn-info text-white shadow-sm">
+                    <i class="bi bi-clock-history"></i> Xem lịch sử toàn bộ
                 </a>
             </div>
         </div>
@@ -38,44 +38,47 @@
             <table class="table table-bordered table-hover align-middle">
                 <thead class="table-dark">
                     <tr>
-                        <th>Mã SP</th>
+                        <th class="text-center">ID</th>
                         <th>Tên sản phẩm</th>
                         <th>Danh mục</th>
-                        <th>Tồn kho hiện tại</th>
-                        <th class="text-center">Hành động</th>
+                        <th class="text-center">Tồn kho</th>
+                        <th class="text-center">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @if (!Model.Any())
+                    @if (Model == null || !Model.Any())
                     {
                         <tr>
-                            <td colspan="5" class="text-center text-muted">Không tìm thấy sản phẩm nào.</td>
+                            <td colspan="5" class="text-center text-muted py-4">Không tìm thấy sản phẩm nào trong kho.</td>
                         </tr>
                     }
-                    @foreach (var item in Model)
+                    else
                     {
-                        <tr class="@(item.StockQuantity <= 10 ? "table-danger" : "")">
-                            @* SỬA: ProductID -> Id *@
-                            <td>#@item.Id</td>
-                            <td>
-                                <div class="fw-bold">@item.ProductName</div>
-                                @if (item.StockQuantity <= 10)
-                                {
-                                    <small class="text-danger"><i class="bi bi-exclamation-triangle"></i> Sắp hết hàng</small>
-                                }
-                            </td>
-                            <td>@(item.Category != null ? item.Category.CategoryName : "N/A")</td>
-                            <td class="fw-bold text-center">@item.StockQuantity</td>
-                            <td class="text-center">
-                                @* SỬA: productId -> tham số cho action History *@
-                                <a href="@Url.Action("History", new { productId = item.Id })" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-clock-history"></i> Lịch sử
-                                </a>
-                                <a href="@Url.Action("Adjust", new { id = item.Id })" class="btn btn-sm btn-warning">
-                                    <i class="bi bi-pencil-square"></i> Điều chỉnh
-                                </a>
-                            </td>
-                        </tr>
+                        foreach (var item in Model)
+                        {
+                            <tr class="@(item.StockQuantity <= 10 ? "table-danger" : "")">
+                                <td class="text-center">#@item.Id</td>
+                                <td>
+                                    <div class="fw-bold text-dark">@item.ProductName</div>
+                                    @if (item.StockQuantity <= 10)
+                                    {
+                                        <span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> Sắp hết hàng</span>
+                                    }
+                                </td>
+                                <td>@(item.CategoryName ?? "N/A")</td>
+                                <td class="fw-bold text-center fs-5">@item.StockQuantity</td>
+                                <td class="text-center">
+                                    <div class="btn-group">
+                                        <a href="@Url.Action("History", new { productId = item.Id })" class="btn btn-sm btn-outline-primary" title="Xem lịch sử biến động">
+                                            <i class="bi bi-clock-history"></i>
+                                        </a>
+                                        <a href="@Url.Action("Adjust", new { id = item.Id })" class="btn btn-sm btn-warning" title="Điều chỉnh số lượng">
+                                            <i class="bi bi-pencil-square"></i> Sửa kho
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                     }
                 </tbody>
             </table>
