@@ -16,10 +16,13 @@ namespace GymBro.Infrastructure
         {
         }
 
-        // Danh sách các bảng trong Database
+        // --- Danh sách các bảng nghiệp vụ của GymBro ---
         public DbSet<Product> Products { get; set; }
         public DbSet<Category> Categories { get; set; }
-        public DbSet<User> Users { get; set; }
+
+        // LƯU Ý: Không nên khai báo thêm 'public DbSet<User> Users' ở đây 
+        // vì IdentityDbContext đã cung cấp sẵn thuộc tính Users kế thừa từ lớp cha.
+
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderDetail> OrderDetails { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
@@ -34,11 +37,13 @@ namespace GymBro.Infrastructure
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // BẮT BUỘC: Phải gọi base.OnModelCreating trước khi cấu hình thêm
             base.OnModelCreating(modelBuilder);
 
-            // Cấu hình thêm nếu cần (ví dụ Unique Username)
+            // SỬA LỖI TRÙNG CỘT: 
+            // Đổi từ u.Username thành u.UserName (viết hoa chữ N) để khớp với thuộc tính có sẵn của Identity.
             modelBuilder.Entity<User>()
-                .HasIndex(u => u.Username)
+                .HasIndex(u => u.UserName)
                 .IsUnique();
 
             modelBuilder.Entity<Category>()

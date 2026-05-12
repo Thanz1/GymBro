@@ -12,11 +12,11 @@ namespace GymBro.Core
     public class User : IdentityUser<int>
     {
         [Key]
-        public int Id { get; set; }
+      
 
         [Required]
         [StringLength(50)]
-        public string Username { get; set; } = string.Empty;
+       
         public bool IsActive { get; set; } = true;
         [Required]
         [StringLength(100)]

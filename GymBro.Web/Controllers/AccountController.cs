@@ -16,7 +16,11 @@ namespace GymBro.Web.Controllers
             _orderService = orderService;
         }
 
-        // ... (Register giữ nguyên vì đã chuẩn) ...
+        [HttpGet]
+        public IActionResult Login()
+        {
+            return View();
+        }
 
         [HttpPost]
         [ValidateAntiForgeryToken]

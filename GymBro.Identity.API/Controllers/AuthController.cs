@@ -26,7 +26,7 @@ namespace GymBro.API.Controllers
         [HttpPost("register")]
         public async Task<ActionResult> Register(RegisterDto request)
         {
-            if (await _context.Users.AnyAsync(u => u.Username == request.Username))
+            if (await _context.Users.AnyAsync(u => u.UserName == request.Username))
             {
                 return BadRequest("Tài khoản đã tồn tại.");
             }
@@ -36,7 +36,7 @@ namespace GymBro.API.Controllers
 
             var user = new GymBro.Core.User
             {
-                Username = request.Username,
+                UserName = request.Username,
                 Password = passwordHash, // <--- ĐÃ SỬA: Dùng 'Password' thay vì 'PasswordHash'
                 FullName = request.FullName,
                 Email = request.Email,
@@ -53,7 +53,7 @@ namespace GymBro.API.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<string>> Login(LoginDto request)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == request.Username);
 
             if (user == null)
             {
@@ -61,7 +61,7 @@ namespace GymBro.API.Controllers
             }
 
             // <--- ĐÃ SỬA: Dùng 'user.Password' thay vì 'user.PasswordHash'
-            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
                 return BadRequest("Sai tài khoản hoặc mật khẩu.");
             }
@@ -74,7 +74,7 @@ namespace GymBro.API.Controllers
         {
             List<Claim> claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Name, user.UserName),
                 new Claim(ClaimTypes.Role, user.Role)
             };
 
