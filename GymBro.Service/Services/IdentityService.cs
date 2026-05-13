@@ -1,5 +1,6 @@
 ﻿﻿using System.Net.Http.Json;
 using GymBro.Contracts;
+using GymBro.Contracts.DTOs;
 namespace GymBro.Service
 {
     public class IdentityService : IIdentityService
@@ -10,7 +11,19 @@ namespace GymBro.Service
         {
             _httpClient = httpClient;
         }
+        public async Task<bool> ResetPasswordAsync(ResetPasswordDto resetPasswordDto)
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/auth/reset-password", resetPasswordDto);
+            return response.IsSuccessStatusCode;
+        }
+        public async Task<bool> ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto)
+        {
+            // Gửi Identifier (Tên hoặc Email) sang API cổng 7001
+            var response = await _httpClient.PostAsJsonAsync("api/auth/forgot-password", forgotPasswordDto);
 
+            // Trả về true nếu API phản hồi thành công (200 OK)
+            return response.IsSuccessStatusCode;
+        }
         public async Task<bool> RegisterAsync(RegisterDto registerDto)
         {
             var response = await _httpClient.PostAsJsonAsync("api/auth/register", registerDto);

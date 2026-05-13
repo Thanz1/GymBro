@@ -1,11 +1,12 @@
-﻿using GymBro.Contracts;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using GymBro.Contracts;
+using GymBro.Contracts.DTOs;
 using GymBro.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace GymBro.API.Controllers
 {
@@ -31,13 +32,12 @@ namespace GymBro.API.Controllers
                 return BadRequest("Tài khoản đã tồn tại.");
             }
 
-            // Mã hóa mật khẩu
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
             var user = new GymBro.Core.User
             {
                 UserName = request.Username,
-                Password = passwordHash, // <--- ĐÃ SỬA: Dùng 'Password' thay vì 'PasswordHash'
+                PasswordHash = passwordHash, // CHỐT: Dùng PasswordHash của IdentityUser
                 FullName = request.FullName,
                 Email = request.Email,
                 Role = "User"
@@ -45,7 +45,6 @@ namespace GymBro.API.Controllers
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
-
             return Ok("Đăng ký thành công!");
         }
 
@@ -53,14 +52,15 @@ namespace GymBro.API.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<string>> Login(LoginDto request)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == request.Username);
+            // Tìm người dùng khớp với Username HOẶC Email
+            var user = await _context.Users.FirstOrDefaultAsync(u =>
+                u.UserName == request.Username || u.Email == request.Username);
 
-            if (user == null)
+            if (user == null || string.IsNullOrEmpty(user.PasswordHash))
             {
                 return BadRequest("Sai tài khoản hoặc mật khẩu.");
             }
 
-            // <--- ĐÃ SỬA: Dùng 'user.Password' thay vì 'user.PasswordHash'
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
                 return BadRequest("Sai tài khoản hoặc mật khẩu.");
@@ -69,7 +69,22 @@ namespace GymBro.API.Controllers
             string token = CreateToken(user);
             return Ok(token);
         }
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordDto request)
+        {
+            // Tìm người dùng theo Tên đăng nhập hoặc Email
+            var user = await _context.Users.FirstOrDefaultAsync(u =>
+                u.UserName == request.Identifier || u.Email == request.Identifier);
 
+            if (user != null)
+            {
+                // Gửi mã token hoặc in ra Console để demo
+                var resetToken = Guid.NewGuid().ToString();
+                Console.WriteLine($"[GYMBRO]: Khôi phục cho {user.UserName} - Email: {user.Email}");
+            }
+
+            return Ok("Yêu cầu đã được ghi nhận.");
+        }
         private string CreateToken(GymBro.Core.User user)
         {
             List<Claim> claims = new List<Claim>
@@ -91,6 +106,23 @@ namespace GymBro.API.Controllers
 
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);
             return jwt;
+        }
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordDto request)
+        {
+            // Tìm người dùng theo Username hoặc Email
+            var user = await _context.Users.FirstOrDefaultAsync(u =>
+                u.UserName == request.Identifier || u.Email == request.Identifier);
+
+            if (user == null) return BadRequest("Người dùng không tồn tại.");
+
+            // Mã hóa mật khẩu mới và lưu vào cột PasswordHash
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+
+            return Ok("Mật khẩu đã được cập nhật thành công.");
         }
     }
 }
