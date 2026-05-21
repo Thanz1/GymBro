@@ -42,12 +42,37 @@ namespace GymBro.Web.Controllers
                     HttpContext.Session.SetString("JWToken", user.Token);
                 }
 
-                if (user.Role == "Admin") return RedirectToAction("Index", "Products");
+                if (string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase))
+                    return RedirectToAction("Index", "Products");
                 return RedirectToAction("Index", "Home");
             }
 
             ViewBag.ErrorMessage = "Sai tài khoản hoặc mật khẩu.";
             return View();
+        }
+        // --- ĐĂNG KÝ TÀI KHOẢN ---
+
+        [HttpGet]
+        public IActionResult Register()
+        {
+            return View(); // Trả về file Register.cshtml
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register(RegisterDto registerDto)
+        {
+            // Gọi sang IdentityService để đăng ký
+            var result = await _identityService.RegisterAsync(registerDto);
+
+            if (result)
+            {
+                TempData["SuccessMessage"] = "Đăng ký thành công! Mời bạn đăng nhập.";
+                return RedirectToAction("Login");
+            }
+
+            ViewBag.ErrorMessage = "Đăng ký thất bại. Tên tài khoản có thể đã tồn tại.";
+            return View(registerDto);
         }
 
         // --- QUÊN MẬT KHẨU ---
@@ -55,26 +80,26 @@ namespace GymBro.Web.Controllers
         [HttpGet]
         public IActionResult ForgotPassword()
         {
-            return View(); // Trả về trang ForgotPassword.cshtml đã tạo
+            return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
+        // ĐỔI: Nhận ResetPasswordDto thay vì ForgotPasswordDto
+        public async Task<IActionResult> ForgotPassword(ResetPasswordDto resetPasswordDto)
         {
-            // Gửi Identifier (có thể là Username hoặc Email) sang API để xử lý
-            var result = await _identityService.ForgotPasswordAsync(forgotPasswordDto);
+            // ĐỔI: Gọi ResetPasswordAsync để thực hiện đổi mật khẩu thật
+            var result = await _identityService.ResetPasswordAsync(resetPasswordDto);
 
             if (result)
             {
-                ViewBag.SuccessMessage = "Nếu thông tin chính xác, chúng tôi đã gửi hướng dẫn khôi phục.";
-                return View();
+                TempData["SuccessMessage"] = "Đổi mật khẩu thành công! Mời bạn đăng nhập.";
+                return RedirectToAction("Login");
             }
 
-            ViewBag.ErrorMessage = "Có lỗi xảy ra, vui lòng thử lại sau.";
+            ViewBag.ErrorMessage = "Không tìm thấy tài khoản hoặc lỗi hệ thống.";
             return View();
         }
-
         // --- ĐĂNG XUẤT & KHÁC ---
 
         public IActionResult Logout()

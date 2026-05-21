@@ -25,7 +25,7 @@ namespace Order.API.Controllers;
         public async Task<ActionResult<List<CartItemDto>>> GetMyCart()
         {
             var username = User.FindFirst(ClaimTypes.Name)?.Value;
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == username);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
 
             if (user == null) return Unauthorized();
 
@@ -51,7 +51,7 @@ namespace Order.API.Controllers;
         public async Task<ActionResult> AddToCart(AddToCartDto request)
         {
             var username = User.FindFirst(ClaimTypes.Name)?.Value;
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == username);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
             if (user == null) return Unauthorized();
 
             var product = await _context.Products.FindAsync(request.ProductId);

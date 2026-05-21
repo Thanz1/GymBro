@@ -13,10 +13,10 @@ builder.Services.AddControllersWithViews();
 
 // Nhóm 1: Identity API (Port 7001) - Quản lý Tài khoản & Người dùng
 builder.Services.AddHttpClient<IIdentityService, IdentityService>(client => {
-    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:IdentityApi"] ?? "https://localhost:7001");
+    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:IdentityApi"] ?? "http://localhost:5001");
 });
 builder.Services.AddHttpClient<IUserService, UserService>(client => {
-    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:IdentityApi"] ?? "https://localhost:7001");
+    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:IdentityApi"] ?? "http://localhost:5001");
 });
 
 // Nhóm 2: Product API (Port 7002) - Quản lý Sản phẩm, Danh mục, Đánh giá, NCC
@@ -58,6 +58,35 @@ builder.Services.AddSession(options => {
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var identityService = scope.ServiceProvider.GetRequiredService<IIdentityService>();
+
+    try
+    {
+        // 1. Kiểm tra xem đã có tài khoản Admin nào chưa
+        bool hasAdmin = await identityService.HasAdminAsync();
+
+        if (!hasAdmin)
+        {
+            // 2. Nếu chưa có, tạo tài khoản admin/123456
+            var adminAccount = new RegisterDto
+            {
+                Username = "admin",
+                Password = "123456",
+                FullName = "Quản trị viên GymBro",
+                Email = "admin@gymbro.com"
+            };
+
+            await identityService.CreateAdminAsync(adminAccount);
+            Console.WriteLine("[GYMBRO]: Đã khởi tạo tài khoản Admin mặc định thành công!");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[GYMBRO ERROR]: Không thể kết nối Identity API để tạo Admin: {ex.Message}");
+    }
+}
 
 // =========================================================
 // 2. CẤU HÌNH PIPELINE (MIDDLEWARE)

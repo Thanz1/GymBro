@@ -1,5 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.26" />
     <PackageReference Include="System.Net.Http.Json" Version="8.0.0" />
@@ -7,17 +13,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GymBro.Contracts\GymBro.Contracts.csproj" />
-	  <ProjectReference Include="..\GymBro.Service\GymBro.Service.csproj" />
+    <ProjectReference Include="..\GymBro.Service\GymBro.Service.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="wwwroot\Content\Images\" />
   </ItemGroup>
-
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
 
 </Project>

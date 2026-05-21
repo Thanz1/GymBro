@@ -3,126 +3,182 @@ using System.Security.Claims;
 using System.Text;
 using GymBro.Contracts;
 using GymBro.Contracts.DTOs;
+using GymBro.Core;
 using GymBro.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
-namespace GymBro.API.Controllers
+namespace GymBro.Identity.API.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class AuthController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AuthController : ControllerBase
+    private readonly GymBroDbContext _context;
+    private readonly IConfiguration _configuration;
+
+    public AuthController(GymBroDbContext context, IConfiguration configuration)
     {
-        private readonly GymBroDbContext _context;
-        private readonly IConfiguration _configuration;
+        _context = context;
+        _configuration = configuration;
+    }
 
-        public AuthController(GymBroDbContext context, IConfiguration configuration)
+    [HttpPost("register")]
+    public async Task<ActionResult> Register(RegisterDto request)
+    {
+        var username = request.Username?.Trim() ?? string.Empty;
+        var email = request.Email?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrEmpty(username))
+            return BadRequest("Tên đăng nhập không được để trống.");
+
+        if (await _context.Users.AnyAsync(u => u.Username == username))
+            return BadRequest("Tài khoản đã tồn tại.");
+
+        if (!string.IsNullOrEmpty(email) &&
+            await _context.Users.AnyAsync(u => u.Email == email))
+            return BadRequest("Email đã được sử dụng.");
+
+        var user = new User
         {
-            _context = context;
-            _configuration = configuration;
+            Username = username,
+            Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            FullName = request.FullName?.Trim() ?? string.Empty,
+            Email = email,
+            Role = "User",
+            IsActive = true,
+            CreatedDate = DateTime.Now
+        };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+        return Ok("Đăng ký thành công!");
+    }
+
+    [HttpPost("login")]
+    public async Task<ActionResult<UserDto>> Login(LoginDto request)
+    {
+        var identifier = request.Username?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(identifier) || string.IsNullOrEmpty(request.Password))
+            return BadRequest("Sai tài khoản hoặc mật khẩu.");
+
+        var user = await _context.Users.FirstOrDefaultAsync(u =>
+            u.Username == identifier || u.Email == identifier);
+
+        if (user == null || !user.IsActive)
+            return BadRequest("Sai tài khoản hoặc mật khẩu.");
+
+        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
+            return BadRequest("Sai tài khoản hoặc mật khẩu.");
+
+        var token = CreateToken(user);
+
+        return Ok(new UserDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            FullName = user.FullName,
+            Email = user.Email,
+            Role = user.Role,
+            IsActive = user.IsActive,
+            Token = token
+        });
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordDto request)
+    {
+        var identifier = request.Identifier?.Trim() ?? string.Empty;
+        var user = await _context.Users.FirstOrDefaultAsync(u =>
+            u.Username == identifier || u.Email == identifier);
+
+        if (user != null)
+        {
+            Console.WriteLine($"[GYMBRO] Yêu cầu khôi phục: {user.Username} ({user.Email})");
         }
 
-        // 1. API ĐĂNG KÝ
-        [HttpPost("register")]
-        public async Task<ActionResult> Register(RegisterDto request)
+        return Ok("Yêu cầu đã được ghi nhận.");
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordDto request)
+    {
+        var identifier = request.Identifier?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(identifier) || string.IsNullOrEmpty(request.NewPassword))
+            return BadRequest("Thông tin không hợp lệ.");
+
+        if (request.NewPassword.Length < 6)
+            return BadRequest("Mật khẩu mới phải có ít nhất 6 ký tự.");
+
+        var user = await _context.Users.FirstOrDefaultAsync(u =>
+            u.Username == identifier || u.Email == identifier);
+
+        if (user == null)
+            return BadRequest("Tài khoản không tồn tại.");
+
+        user.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        await _context.SaveChangesAsync();
+
+        return Ok("Mật khẩu đã được cập nhật.");
+    }
+
+    [HttpGet("has-admin")]
+    public async Task<IActionResult> HasAdmin()
+    {
+        var hasAdmin = await _context.Users.AnyAsync(u => u.Role == "Admin");
+        return hasAdmin ? Ok() : NotFound();
+    }
+
+    [HttpPost("create-admin")]
+    public async Task<IActionResult> CreateAdmin(RegisterDto request)
+    {
+        if (await _context.Users.AnyAsync(u => u.Role == "Admin"))
+            return BadRequest("Hệ thống đã có tài khoản Admin.");
+
+        var username = request.Username?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(username))
+            return BadRequest("Tên đăng nhập không được để trống.");
+
+        if (await _context.Users.AnyAsync(u => u.Username == username))
+            return BadRequest("Tên đăng nhập đã tồn tại.");
+
+        var user = new User
         {
-            if (await _context.Users.AnyAsync(u => u.UserName == request.Username))
-            {
-                return BadRequest("Tài khoản đã tồn tại.");
-            }
+            Username = username,
+            Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            FullName = request.FullName?.Trim() ?? "Quản trị viên",
+            Email = request.Email?.Trim() ?? $"{username}@gymbro.local",
+            Role = "Admin",
+            IsActive = true,
+            CreatedDate = DateTime.Now
+        };
 
-            string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+        return Ok();
+    }
 
-            var user = new GymBro.Core.User
-            {
-                UserName = request.Username,
-                PasswordHash = passwordHash, // CHỐT: Dùng PasswordHash của IdentityUser
-                FullName = request.FullName,
-                Email = request.Email,
-                Role = "User"
-            };
+    private string CreateToken(User user)
+    {
+        var jwtKey = _configuration["Jwt:Key"]
+            ?? throw new InvalidOperationException("Jwt:Key chưa được cấu hình trong appsettings.");
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-            return Ok("Đăng ký thành công!");
-        }
-
-        // 2. API ĐĂNG NHẬP
-        [HttpPost("login")]
-        public async Task<ActionResult<string>> Login(LoginDto request)
+        var claims = new List<Claim>
         {
-            // Tìm người dùng khớp với Username HOẶC Email
-            var user = await _context.Users.FirstOrDefaultAsync(u =>
-                u.UserName == request.Username || u.Email == request.Username);
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.Name, user.Username),
+            new(ClaimTypes.Role, user.Role)
+        };
 
-            if (user == null || string.IsNullOrEmpty(user.PasswordHash))
-            {
-                return BadRequest("Sai tài khoản hoặc mật khẩu.");
-            }
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
-            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-            {
-                return BadRequest("Sai tài khoản hoặc mật khẩu.");
-            }
+        var token = new JwtSecurityToken(
+            claims: claims,
+            expires: DateTime.UtcNow.AddDays(1),
+            signingCredentials: creds);
 
-            string token = CreateToken(user);
-            return Ok(token);
-        }
-        [HttpPost("forgot-password")]
-        public async Task<IActionResult> ForgotPassword(ForgotPasswordDto request)
-        {
-            // Tìm người dùng theo Tên đăng nhập hoặc Email
-            var user = await _context.Users.FirstOrDefaultAsync(u =>
-                u.UserName == request.Identifier || u.Email == request.Identifier);
-
-            if (user != null)
-            {
-                // Gửi mã token hoặc in ra Console để demo
-                var resetToken = Guid.NewGuid().ToString();
-                Console.WriteLine($"[GYMBRO]: Khôi phục cho {user.UserName} - Email: {user.Email}");
-            }
-
-            return Ok("Yêu cầu đã được ghi nhận.");
-        }
-        private string CreateToken(GymBro.Core.User user)
-        {
-            List<Claim> claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(ClaimTypes.Role, user.Role)
-            };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                _configuration.GetSection("Jwt:Key").Value!));
-
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
-
-            var token = new JwtSecurityToken(
-                    claims: claims,
-                    expires: DateTime.Now.AddDays(1),
-                    signingCredentials: creds
-                );
-
-            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
-            return jwt;
-        }
-        [HttpPost("reset-password")]
-        public async Task<IActionResult> ResetPassword(ResetPasswordDto request)
-        {
-            // Tìm người dùng theo Username hoặc Email
-            var user = await _context.Users.FirstOrDefaultAsync(u =>
-                u.UserName == request.Identifier || u.Email == request.Identifier);
-
-            if (user == null) return BadRequest("Người dùng không tồn tại.");
-
-            // Mã hóa mật khẩu mới và lưu vào cột PasswordHash
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
-
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync();
-
-            return Ok("Mật khẩu đã được cập nhật thành công.");
-        }
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }

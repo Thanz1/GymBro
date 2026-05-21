@@ -10,7 +10,13 @@
             <div class="card shadow border-0 rounded-3 p-4 mt-4">
                 <h2 class="text-center fw-bold text-danger">Đăng ký tài khoản</h2>
                 <hr />
-
+                @if (ViewBag.ErrorMessage != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show">
+                        <i class="bi bi-exclamation-triangle"></i> @ViewBag.ErrorMessage
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
                 @using (Html.BeginForm()) 
                 {
                 @Html.AntiForgeryToken()
