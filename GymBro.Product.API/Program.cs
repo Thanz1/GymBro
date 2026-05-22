@@ -1,6 +1,7 @@
-﻿using GymBro.Infrastructure; // SỬA: Bỏ .Repositories
-using GymBro.Service;        // SỬA: Bỏ .Services
+﻿using GymBro.Infrastructure;
+using GymBro.Service;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,18 +19,19 @@ builder.Services.AddDbContext<GymBroDbContext>(options =>
     // Lưu ý: Migrations sẽ được lưu tại dự án API này
     x => x.MigrationsAssembly("GymBro.Product.API")));
 
-// --- Đăng ký HttpClient & Repository ---
-// Đăng ký ProductService theo dạng HttpClient nếu Service này gọi API khác hoặc dùng Typed Client
-builder.Services.AddHttpClient<IProductService, ProductService>(client =>
-{
-    client.BaseAddress = new Uri("https://localhost:7002/");
-});
+// --- Đăng ký Service & Repository ---
+// Đăng ký Service để xử lý logic (Đã dọn sạch lỗi cú pháp, KHÔNG dùng HttpClient ở đây)
+//builder.Services.AddScoped<IProductService, ProductService>();
 
 // Đăng ký Repository để làm việc với Database thông qua GymBroDbContext
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 // --- Đăng ký AutoMapper ---
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+// Chuẩn .NET 8: Tự động quét các cấu hình (Profile) trong dự án hiện tại
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddMaps(typeof(Program).Assembly);
+});
 
 var app = builder.Build();
 

@@ -130,34 +130,7 @@ public class AuthController : ControllerBase
         return hasAdmin ? Ok() : NotFound();
     }
 
-    [HttpPost("create-admin")]
-    public async Task<IActionResult> CreateAdmin(RegisterDto request)
-    {
-        if (await _context.Users.AnyAsync(u => u.Role == "Admin"))
-            return BadRequest("Hệ thống đã có tài khoản Admin.");
-
-        var username = request.Username?.Trim() ?? string.Empty;
-        if (string.IsNullOrEmpty(username))
-            return BadRequest("Tên đăng nhập không được để trống.");
-
-        if (await _context.Users.AnyAsync(u => u.Username == username))
-            return BadRequest("Tên đăng nhập đã tồn tại.");
-
-        var user = new User
-        {
-            Username = username,
-            Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            FullName = request.FullName?.Trim() ?? "Quản trị viên",
-            Email = request.Email?.Trim() ?? $"{username}@gymbro.local",
-            Role = "Admin",
-            IsActive = true,
-            CreatedDate = DateTime.Now
-        };
-
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
-        return Ok();
-    }
+    
 
     private string CreateToken(User user)
     {
