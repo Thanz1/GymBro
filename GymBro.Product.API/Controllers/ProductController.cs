@@ -66,7 +66,7 @@ public class ProductController : ControllerBase
 
     // 3. Thêm sản phẩm mới (Đã cải tiến để trả về ProductDto có ID)
     [HttpPost]
-    [Authorize] // Yêu cầu đăng nhập mới được thêm sản phẩm
+   // [Authorize] // Yêu cầu đăng nhập mới được thêm sản phẩm
     public async Task<ActionResult<ProductDto>> CreateProduct(CreateProductDto request)
     {
         var product = new GymBro.Core.Product

@@ -16,15 +16,15 @@
                 <table class="table table-bordered">
                     <tr>
                         <th class="bg-light w-40">Tên đăng nhập</th>
-                        <td class="fw-bold">@Model.Username</td>[cite: 52]
+                        <td class="fw-bold">@Model.Username</td>
                     </tr>
                     <tr>
                         <th class="bg-light">Họ và tên</th>
-                        <td>@(Model.FullName ?? "Chưa cập nhật")</td>[cite: 52]
+                        <td>@(Model.FullName ?? "Chưa cập nhật")</td>
                     </tr>
                     <tr>
                         <th class="bg-light">Email</th>
-                        <td class="text-primary">@Model.Email</td>[cite: 52]
+                        <td class="text-primary">@Model.Email</td>
                     </tr>
                     <tr>
                         <th class="bg-light">Vai trò</th>
@@ -36,13 +36,13 @@
                     </tr>
                     <tr>
                         <th class="bg-light">Ngày gia nhập</th>
-                        <td>@Model.CreatedDate.ToString("dd/MM/yyyy HH:mm")</td>[cite: 52]
+                        <td>@Model.CreatedDate.ToString("dd/MM/yyyy HH:mm")</td>
                     </tr>
                 </table>
 
                 <div class="mt-4 d-flex gap-2">
-                    <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-primary"><i class="bi bi-pencil"></i> Chỉnh sửa</a>[cite: 52]
-                    <a href="@Url.Action("Index")" class="btn btn-secondary">Quay lại</a>[cite: 52]
+                    <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-primary"><i class="bi bi-pencil"></i> Chỉnh sửa</a>
+                    <a href="@Url.Action("Index")" class="btn btn-secondary">Quay lại</a>
                 </div>
             </div>
         </div>

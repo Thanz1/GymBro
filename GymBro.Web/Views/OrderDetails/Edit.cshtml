@@ -22,7 +22,7 @@
                     <div class="form-horizontal">
                         @Html.ValidationSummary(true, "", new { @class = "text-danger" })
 
-                        @* Giữ lại ID để hệ thống biết cần cập nhật bản ghi nào[cite: 33] *@
+                        @* Giữ lại ID để hệ thống biết cần cập nhật bản ghi nào *@
                         @Html.HiddenFor(model => model.Id)
 
                         <div class="mb-3">

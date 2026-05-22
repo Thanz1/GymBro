@@ -46,13 +46,13 @@
                             <td class="text-center">
                                 <span class="badge @(item.Role == "Admin" ? "bg-danger" : "bg-info text-dark") rounded-pill px-3">
                                     @(item.Role == "Admin" ? "Quản trị viên" : "Người dùng")
-                                </span>[cite: 54]
+                                </span>
                             </td>
                             <td class="text-center">
                                 <div class="btn-group">
-                                    <a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>[cite: 54]
-                                    <a href="@Url.Action("Details", new { id = item.Id })" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i></a>[cite: 54]
-                                    <a href="@Url.Action("Delete", new { id = item.Id })" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>[cite: 54]
+                                    <a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                                    <a href="@Url.Action("Details", new { id = item.Id })" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i></a>
+                                    <a href="@Url.Action("Delete", new { id = item.Id })" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
                                 </div>
                             </td>
                         </tr>

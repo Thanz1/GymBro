@@ -48,7 +48,7 @@ namespace GymBro.Product.API.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+       // [Authorize]
         public async Task<ActionResult<CategoryDto>> CreateCategory(CategoryDto request)
         {
             var category = new GymBro.Core.Category

@@ -15,7 +15,7 @@
             <div class="card-body text-center p-4">
                 <div class="alert alert-warning border-warning shadow-sm mb-4">
                     <i class="bi bi-info-circle-fill me-2"></i>
-                    <strong>Cảnh báo:</strong> Hành động này sẽ xóa vĩnh viễn tài khoản và không thể hoàn tác[cite: 45].
+                    <strong>Cảnh báo:</strong> Hành động này sẽ xóa vĩnh viễn tài khoản và không thể hoàn tác.
                 </div>
 
                 <div class="mb-4">
@@ -29,13 +29,13 @@
                 <div class="bg-light rounded p-3 mb-4 text-start">
                     <div class="row mb-2">
                         <div class="col-5 text-muted small text-uppercase">Họ và tên:</div>
-                        <div class="col-7 fw-bold">@(string.IsNullOrEmpty(Model.FullName) ? "Chưa cập nhật" : Model.FullName)[cite: 45]</div>
+                        <div class="col-7 fw-bold">@(string.IsNullOrEmpty(Model.FullName) ? "Chưa cập nhật" : Model.FullName)</div>
                     </div>
                     <div class="row">
                         <div class="col-5 text-muted small text-uppercase">Vai trò hiện tại:</div>
                         <div class="col-7">
                             <span class="badge @(Model.Role == "Admin" ? "bg-danger" : "bg-info text-dark")">
-                                @(Model.Role == "Admin" ? "Quản trị viên" : "Người dùng")[cite: 45]
+                                @(Model.Role == "Admin" ? "Quản trị viên" : "Người dùng")
                             </span>
                         </div>
                     </div>
@@ -53,7 +53,7 @@
                         </button>
                         <a href="@Url.Action("Index")" class="btn btn-outline-secondary btn-lg px-4">
                             HỦY BỎ
-                        </a>[cite: 45]
+                        </a>
                     </div>
                 }
             </div>

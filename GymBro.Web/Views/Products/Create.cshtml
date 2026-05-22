@@ -35,7 +35,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Danh mục sản phẩm</label>
-                            @Html.DropDownList("CategoryId", null, "-- Chọn danh mục --", new { @class = "form-select border-primary" })
+                                @Html.DropDownList("CategoryId", ViewBag.CategoryId as SelectList, "-- Chọn danh mục --", new { @class = "form-select border-primary" })
                         </div>
                     </div>
                     <div class="col-md-4 text-center">
@@ -61,9 +61,9 @@
 </div>
 
 @section Scripts {
-    <script src="https://cdn.ckeditor.com/4.16.2/standard/ckeditor.js"></script>[cite: 40]
+    <script src="https://cdn.ckeditor.com/4.16.2/standard/ckeditor.js"></script>
     <script>
-        CKEDITOR.replace('Description');[cite: 40]
+        CKEDITOR.replace('Description');
         function previewImage(input) {
             var preview = document.getElementById('preview');
             if (input.files && input.files[0]) {

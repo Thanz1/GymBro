@@ -33,7 +33,7 @@ namespace GymBro.Web.Controllers
         {
             // Lấy danh sách danh mục từ API để hiển thị DropdownList
             var categories = await _categoryService.GetAllCategoriesAsync();
-            ViewBag.CategoryId = new SelectList(categories, "Id", "Name");
+            ViewBag.CategoryId = new SelectList(categories, "Id", "CategoryName");
             return View();
         }
 
@@ -55,11 +55,16 @@ namespace GymBro.Web.Controllers
                     TempData["SuccessMessage"] = "Thêm sản phẩm thành công!";
                     return RedirectToAction(nameof(Index));
                 }
+                else
+                {
+                    // THÊM DÒNG NÀY ĐỂ BẮT LỖI TỪ API:
+                    ModelState.AddModelError("", "Lỗi từ API: Không thể lưu sản phẩm (Có thể do Token hoặc lỗi kết nối).");
+                }
             }
 
             // Nếu lỗi, phải nạp lại danh sách danh mục trước khi trả về View
             var categories = await _categoryService.GetAllCategoriesAsync();
-            ViewBag.CategoryId = new SelectList(categories, "Id", "Name", productDto.CategoryId);
+            ViewBag.CategoryId = new SelectList(categories, "Id", "CategoryName", productDto.CategoryId);
             return View(productDto);
         }
 
@@ -71,7 +76,7 @@ namespace GymBro.Web.Controllers
 
             // Nạp danh sách danh mục cho Dropdown
             var categories = await _categoryService.GetAllCategoriesAsync();
-            ViewBag.CategoryId = new SelectList(categories, "Id", "Name", product.CategoryId);
+            ViewBag.CategoryId = new SelectList(categories, "Id", "CategoryName", product.CategoryId);
 
             return View(product);
         }
@@ -99,7 +104,7 @@ namespace GymBro.Web.Controllers
             }
 
             var categories = await _categoryService.GetAllCategoriesAsync();
-            ViewBag.CategoryId = new SelectList(categories, "Id", "Name", productDto.CategoryId);
+            ViewBag.CategoryId = new SelectList(categories, "Id", "CategoryName", productDto.CategoryId);
             return View(productDto);
         }
 

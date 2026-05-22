@@ -36,10 +36,14 @@ namespace GymBro.Web.Controllers
                     TempData["SuccessMessage"] = "Thêm danh mục thành công!";
                     return RedirectToAction(nameof(Index));
                 }
+                else
+                {
+                    // THÊM ĐOẠN NÀY VÀO: Báo lỗi thẳng lên màn hình nếu API từ chối
+                    ModelState.AddModelError("", "Lỗi từ API: Không thể thêm danh mục (Có thể do lỗi Token hoặc kết nối).");
+                }
             }
             return View(categoryDto);
         }
-
         public async Task<IActionResult> Edit(int id)
         {
             var category = await _categoryService.GetCategoryByIdAsync(id);
