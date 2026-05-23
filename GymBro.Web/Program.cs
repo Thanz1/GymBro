@@ -1,4 +1,4 @@
-using GymBro.Service;
+ using GymBro.Service;
 using GymBro.Contracts;
 
 var builder = WebApplication.CreateBuilder(args);

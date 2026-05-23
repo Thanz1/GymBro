@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Google.Apis.Auth" Version="1.68.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
@@ -24,7 +25,10 @@
     <ProjectReference Include="..\GymBro.Infrastructure\GymBro.Infrastructure.csproj" />
     <ProjectReference Include="..\GymBro.Core\GymBro.Core.csproj" />
     <ProjectReference Include="..\GymBro.Contracts\GymBro.Contracts.csproj" />
+    <ProjectReference Include="..\GymBro.Order.API\GymBro.Order.API.csproj" />
+    <ProjectReference Include="..\GymBro.Product.API\GymBro.Product.API.csproj" />
     <ProjectReference Include="..\GymBro.Service\GymBro.Service.csproj" />
+    <ProjectReference Include="..\GymBro.Web\GymBro.Web.csproj" />
   </ItemGroup>
 
 </Project>

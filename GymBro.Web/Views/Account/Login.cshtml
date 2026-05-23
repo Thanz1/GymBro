@@ -1,5 +1,8 @@
-﻿@{
+@{
     ViewBag.Title = "Đăng nhập";
+    var googleClientId = ViewBag.GoogleClientId as string ?? "";
+    var googleEnabled = !string.IsNullOrWhiteSpace(googleClientId)
+        && !googleClientId.StartsWith("YOUR_", StringComparison.Ordinal);
 }
 
 <div class="auth-page">
@@ -26,6 +29,31 @@
                     </div>
                 }
 
+                @if (googleEnabled)
+                {
+                    <div class="google-signin-wrap position-relative w-100 mb-4" style="height: 50px;">
+                        <button type="button" tabindex="-1"
+                                class="btn btn-lg w-100 border-0 text-white fw-semibold"
+                                style="background: #e85d04; pointer-events: none; height: 50px; border-radius: 8px;">
+                            Đăng nhập bằng tài khoản Google
+                        </button>
+                        <div id="googleSignInOverlay"
+                             class="position-absolute top-0 start-0 w-100 h-100"
+                             style="opacity: 0.011; z-index: 2; overflow: hidden;"></div>
+                    </div>
+
+                    <form id="googleLoginForm" asp-action="GoogleLogin" asp-controller="Account" method="post" class="d-none">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="idToken" id="googleIdToken" />
+                    </form>
+
+                    <div class="d-flex align-items-center my-4">
+                        <hr class="flex-grow-1" />
+                        <span class="px-3 text-muted small">hoặc</span>
+                        <hr class="flex-grow-1" />
+                    </div>
+                }
+
                 @using (Html.BeginForm("Login", "Account", FormMethod.Post))
                 {
                     @Html.AntiForgeryToken()
@@ -47,10 +75,11 @@
 
                         @Html.ActionLink("Quên mật khẩu?", "ForgotPassword", "Account", null,
                         new { @class = "text-decoration-none small text-muted", style = "font-style: italic;" })
-                </div>
-                                }
+                    </div>
+                }
 
-                <hr class="my-4" /> <div class="text-center mt-3">
+                <hr class="my-4" />
+                <div class="text-center mt-3">
                     <span class="text-muted">Chưa có tài khoản?</span>
                     @Html.ActionLink("Đăng ký ngay", "Register", "Account", null, new { @class = "text-decoration-none fw-bold text-danger" })
                 </div>
@@ -58,3 +87,34 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    @if (googleEnabled)
+    {
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
+        <script>
+            function handleGoogleSignIn(response) {
+                document.getElementById('googleIdToken').value = response.credential;
+                document.getElementById('googleLoginForm').submit();
+            }
+
+            window.addEventListener('load', function () {
+                google.accounts.id.initialize({
+                    client_id: '@googleClientId',
+                    callback: handleGoogleSignIn,
+                    ux_mode: 'popup',
+                    locale: 'vi'
+                });
+
+                var overlay = document.getElementById('googleSignInOverlay');
+                google.accounts.id.renderButton(overlay, {
+                    type: 'standard',
+                    theme: 'filled_red',
+                    size: 'large',
+                    text: 'signin_with',
+                    width: overlay.offsetWidth || 400
+                });
+            });
+        </script>
+    }
+}
