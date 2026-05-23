@@ -20,9 +20,18 @@ namespace GymBro.Service
             return response.IsSuccessStatusCode;
         }
 
-        public async Task<bool> PlaceOrderAsync(CheckoutDto checkoutDto)
+        public async Task<PlaceOrderResponseDto?> PlaceOrderAsync(CheckoutDto checkoutDto)
         {
             var response = await _httpClient.PostAsJsonAsync("api/order/place-order", checkoutDto);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            return await response.Content.ReadFromJsonAsync<PlaceOrderResponseDto>();
+        }
+
+        public async Task<bool> ConfirmPaymentAsync(int orderId)
+        {
+            var response = await _httpClient.PostAsync($"api/order/{orderId}/confirm-payment", null);
             return response.IsSuccessStatusCode;
         }
 

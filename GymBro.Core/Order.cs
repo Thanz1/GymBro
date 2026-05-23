@@ -24,8 +24,8 @@ namespace GymBro.Core
 
         public int? UserId { get; set; } // Đổi UserID -> UserId
 
-        [ForeignKey("UserId")]
-        public virtual User? User { get; set; }
+        //[ForeignKey("UserId")]
+        //public virtual User? User { get; set; }
 
         public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
         public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();

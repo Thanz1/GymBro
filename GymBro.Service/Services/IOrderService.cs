@@ -5,7 +5,8 @@ namespace GymBro.Service
     public interface IOrderService
     {
         Task<bool> CreateOrderAsync(AddToCartDto orderDto);
-        Task<bool> PlaceOrderAsync(CheckoutDto checkoutDto);
+        Task<PlaceOrderResponseDto?> PlaceOrderAsync(CheckoutDto checkoutDto);
+        Task<bool> ConfirmPaymentAsync(int orderId);
         Task<IEnumerable<OrderDto>> GetAllOrdersAsync();
         Task<OrderDto?> GetOrderByIdAsync(int id);
         Task<bool> UpdateOrderStatusAsync(int id, string status);

@@ -14,18 +14,8 @@ builder.Services.AddDbContext<GymBroDbContext>(options =>
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<GymBroDbContext>();
-    try
-    {
-        db.Database.Migrate();
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"[GYMBRO Identity] Migration warning: {ex.Message}");
-    }
-}
+// Không tự Migrate khi đã import dữ liệu Users thủ công — tránh ghi đè schema.
+// Chạy migration thủ công khi cần: dotnet ef database update ...
 
 if (app.Environment.IsDevelopment())
 {
