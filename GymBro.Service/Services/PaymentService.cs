@@ -45,5 +45,17 @@ namespace GymBro.Service
             return await _httpClient.GetFromJsonAsync<IEnumerable<PaymentDto>>("api/payment")
                    ?? new List<PaymentDto>();
         }
+        public async Task<PaymentDto?> GetPaymentByIdAsync(int id)
+        {
+            // Đã xóa dấu / ở đầu và chữ s ở cuối chữ Payment
+            var response = await _httpClient.GetAsync($"api/payment/{id}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<PaymentDto>();
+            }
+
+            return null; // Không tìm thấy
+        }
     }
 }

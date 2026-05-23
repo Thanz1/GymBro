@@ -24,5 +24,20 @@ namespace GymBro.Web.Controllers
 
             return View(sortedPayments);
         }
+        public async Task<IActionResult> Details(int id)
+        {
+            // Gọi Service để tìm chi tiết thanh toán theo ID (Ví dụ ID = 8)
+            // Lưu ý: Tên hàm GetPaymentByIdAsync có thể thay đổi tùy vào cách bạn đặt trong IPaymentService
+            var payment = await _paymentService.GetPaymentByIdAsync(id);
+
+            // Nếu không tìm thấy, báo lỗi 404
+            if (payment == null)
+            {
+                return NotFound("Không tìm thấy thông tin giao dịch này.");
+            }
+
+            // Ném cục dữ liệu PaymentDto ra cho file Details.cshtml hiển thị
+            return View(payment);
+        }
     }
 }
