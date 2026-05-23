@@ -69,8 +69,8 @@
                                 <td class="fw-bold text-primary">@item.Amount.ToString("N0") ₫</td>
                                 <td class="small">@item.PaymentDate.ToString("dd/MM/yyyy HH:mm")</td>
                                 <td class="text-center">
-                                    <span class="badge @(item.Status == "Completed" ? "bg-success" : "bg-warning text-dark") rounded-pill px-3">
-                                        @(item.Status == "Completed" ? "Đã thanh toán" : item.Status)
+                                    <span class="badge @(item.Status == "Completed" || item.Status == "Đã thanh toán" ? "bg-success" : "bg-warning text-dark") rounded-pill px-3">
+                                        @(item.Status == "Completed" || item.Status == "Đã thanh toán" ? "Đã thanh toán" : item.Status)
                                     </span>
                                 </td>
                                 <td class="text-center">

@@ -1,6 +1,8 @@
 ﻿using GymBro.Contracts;
 using GymBro.Service;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace GymBro.Web.Controllers
 {
@@ -16,28 +18,40 @@ namespace GymBro.Web.Controllers
         // Hiển thị danh sách lịch sử thanh toán
         public async Task<IActionResult> Index()
         {
-            // Gọi API thông qua Service thay vì truy vấn trực tiếp DB
             var payments = await _paymentService.GetAllPaymentsAsync();
-
-            // Sắp xếp giảm dần theo ngày thanh toán ngay tại tầng Web
             var sortedPayments = payments.OrderByDescending(p => p.PaymentDate).ToList();
-
             return View(sortedPayments);
         }
+
+        // Hiển thị chi tiết thanh toán theo ID giao dịch thanh toán
         public async Task<IActionResult> Details(int id)
         {
-            // Gọi Service để tìm chi tiết thanh toán theo ID (Ví dụ ID = 8)
-            // Lưu ý: Tên hàm GetPaymentByIdAsync có thể thay đổi tùy vào cách bạn đặt trong IPaymentService
             var payment = await _paymentService.GetPaymentByIdAsync(id);
 
-            // Nếu không tìm thấy, báo lỗi 404
             if (payment == null)
             {
                 return NotFound("Không tìm thấy thông tin giao dịch này.");
             }
 
-            // Ném cục dữ liệu PaymentDto ra cho file Details.cshtml hiển thị
             return View(payment);
+        }
+
+        // Xử lý nút bấm cập nhật trạng thái thanh toán từ Admin
+        [HttpPost]
+        public async Task<IActionResult> UpdateStatus(int paymentId, string newStatus)
+        {
+            var isSuccess = await _paymentService.UpdatePaymentStatusAsync(paymentId, newStatus);
+
+            if (isSuccess)
+            {
+                TempData["SuccessMessage"] = "Đã cập nhật trạng thái giao dịch thành công!";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Không thể cập nhật trạng thái. Vui lòng kiểm tra lại!";
+            }
+
+            return RedirectToAction("Details", new { id = paymentId });
         }
     }
 }

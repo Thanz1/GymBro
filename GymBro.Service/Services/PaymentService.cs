@@ -1,5 +1,9 @@
 ﻿using System.Net.Http.Json;
 using GymBro.Contracts;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading.Tasks;
+
 namespace GymBro.Service
 {
     public class PaymentService : IPaymentService
@@ -9,6 +13,32 @@ namespace GymBro.Service
         public PaymentService(HttpClient httpClient)
         {
             _httpClient = httpClient;
+        }
+
+        public async Task<IEnumerable<PaymentDto>> GetAllPaymentsAsync()
+        {
+            return await _httpClient.GetFromJsonAsync<IEnumerable<PaymentDto>>("api/payment")
+                   ?? new List<PaymentDto>();
+        }
+
+        public async Task<PaymentDto?> GetPaymentByIdAsync(int id)
+        {
+            // Sửa dứt điểm link gọi sang API: không có gạch chéo đầu, không có chữ 's' ở đuôi Payment
+            var response = await _httpClient.GetAsync($"api/payment/{id}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<PaymentDto>();
+            }
+
+            return null;
+        }
+
+        public async Task<bool> UpdatePaymentStatusAsync(int paymentId, string newStatus)
+        {
+            // Gọi sang API nhánh cập nhật trạng thái bằng phương thức PUT
+            var response = await _httpClient.PutAsJsonAsync($"api/payment/{paymentId}/status", newStatus);
+            return response.IsSuccessStatusCode;
         }
 
         public async Task<IEnumerable<PaymentMethodDto>> GetAllPaymentMethodsAsync()
@@ -38,24 +68,6 @@ namespace GymBro.Service
         {
             var response = await _httpClient.DeleteAsync($"api/paymentmethod/{id}");
             return response.IsSuccessStatusCode;
-        }
-        public async Task<IEnumerable<PaymentDto>> GetAllPaymentsAsync()
-        {
-            // Gọi sang Order.API (thường quản lý cả Order và Payment)
-            return await _httpClient.GetFromJsonAsync<IEnumerable<PaymentDto>>("api/payment")
-                   ?? new List<PaymentDto>();
-        }
-        public async Task<PaymentDto?> GetPaymentByIdAsync(int id)
-        {
-            // Đã xóa dấu / ở đầu và chữ s ở cuối chữ Payment
-            var response = await _httpClient.GetAsync($"api/payment/{id}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                return await response.Content.ReadFromJsonAsync<PaymentDto>();
-            }
-
-            return null; // Không tìm thấy
         }
     }
 }

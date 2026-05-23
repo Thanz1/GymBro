@@ -2,6 +2,9 @@
 using GymBro.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace GymBro.Order.API.Controllers;
 
@@ -15,15 +18,16 @@ public class PaymentController : ControllerBase
     {
         _context = context;
     }
-    [HttpGet] // Không có tham số {id} ở đây
+
+    // GET: api/Payment - Lấy toàn bộ danh sách thanh toán
+    [HttpGet]
     public async Task<ActionResult<IEnumerable<PaymentDto>>> GetAllPayments()
     {
         var payments = await _context.Payments
-            // .Include(p => p.Order) // Mở ra nếu cần
+            .Include(p => p.Order)
             .OrderByDescending(p => p.PaymentDate)
             .ToListAsync();
 
-        // Map sang DTO
         var paymentDtos = payments.Select(p => new PaymentDto
         {
             Id = p.Id,
@@ -31,13 +35,16 @@ public class PaymentController : ControllerBase
             Amount = p.Amount,
             PaymentDate = p.PaymentDate,
             Status = p.Status,
-            PaymentMethodName = "Theo đơn hàng", // Hoặc map từ bảng khác
-            CustomerName = "Khách hàng" // Tạm thời để string tĩnh
+            PaymentMethodName = "Thanh toán khi nhận hàng (COD)",
+            CustomerName = p.Order != null ? $"Khách hàng (Mã: {p.Order.UserId})" : "Khách vãng lai",
+            CustomerEmail = "Đang cập nhật...",
+            CustomerAddress = "Chưa cập nhật địa chỉ"
         }).ToList();
 
         return Ok(paymentDtos);
     }
 
+    // GET: api/Payment/8 - Lấy chi tiết 1 giao dịch thanh toán theo ID của nó
     [HttpGet("{id}")]
     public async Task<ActionResult<PaymentDto>> GetPaymentById(int id)
     {
@@ -50,7 +57,6 @@ public class PaymentController : ControllerBase
             return NotFound();
         }
 
-        // Map dữ liệu trong khả năng cho phép của Database Đơn hàng
         var paymentDto = new PaymentDto
         {
             Id = payment.Id,
@@ -58,16 +64,29 @@ public class PaymentController : ControllerBase
             Amount = payment.Amount,
             PaymentDate = payment.PaymentDate,
             Status = payment.Status,
-
-            // Gán thẳng nếu PaymentMethod là dạng chuỗi, hoặc set mặc định
-            PaymentMethodName = "Theo đơn hàng",
-
-            // Vì Order DB chỉ chứa UserId, ta sẽ hiển thị ID để giữ chuẩn Microservices
+            PaymentMethodName = "Thanh toán khi nhận hàng (COD)",
             CustomerName = payment.Order != null ? $"Khách hàng (Mã: {payment.Order.UserId})" : "Khách vãng lai",
             CustomerEmail = "Đang cập nhật...",
-            CustomerAddress = "Đang cập nhật..."
+            CustomerAddress = "Chưa cập nhật địa chỉ"
         };
 
         return Ok(paymentDto);
     }
+
+    // PUT: api/Payment/8/status - API xử lý cập nhật trạng thái xuống Database
+    [HttpPut("{id}/status")]
+    public async Task<IActionResult> UpdateStatus(int id, [FromBody] string newStatus)
+    {
+        var payment = await _context.Payments.FindAsync(id);
+        if (payment == null)
+        {
+            return NotFound();
+        }
+
+        payment.Status = newStatus;
+        await _context.SaveChangesAsync();
+
+        return Ok();
+    }
 }
+
