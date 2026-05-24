@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
 using System.Text.Json;
 using GymBro.Contracts;
 using GymBro.Contracts.DTOs;
@@ -40,6 +40,16 @@ public class IdentityService : IIdentityService
     public async Task<UserDto?> LoginAsync(LoginDto loginDto)
     {
         var response = await _httpClient.PostAsJsonAsync("api/auth/login", loginDto);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<UserDto>(json, JsonOptions);
+    }
+
+    public async Task<UserDto?> LoginWithGoogleAsync(GoogleLoginDto googleLoginDto)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/auth/google", googleLoginDto);
         if (!response.IsSuccessStatusCode)
             return null;
 

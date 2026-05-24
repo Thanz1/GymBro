@@ -10,11 +10,16 @@ namespace GymBro.Web.Controllers
     {
         private readonly IIdentityService _identityService;
         private readonly IOrderService _orderService;
+        private readonly IConfiguration _configuration;
 
-        public AccountController(IIdentityService identityService, IOrderService orderService)
+        public AccountController(
+            IIdentityService identityService,
+            IOrderService orderService,
+            IConfiguration configuration)
         {
             _identityService = identityService;
             _orderService = orderService;
+            _configuration = configuration;
         }
 
         // --- ĐĂNG NHẬP ---
@@ -22,6 +27,7 @@ namespace GymBro.Web.Controllers
         [HttpGet]
         public IActionResult Login()
         {
+            ViewBag.GoogleClientId = _configuration["Google:ClientId"];
             return View();
         }
 
@@ -48,8 +54,41 @@ namespace GymBro.Web.Controllers
             }
 
             ViewBag.ErrorMessage = "Sai tài khoản hoặc mật khẩu.";
+            ViewBag.GoogleClientId = _configuration["Google:ClientId"];
             return View();
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GoogleLogin(string idToken)
+        {
+            if (string.IsNullOrWhiteSpace(idToken))
+            {
+                ViewBag.ErrorMessage = "Đăng nhập Google thất bại. Vui lòng thử lại.";
+                ViewBag.GoogleClientId = _configuration["Google:ClientId"];
+                return View("Login");
+            }
+
+            var user = await _identityService.LoginWithGoogleAsync(new GoogleLoginDto { IdToken = idToken });
+
+            if (user != null)
+            {
+                HttpContext.Session.SetObject("User", user);
+
+                if (!string.IsNullOrEmpty(user.Token))
+                    HttpContext.Session.SetString("JWToken", user.Token);
+
+                if (string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase))
+                    return RedirectToAction("Index", "Products");
+
+                return RedirectToAction("Index", "Home");
+            }
+
+            ViewBag.ErrorMessage = "Đăng nhập Google thất bại. Kiểm tra cấu hình ClientId hoặc thử lại.";
+            ViewBag.GoogleClientId = _configuration["Google:ClientId"];
+            return View("Login");
+        }
+
         // --- ĐĂNG KÝ TÀI KHOẢN ---
 
         [HttpGet]

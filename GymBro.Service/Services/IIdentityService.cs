@@ -8,6 +8,7 @@ namespace GymBro.Service
         Task<bool> ForgotPasswordAsync(ForgotPasswordDto dto);
         Task<bool> RegisterAsync(RegisterDto registerDto);
         Task<UserDto?> LoginAsync(LoginDto loginDto);
+        Task<UserDto?> LoginWithGoogleAsync(GoogleLoginDto googleLoginDto);
         Task<bool> CheckHealthAsync();
         Task<IEnumerable<UserDto>> GetAllUsersAsync();
         Task<bool> HasAdminAsync();

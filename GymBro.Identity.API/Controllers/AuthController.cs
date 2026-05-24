@@ -1,6 +1,7 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Google.Apis.Auth;
 using GymBro.Contracts;
 using GymBro.Contracts.DTOs;
 using GymBro.Core;
@@ -163,6 +164,94 @@ public class AuthController : ControllerBase
         return Ok();
     }
 
+    [HttpPost("google")]
+    public async Task<ActionResult<UserDto>> GoogleLogin(GoogleLoginDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.IdToken))
+            return BadRequest("Token Google không hợp lệ.");
+
+        var clientId = _configuration["Google:ClientId"];
+        if (string.IsNullOrWhiteSpace(clientId) || clientId.StartsWith("YOUR_", StringComparison.Ordinal))
+            return BadRequest("Chưa cấu hình Google ClientId trong appsettings (Google:ClientId).");
+
+        GoogleJsonWebSignature.Payload payload;
+        try
+        {
+            payload = await GoogleJsonWebSignature.ValidateAsync(
+                request.IdToken,
+                new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = [clientId]
+                });
+        }
+        catch
+        {
+            return BadRequest("Token Google không hợp lệ hoặc đã hết hạn.");
+        }
+
+        var email = payload.Email?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(email))
+            return BadRequest("Không lấy được email từ tài khoản Google.");
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+        if (user == null)
+        {
+            var username = await GenerateUniqueGoogleUsernameAsync(email, payload.Subject);
+            user = new User
+            {
+                Username = username,
+                Password = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N")),
+                FullName = payload.Name?.Trim() ?? email,
+                Email = email,
+                Role = "User",
+                IsActive = true,
+                CreatedDate = DateTime.Now
+            };
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+        }
+        else if (!user.IsActive)
+        {
+            return BadRequest("Tài khoản của bạn đã bị khóa.");
+        }
+
+        return Ok(new UserDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            FullName = user.FullName,
+            Email = user.Email,
+            Role = user.Role,
+            IsActive = user.IsActive,
+            Token = CreateToken(user)
+        });
+    }
+
+    private async Task<string> GenerateUniqueGoogleUsernameAsync(string email, string googleSubject)
+    {
+        var localPart = email.Split('@')[0];
+        var baseName = new string(localPart
+            .Where(c => char.IsLetterOrDigit(c) || c == '_' || c == '.')
+            .ToArray());
+
+        if (string.IsNullOrEmpty(baseName))
+        {
+            baseName = googleSubject.Length >= 8
+                ? $"google_{googleSubject[..8]}"
+                : "google_user";
+        }
+
+        var candidate = baseName;
+        var suffix = 0;
+        while (await _context.Users.AnyAsync(u => u.Username == candidate))
+        {
+            suffix++;
+            candidate = $"{baseName}{suffix}";
+        }
+
+        return candidate;
+    }
   private async Task<User?> FindByIdentifierAsync(string identifier)
     {
         if (string.IsNullOrEmpty(identifier))

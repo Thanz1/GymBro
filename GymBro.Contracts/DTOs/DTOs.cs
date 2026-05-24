@@ -15,6 +15,12 @@ namespace GymBro.Contracts;
         public string Password { get; set; } = string.Empty;
     }
 
+    // ID token từ Google Identity Services (đăng nhập Gmail)
+    public class GoogleLoginDto
+    {
+        public string IdToken { get; set; } = string.Empty;
+    }
+
  
     
 

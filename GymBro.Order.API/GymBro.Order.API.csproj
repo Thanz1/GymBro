@@ -25,6 +25,7 @@
     <ProjectReference Include="..\GymBro.Infrastructure\GymBro.Infrastructure.csproj" />
     <ProjectReference Include="..\GymBro.Core\GymBro.Core.csproj" />
     <ProjectReference Include="..\GymBro.Contracts\GymBro.Contracts.csproj" />
+    <ProjectReference Include="..\GymBro.Service\GymBro.Service.csproj" />
   </ItemGroup>
 
 </Project>
