@@ -29,6 +29,21 @@ services:
     networks:
       - gymbro_network
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: gymbro_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    networks:
+      - gymbro_network
+
   gymbro_web:
     build:
       context: .

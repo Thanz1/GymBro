@@ -4,7 +4,9 @@ using System.Text;
 using Google.Apis.Auth;
 using GymBro.Contracts;
 using GymBro.Contracts.DTOs;
+using GymBro.Contracts.Events;
 using GymBro.Core;
+using GymBro.Identity.API.Messaging;
 using GymBro.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,11 +20,19 @@ public class AuthController : ControllerBase
 {
     private readonly GymBroDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly IIntegrationEventPublisher _eventPublisher;
+    private readonly ILogger<AuthController> _logger;
 
-    public AuthController(GymBroDbContext context, IConfiguration configuration)
+    public AuthController(
+        GymBroDbContext context,
+        IConfiguration configuration,
+        IIntegrationEventPublisher eventPublisher,
+        ILogger<AuthController> logger)
     {
         _context = context;
         _configuration = configuration;
+        _eventPublisher = eventPublisher;
+        _logger = logger;
     }
 
     [HttpPost("register")]
@@ -54,6 +64,7 @@ public class AuthController : ControllerBase
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
+        await TryPublishUserCreatedEventAsync(user, "Local");
         return Ok("Đăng ký thành công!");
     }
 
@@ -177,6 +188,7 @@ public class AuthController : ControllerBase
             };
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
+            await TryPublishUserCreatedEventAsync(user, "Google");
         }
         else if (!user.IsActive)
         {
@@ -193,6 +205,29 @@ public class AuthController : ControllerBase
             IsActive = user.IsActive,
             Token = CreateToken(user)
         });
+    }
+
+    private async Task TryPublishUserCreatedEventAsync(User user, string registrationSource)
+    {
+        try
+        {
+            await _eventPublisher.PublishUserCreatedAsync(new UserCreatedIntegrationEvent
+            {
+                UserId = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                FullName = user.FullName,
+                CreatedAt = user.CreatedDate,
+                RegistrationSource = registrationSource
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Không gửi được event UserCreated lên RabbitMQ cho UserId={UserId}. Đăng nhập vẫn thành công.",
+                user.Id);
+        }
     }
 
     private async Task<string> GenerateUniqueGoogleUsernameAsync(string email, string googleSubject)
