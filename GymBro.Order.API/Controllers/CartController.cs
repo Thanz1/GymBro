@@ -36,10 +36,10 @@ namespace Order.API.Controllers;
                 {
                     // ĐÃ SỬA: Đồng bộ Tiếng Anh 100%
                     ProductId = c.ProductId,
-                    ProductName = c.Product.ProductName,
-                    Price = c.Product.Price,
+                    ProductName = c.Product == null ? string.Empty : c.Product.ProductName,
+                    Price = c.Product == null ? 0 : c.Product.Price,
                     Quantity = c.Quantity,
-                    ImageURL = c.Product.ImageURL
+                    ImageURL = c.Product == null ? string.Empty : c.Product.ImageURL
                 })
                 .ToListAsync();
 

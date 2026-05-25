@@ -30,7 +30,8 @@ namespace GymBro.Service
 
         public async Task<ProductDto> GetProductByIdAsync(int id)
         {
-            return await _httpClient.GetFromJsonAsync<ProductDto>($"api/product/{id}");
+            return await _httpClient.GetFromJsonAsync<ProductDto>($"api/product/{id}")
+                ?? throw new InvalidOperationException($"Product {id} was not found.");
         }
 
         public async Task<bool> CreateProductAsync(CreateProductDto productDto)

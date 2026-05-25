@@ -6,6 +6,7 @@ using GymBro.Contracts;
 using GymBro.Contracts.DTOs;
 using GymBro.Contracts.Events;
 using GymBro.Core;
+using GymBro.Identity.API.Email;
 using GymBro.Identity.API.Messaging;
 using GymBro.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
@@ -21,17 +22,20 @@ public class AuthController : ControllerBase
     private readonly GymBroDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly IIntegrationEventPublisher _eventPublisher;
+    private readonly IWelcomeEmailSender _welcomeEmailSender;
     private readonly ILogger<AuthController> _logger;
 
     public AuthController(
         GymBroDbContext context,
         IConfiguration configuration,
         IIntegrationEventPublisher eventPublisher,
+        IWelcomeEmailSender welcomeEmailSender,
         ILogger<AuthController> logger)
     {
         _context = context;
         _configuration = configuration;
         _eventPublisher = eventPublisher;
+        _welcomeEmailSender = welcomeEmailSender;
         _logger = logger;
     }
 
@@ -188,7 +192,9 @@ public class AuthController : ControllerBase
             };
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
-            await TryPublishUserCreatedEventAsync(user, "Google");
+
+            var welcomeEmailHandled = await TrySendWelcomeEmailAsync(user, "Google");
+            await TryPublishUserCreatedEventAsync(user, "Google", sendWelcomeEmail: !welcomeEmailHandled);
         }
         else if (!user.IsActive)
         {
@@ -207,19 +213,35 @@ public class AuthController : ControllerBase
         });
     }
 
-    private async Task TryPublishUserCreatedEventAsync(User user, string registrationSource)
+    private async Task<bool> TrySendWelcomeEmailAsync(User user, string registrationSource)
     {
         try
         {
-            await _eventPublisher.PublishUserCreatedAsync(new UserCreatedIntegrationEvent
-            {
-                UserId = user.Id,
-                Username = user.Username,
-                Email = user.Email,
-                FullName = user.FullName,
-                CreatedAt = user.CreatedDate,
-                RegistrationSource = registrationSource
-            });
+            await _welcomeEmailSender.SendWelcomeEmailAsync(
+                CreateUserCreatedIntegrationEvent(user, registrationSource),
+                CancellationToken.None);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Khong gui duoc email chao mung truc tiep cho UserId={UserId}. Dang nhap van thanh cong.",
+                user.Id);
+            return true;
+        }
+    }
+
+    private async Task TryPublishUserCreatedEventAsync(
+        User user,
+        string registrationSource,
+        bool sendWelcomeEmail = true)
+    {
+        try
+        {
+            var integrationEvent = CreateUserCreatedIntegrationEvent(user, registrationSource);
+            integrationEvent.SendWelcomeEmail = sendWelcomeEmail;
+            await _eventPublisher.PublishUserCreatedAsync(integrationEvent);
         }
         catch (Exception ex)
         {
@@ -228,6 +250,21 @@ public class AuthController : ControllerBase
                 "Không gửi được event UserCreated lên RabbitMQ cho UserId={UserId}. Đăng nhập vẫn thành công.",
                 user.Id);
         }
+    }
+
+    private static UserCreatedIntegrationEvent CreateUserCreatedIntegrationEvent(
+        User user,
+        string registrationSource)
+    {
+        return new UserCreatedIntegrationEvent
+        {
+            UserId = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            FullName = user.FullName,
+            CreatedAt = user.CreatedDate,
+            RegistrationSource = registrationSource
+        };
     }
 
     private async Task<string> GenerateUniqueGoogleUsernameAsync(string email, string googleSubject)
