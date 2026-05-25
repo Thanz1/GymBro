@@ -11,6 +11,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
+
 builder.Services.AddHttpClient("ProductService", client =>
 {
     var productApi = builder.Configuration["ServiceUrls:ProductApi"] ?? "https://localhost:7002";
