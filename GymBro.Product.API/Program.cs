@@ -14,10 +14,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // --- Đăng ký DbContext dùng chung (Chuẩn SOA) ---
-builder.Services.AddDbContext<GymBroDbContext>(options =>
+builder.Services.AddDbContext<ProductDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
     // Lưu ý: Migrations sẽ được lưu tại dự án API này
-    x => x.MigrationsAssembly("GymBro.Product.API")));
+    x => x.MigrationsAssembly("GymBro.Infrastructure")));
 
 // --- Đăng ký Service & Repository ---
 // Đăng ký Service để xử lý logic (Đã dọn sạch lỗi cú pháp, KHÔNG dùng HttpClient ở đây)

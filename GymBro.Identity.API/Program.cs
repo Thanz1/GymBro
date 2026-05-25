@@ -1,4 +1,5 @@
 using GymBro.Identity.API.Email;
+using GymBro.Identity.API.Hubs;
 using GymBro.Identity.API.Messaging;
 using GymBro.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,19 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// --- THÊM CẤU HÌNH CORS CHO SIGNALR ---
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ChatCorsPolicy", policyBuilder =>
+    {
+        policyBuilder.SetIsOriginAllowed(_ => true) // Chấp nhận mọi nguồn gọi tới (để dễ test)
+                     .AllowAnyMethod()
+                     .AllowAnyHeader()
+                     .AllowCredentials(); // Bắt buộc phải có để SignalR hoạt động
+    });
+});
+// --------------------------------------
+
 builder.Services.Configure<RabbitMqOptions>(
     builder.Configuration.GetSection(RabbitMqOptions.SectionName));
 builder.Services.Configure<SmtpOptions>(
@@ -16,8 +30,8 @@ builder.Services.Configure<SmtpOptions>(
 builder.Services.AddSingleton<IIntegrationEventPublisher, RabbitMqIntegrationEventPublisher>();
 builder.Services.AddScoped<IWelcomeEmailSender, SmtpWelcomeEmailSender>();
 builder.Services.AddHostedService<UserCreatedWelcomeEmailConsumer>();
-
-builder.Services.AddDbContext<GymBroDbContext>(options =>
+builder.Services.AddSignalR();
+builder.Services.AddDbContext<IdentityDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         sql => sql.MigrationsAssembly("GymBro.Infrastructure")));
@@ -36,7 +50,8 @@ catch (Exception ex)
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<GymBroDbContext>();
+    // ĐÃ SỬA: Đổi từ GymBroDbContext sang IdentityDbContext
+    var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
     try
     {
         db.Database.Migrate();
@@ -46,8 +61,6 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"[GYMBRO Identity] Migration warning: {ex.Message}");
     }
 }
-// Không tự Migrate khi đã import dữ liệu Users thủ công — tránh ghi đè schema.
-// Chạy migration thủ công khi cần: dotnet ef database update ...
 
 if (app.Environment.IsDevelopment())
 {
@@ -56,6 +69,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRouting();
+// --- KÍCH HOẠT CORS TRƯỚC KHI ỦY QUYỀN VÀ MAP HUB ---
+app.UseCors("ChatCorsPolicy");
+
 app.UseAuthorization();
+app.MapHub<ChatHub>("/chatHub");
 app.MapControllers();
 app.Run();

@@ -19,13 +19,13 @@ namespace GymBro.Identity.API.Controllers;
 [ApiController]
 public class AuthController : ControllerBase
 {
-    private readonly GymBroDbContext _context;
+    private readonly IdentityDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly IIntegrationEventPublisher _eventPublisher;
     private readonly ILogger<AuthController> _logger;
 
     public AuthController(
-        GymBroDbContext context,
+        IdentityDbContext context,
         IConfiguration configuration,
         IIntegrationEventPublisher eventPublisher,
         ILogger<AuthController> logger)
@@ -60,7 +60,7 @@ public class AuthController : ControllerBase
             Email = request.Email?.Trim() ?? string.Empty,
             Role = "User",
             IsActive = true,
-            CreatedDate = DateTime.Now
+            CreatedDate = DateTime.UtcNow
         };
 
         _context.Users.Add(user);

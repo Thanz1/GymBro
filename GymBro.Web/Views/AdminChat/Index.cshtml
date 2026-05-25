@@ -1,0 +1,177 @@
+﻿@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Hỗ trợ khách hàng";
+}
+
+<div class="row mt-3" style="height: 75vh;">
+    <div class="col-md-4 border-end bg-white rounded shadow-sm overflow-auto">
+        <h5 class="p-3 border-bottom bg-light m-0"><i class="bi bi-people"></i> Danh sách trò chuyện</h5>
+        <div id="user-list" class="list-group list-group-flush">
+            <div class="text-center p-4 text-muted">Đang tải danh sách...</div>
+        </div>
+    </div>
+
+    <div class="col-md-8 d-flex flex-column bg-white rounded shadow-sm p-0 position-relative">
+        <div class="p-3 bg-primary text-white font-weight-bold d-flex justify-content-between align-items-center">
+            <span id="current-chat-name">Vui lòng chọn khách hàng để chat</span>
+        </div>
+
+        <div id="admin-chat-messages" class="flex-grow-1 p-3 overflow-auto" style="background-color: #f8f9fa;">
+        </div>
+
+        <div class="p-3 border-top bg-light d-flex gap-2">
+            <input type="text" id="admin-chat-input" class="form-control rounded-pill" placeholder="Nhập tin nhắn..." disabled />
+            <button id="btn-admin-send" class="btn btn-primary rounded-pill px-4" disabled><i class="bi bi-send"></i> Gửi</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        onst IDENTITY_API_URL = "https://localhost:7001";
+
+        const adminId = "ADMIN";
+        let currentUserIdChatting = null;
+
+        // 1. Khởi tạo SignalR
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl(`${IDENTITY_API_URL}/chatHub`)
+            .build();
+
+        // 2. Hàm gọi API lấy danh sách người dùng đã chat với Admin
+        async function loadConversations() {
+            try {
+                const response = await fetch(`${IDENTITY_API_URL}/api/chat/admin/conversations?adminId=${adminId}`);
+                if (response.ok) {
+                    const users = await response.json();
+                    const userList = document.getElementById("user-list");
+                    userList.innerHTML = ""; // Xóa chữ "Đang tải"
+
+                    if(users.length === 0) {
+                        userList.innerHTML = "<div class='text-center p-4 text-muted'>Chưa có tin nhắn nào.</div>";
+                        return;
+                    }
+
+                    users.forEach(user => {
+                        const btn = document.createElement("button");
+                        btn.className = "list-group-item list-group-item-action py-3 fw-bold";
+                        // ID của API trả về có thể viết thường (userId, fullName) do format JSON
+                        const displayName = user.fullName || user.username || "Khách lạ";
+                        btn.innerHTML = `<i class="bi bi-person-circle text-secondary me-2"></i> ${displayName}`;
+
+                        // Sự kiện khi Admin click vào khách hàng
+                        btn.onclick = () => selectUserToChat(user.userId, displayName, btn);
+                        userList.appendChild(btn);
+                    });
+                }
+            } catch (error) {
+                console.error("Lỗi tải danh sách:", error);
+            }
+        }
+
+        // 3. Hàm xử lý khi chọn 1 khách hàng
+        async function selectUserToChat(userId, userName, btnElement) {
+            currentUserIdChatting = userId.toString();
+
+            // Xóa highlight của các nút khác và bôi đậm nút vừa chọn
+            document.querySelectorAll("#user-list button").forEach(b => b.classList.remove("active", "bg-primary", "text-white"));
+            btnElement.classList.add("active", "bg-primary", "text-white");
+
+            // Đổi Header và Mở khóa khung nhập tin nhắn
+            document.getElementById("current-chat-name").innerText = `Đang hỗ trợ: ${userName}`;
+            document.getElementById("admin-chat-input").disabled = false;
+            document.getElementById("btn-admin-send").disabled = false;
+
+            // Gọi API lấy lịch sử chat
+            loadChatHistory(currentUserIdChatting);
+        }
+
+        // 4. Hàm gọi API lấy lịch sử tin nhắn
+        async function loadChatHistory(userId) {
+            const chatBox = document.getElementById("admin-chat-messages");
+            chatBox.innerHTML = "<div class='text-center text-muted mt-3'>Đang tải tin nhắn...</div>";
+
+            try {
+                const response = await fetch(`${IDENTITY_API_URL}/api/chat/history?user1=${adminId}&user2=${userId}`);
+                if (response.ok) {
+                    const messages = await response.json();
+                    chatBox.innerHTML = "";
+                    messages.forEach(msg => appendMessageToUI(msg));
+                }
+            } catch (error) {
+                console.error("Lỗi tải tin nhắn:", error);
+            }
+        }
+
+        // 5. Hàm in tin nhắn ra màn hình (ĐÃ BỔ SUNG TÊN)
+         function appendMessageToUI(message) {
+             const chatBox = document.getElementById("admin-chat-messages");
+             const msgDiv = document.createElement("div");
+
+             if (message.senderId === adminId) {
+                 // Tin nhắn của Admin (Nằm bên phải)
+                 msgDiv.className = "text-end mb-3";
+                 msgDiv.innerHTML = `
+                     <div style="font-size: 11px; color: #6c757d; margin-bottom: 3px; font-weight: 500;">Bạn (Admin)</div>
+                     <span class="bg-primary text-white p-2 rounded-3 d-inline-block shadow-sm" style="max-width: 75%; text-align: left;">${message.content}</span>
+                 `;
+             } else {
+                 // Tin nhắn của Khách (Nằm bên trái)
+                 // Trích xuất tên khách hàng đang chat từ cái Header phía trên
+                 const currentCustomerName = document.getElementById("current-chat-name").innerText.replace("Đang hỗ trợ: ", "");
+
+                 msgDiv.className = "text-start mb-3";
+                 msgDiv.innerHTML = `
+                     <div style="font-size: 11px; color: #6c757d; margin-bottom: 3px; font-weight: 500;">${currentCustomerName}</div>
+                     <span class="bg-white text-dark p-2 rounded-3 d-inline-block shadow-sm border" style="max-width: 75%; text-align: left;">${message.content}</span>
+                 `;
+             }
+
+             chatBox.appendChild(msgDiv);
+             chatBox.scrollTop = chatBox.scrollHeight; // Tự cuộn xuống đáy
+         }
+
+        // 6. Lắng nghe tin nhắn mới từ SignalR
+        connection.on("ReceiveMessage", function (message) {
+            // Nếu tin nhắn thuộc về cuộc hội thoại đang mở
+            if (message.senderId === currentUserIdChatting || (message.senderId === adminId && message.receiverId === currentUserIdChatting)) {
+                appendMessageToUI(message);
+            } else if (message.receiverId === adminId) {
+                // Có người khác nhắn tới -> Load lại danh sách bên trái để họ hiện lên
+                loadConversations();
+            }
+        });
+
+        // Khởi động kết nối
+        connection.start().then(() => {
+            connection.invoke("JoinChat", adminId);
+            loadConversations(); // Lấy danh sách khách hàng ngay khi vào trang
+        });
+
+        // 7. Hàm gửi tin nhắn
+        function sendAdminMessage() {
+            const input = document.getElementById("admin-chat-input");
+            const content = input.value.trim();
+            if (content === "" || !currentUserIdChatting) return;
+
+            const chatMessageDto = {
+                senderId: adminId,
+                receiverId: currentUserIdChatting,
+                senderName: "Admin GymBro",
+                content: content
+            };
+
+            // Đẩy lên Server
+            connection.invoke("SendMessage", chatMessageDto).catch(err => console.error(err));
+
+            input.value = "";
+            input.focus();
+        }
+
+        document.getElementById("btn-admin-send").addEventListener("click", sendAdminMessage);
+        document.getElementById("admin-chat-input").addEventListener("keypress", function (e) {
+            if (e.key === 'Enter') sendAdminMessage();
+        });
+    </script>
+}

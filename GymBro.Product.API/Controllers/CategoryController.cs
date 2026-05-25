@@ -9,9 +9,9 @@ namespace GymBro.Product.API.Controllers
     [ApiController]
     public class CategoryController : ControllerBase
     {
-        private readonly GymBroDbContext _context;
+        private readonly ProductDbContext _context;
 
-        public CategoryController(GymBroDbContext context)
+        public CategoryController(ProductDbContext context)
         {
             _context = context;
         }

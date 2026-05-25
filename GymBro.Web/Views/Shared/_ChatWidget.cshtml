@@ -1,0 +1,142 @@
+﻿@using GymBro.Web.Helpers
+@using GymBro.Contracts
+@{
+    // Lấy thông tin user từ Session giống hệt như _Layout
+    var chatUser = Context.Session.GetObject<UserDto>("User");
+    bool isAuth = chatUser != null;
+    string currentUserId = isAuth ? chatUser.Id.ToString() : "Guest_" + Guid.NewGuid().ToString().Substring(0, 6);
+    string currentUserName = isAuth ? (chatUser.FullName ?? chatUser.Username) : "Khách vãng lai";
+}
+
+
+
+<button id = "btn-open-chat" style = "position: fixed; bottom: 20px; right: 20px; z-index: 1000; padding: 12px 24px; background-color: #dc3545; color: white; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4); transition: transform 0.2s;" >
+    <i class="fas fa-comments"></i> Chat với GymBro
+</button>
+
+<div id="chat-popup" style="display: none; position: fixed; bottom: 80px; right: 20px; width: 350px; height: 450px; background: white; border-radius: 12px; z-index: 1000; box-shadow: 0 5px 20px rgba(0,0,0,0.2); flex-direction: column; overflow: hidden;">
+
+    <div style="background-color: #dc3545; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: bold; font-size: 16px;">💪 Hỗ trợ trực tuyến</span>
+        <span id="btn-close-chat" style="cursor: pointer; font-size: 24px; line-height: 1;">&times;</span>
+    </div>
+
+    <div id="chat-messages" style="flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background-color: #f8f9fa;">
+        <div style="text-align: center; color: gray; font-size: 12px; margin-bottom: 10px;">
+            Chào mừng đến với GymBro! Bạn cần tư vấn gì?
+        </div>
+    </div>
+
+    <div style="padding: 10px; border-top: 1px solid #eee; display: flex; gap: 8px; background: white;">
+        <input type="text" id="chat-input" placeholder="Nhập tin nhắn..." autocomplete="off" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none;" />
+        <button id="btn-send-chat" style="background-color: #dc3545; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; display: flex; justify-content: center; align-items: center;">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        // 1. Lấy thông tin chuẩn từ C# (Session) truyền xuống
+        const currentUserId = '@currentUserId';
+        const currentUserName = '@Html.Raw(currentUserName)';
+        const adminId = "ADMIN"; // ID fix cứng của Admin để test
+
+        // Xử lý bật/tắt UI
+        const btnOpen = document.getElementById("btn-open-chat");
+        const btnClose = document.getElementById("btn-close-chat");
+        const chatPopup = document.getElementById("chat-popup");
+        const chatMessages = document.getElementById("chat-messages");
+        const chatInput = document.getElementById("chat-input");
+        const btnSend = document.getElementById("btn-send-chat");
+
+        btnOpen.onclick = () => {
+            chatPopup.style.display = "flex";
+            btnOpen.style.display = "none";
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Cuộn xuống đáy
+        };
+
+        btnClose.onclick = () => {
+            chatPopup.style.display = "none";
+            btnOpen.style.display = "block";
+        };
+
+        // --- CẤU HÌNH SIGNALR ---
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("https://localhost:7001/chatHub")
+            .withAutomaticReconnect() // Tự động kết nối lại nếu rớt mạng
+            .build();
+
+        // Lắng nghe khi có tin nhắn mới đổ về
+        connection.on("ReceiveMessage", function (message) {
+            const msgDiv = document.createElement("div");
+            msgDiv.style.padding = "8px 14px";
+            msgDiv.style.borderRadius = "15px";
+            msgDiv.style.maxWidth = "80%";
+            msgDiv.style.wordWrap = "break-word";
+            msgDiv.style.fontSize = "14px";
+            msgDiv.style.boxShadow = "0 1px 2px rgba(0,0,0,0.1)";
+
+            // Nếu mình là người gửi
+            if (message.senderId === currentUserId) {
+                msgDiv.style.alignSelf = "flex-end";
+                msgDiv.style.backgroundColor = "#dc3545";
+                msgDiv.style.color = "white";
+                msgDiv.style.borderBottomRightRadius = "2px";
+                msgDiv.innerHTML = `<span style="font-size: 11px; color: #ffc107; display: block; margin-bottom: 3px; font-weight: 500;">Bạn (${currentUserName})</span><span>${message.content}</span>`;
+            } else {
+                // Nếu người khác (Admin) gửi cho mình
+                msgDiv.style.alignSelf = "flex-start";
+                msgDiv.style.backgroundColor = "#e9ecef";
+                msgDiv.style.color = "black";
+                msgDiv.style.borderBottomLeftRadius = "2px";
+                msgDiv.innerHTML = `<span style="font-size: 11px; color: #6c757d; display: block; margin-bottom: 3px; font-weight: 500;">Admin GymBro</span><span>${message.content}</span>`;
+            }
+
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+
+        // Khởi động kết nối
+        connection.start().then(function () {
+            console.log("Đã kết nối SignalR thành công!");
+            connection.invoke("JoinChat", currentUserId).catch(err => console.error("Lỗi JoinChat: ", err));
+        }).catch(function (err) {
+            console.error("Lỗi kết nối SignalR: ", err);
+        });
+
+        // Hàm Gửi tin nhắn
+        function sendMessage() {
+            const content = chatInput.value.trim();
+            if (content === "") return;
+
+            const chatMessageDto = {
+                senderId: currentUserId,
+                receiverId: adminId,
+                senderName: currentUserName,
+                content: content
+            };
+
+            // Bắn dữ liệu lên Hub
+            connection.invoke("SendMessage", chatMessageDto).catch(function (err) {
+                console.error("Lỗi gửi tin nhắn: ", err);
+            });
+
+            chatInput.value = ""; // Xóa trắng ô input
+            chatInput.focus();
+        }
+
+        // Bắt sự kiện Click nút gửi
+        btnSend.addEventListener("click", sendMessage);
+
+        // Bắt sự kiện Enter
+        chatInput.addEventListener("keypress", function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    });
+</script>

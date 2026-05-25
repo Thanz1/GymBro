@@ -10,9 +10,10 @@ namespace Product.API.Controllers;
 [ApiController]
 public class ProductController : ControllerBase
 {
-    private readonly GymBroDbContext _context;
+    private readonly ProductDbContext _context;
 
-    public ProductController(GymBroDbContext context)
+    // ĐÃ SỬA: Cập nhật tên trong Constructor
+    public ProductController(ProductDbContext context)
     {
         _context = context;
     }
@@ -66,7 +67,7 @@ public class ProductController : ControllerBase
 
     // 3. Thêm sản phẩm mới (Đã cải tiến để trả về ProductDto có ID)
     [HttpPost]
-   // [Authorize] // Yêu cầu đăng nhập mới được thêm sản phẩm
+    // [Authorize] // Yêu cầu đăng nhập mới được thêm sản phẩm
     public async Task<ActionResult<ProductDto>> CreateProduct(CreateProductDto request)
     {
         var product = new GymBro.Core.Product

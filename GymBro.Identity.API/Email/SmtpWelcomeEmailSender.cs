@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Mail;
 using GymBro.Contracts.Events;
 using Microsoft.Extensions.Options;
@@ -49,11 +49,18 @@ public sealed class SmtpWelcomeEmailSender : IWelcomeEmailSender
         };
         message.To.Add(new MailAddress(integrationEvent.Email, integrationEvent.FullName));
 
-        using var smtpClient = new SmtpClient(_options.Host, _options.Port)
-        {
-            EnableSsl = _options.EnableSsl,
-            Credentials = new NetworkCredential(_options.UserName, _options.Password)
-        };
+        using var smtpClient = new SmtpClient(_options.Host, _options.Port);
+
+        // 1. BẮT BUỘC NẰM TRƯỚC: Báo cho .NET biết không dùng danh tính Windows mặc định
+        smtpClient.UseDefaultCredentials = false;
+
+        // 2. SAU ĐÓ MỚI: Gán mật khẩu ứng dụng Gmail (16 ký tự) vào
+        smtpClient.Credentials = new NetworkCredential(_options.UserName, _options.Password);
+
+        // 3. Bật SSL để bảo mật
+        smtpClient.EnableSsl = _options.EnableSsl;
+
+        await smtpClient.SendMailAsync(message, cancellationToken);
 
         await smtpClient.SendMailAsync(message, cancellationToken);
         _logger.LogInformation(

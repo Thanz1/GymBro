@@ -9,9 +9,9 @@ namespace GymBro.Infrastructure
 {
     public class ProductRepository : IProductRepository
     {
-        private readonly GymBroDbContext _context;
+        private readonly ProductDbContext _context;
 
-        public ProductRepository(GymBroDbContext context)
+        public ProductRepository(ProductDbContext context)
         {
             _context = context;
         }
