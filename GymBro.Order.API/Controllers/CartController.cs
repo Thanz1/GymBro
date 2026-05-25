@@ -33,30 +33,21 @@ public class CartController : ControllerBase
         if (!int.TryParse(userIdString, out int userId))
             return Unauthorized("Token không hợp lệ hoặc thiếu UserId!");
 
-        // Đã fix lỗi CS0019: c.UserId (int) == userId (int)
-        var cartItems = await _context.CartItems
-            .Where(c => c.UserId == userId)
-            .ToListAsync();
+            if (user == null) return Unauthorized();
 
-        var result = new List<CartItemDto>();
-        var client = _httpClientFactory.CreateClient("ProductService");
-
-        foreach (var item in cartItems)
-        {
-            var productRes = await client.GetFromJsonAsync<ProductDto>($"products/{item.ProductId}");
-
-            if (productRes != null)
-            {
-                result.Add(new CartItemDto
+            var cartItems = await _context.CartItems
+                .Include(c => c.Product)
+                .Where(c => c.UserId == user.Id)
+                .Select(c => new CartItemDto
                 {
-                    ProductId = item.ProductId,
-                    ProductName = productRes.ProductName,
-                    Price = productRes.Price,
-                    Quantity = item.Quantity,
-                    ImageURL = productRes.ImageURL
-                });
-            }
-        }
+                    // ĐÃ SỬA: Đồng bộ Tiếng Anh 100%
+                    ProductId = c.ProductId,
+                    ProductName = c.Product == null ? string.Empty : c.Product.ProductName,
+                    Price = c.Product == null ? 0 : c.Product.Price,
+                    Quantity = c.Quantity,
+                    ImageURL = c.Product == null ? string.Empty : c.Product.ImageURL
+                })
+                .ToListAsync();
 
         return Ok(result);
     }

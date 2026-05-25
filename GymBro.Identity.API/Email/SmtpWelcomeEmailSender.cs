@@ -1,7 +1,9 @@
 ﻿using System.Net;
-using System.Net.Mail;
 using GymBro.Contracts.Events;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Options;
+using MimeKit;
 
 namespace GymBro.Identity.API.Email;
 
@@ -40,29 +42,31 @@ public sealed class SmtpWelcomeEmailSender : IWelcomeEmailSender
             return;
         }
 
-        using var message = new MailMessage
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress(_options.FromName, _options.FromEmail));
+        message.To.Add(new MailboxAddress(integrationEvent.FullName, integrationEvent.Email));
+        message.Subject = "Chao mung den voi GymBro";
+        message.Body = new BodyBuilder
         {
-            From = new MailAddress(_options.FromEmail, _options.FromName),
-            Subject = "Chao mung den voi GymBro",
-            Body = BuildBody(integrationEvent),
-            IsBodyHtml = true
-        };
-        message.To.Add(new MailAddress(integrationEvent.Email, integrationEvent.FullName));
+            HtmlBody = BuildBody(integrationEvent)
+        }.ToMessageBody();
 
-        using var smtpClient = new SmtpClient(_options.Host, _options.Port);
+        using var smtpClient = new SmtpClient();
+        var secureSocketOptions = _options.EnableSsl
+            ? SecureSocketOptions.StartTls
+            : SecureSocketOptions.Auto;
 
-        // 1. BẮT BUỘC NẰM TRƯỚC: Báo cho .NET biết không dùng danh tính Windows mặc định
-        smtpClient.UseDefaultCredentials = false;
+        await smtpClient.ConnectAsync(
+            _options.Host,
+            _options.Port,
+            secureSocketOptions,
+            cancellationToken);
+        await smtpClient.AuthenticateAsync(
+            new NetworkCredential(_options.UserName, _options.Password),
+            cancellationToken);
+        await smtpClient.SendAsync(message, cancellationToken);
+        await smtpClient.DisconnectAsync(quit: true, cancellationToken);
 
-        // 2. SAU ĐÓ MỚI: Gán mật khẩu ứng dụng Gmail (16 ký tự) vào
-        smtpClient.Credentials = new NetworkCredential(_options.UserName, _options.Password);
-
-        // 3. Bật SSL để bảo mật
-        smtpClient.EnableSsl = _options.EnableSsl;
-
-        await smtpClient.SendMailAsync(message, cancellationToken);
-
-        await smtpClient.SendMailAsync(message, cancellationToken);
         _logger.LogInformation(
             "Sent welcome email to Email={Email}, UserId={UserId}",
             integrationEvent.Email,

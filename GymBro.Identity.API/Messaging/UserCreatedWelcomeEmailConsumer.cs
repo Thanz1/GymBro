@@ -2,6 +2,8 @@ using System.Text;
 using System.Text.Json;
 using GymBro.Contracts.Events;
 using GymBro.Identity.API.Email;
+using MailKit;
+using MailKit.Net.Smtp;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -93,6 +95,16 @@ public sealed class UserCreatedWelcomeEmailConsumer : BackgroundService
                 return;
             }
 
+            if (!integrationEvent.SendWelcomeEmail)
+            {
+                _logger.LogInformation(
+                    "Welcome email already handled. Skipped Email={Email}, UserId={UserId}",
+                    integrationEvent.Email,
+                    integrationEvent.UserId);
+                _channel.BasicAck(args.DeliveryTag, multiple: false);
+                return;
+            }
+
             using var scope = _scopeFactory.CreateScope();
             var emailSender = scope.ServiceProvider.GetRequiredService<IWelcomeEmailSender>();
             await emailSender.SendWelcomeEmailAsync(integrationEvent, CancellationToken.None);
@@ -101,9 +113,26 @@ public sealed class UserCreatedWelcomeEmailConsumer : BackgroundService
         }
         catch (Exception ex)
         {
+            if (IsSmtpFailure(ex))
+            {
+                _logger.LogWarning(
+                    ex,
+                    "SMTP rejected welcome email. Message will not be requeued.");
+                _channel.BasicNack(args.DeliveryTag, multiple: false, requeue: false);
+                return;
+            }
+
             _logger.LogError(ex, "Failed to process welcome email message.");
             _channel.BasicNack(args.DeliveryTag, multiple: false, requeue: true);
         }
+    }
+
+    private static bool IsSmtpFailure(Exception exception)
+    {
+        return exception is SmtpCommandException
+            or SmtpProtocolException
+            or ServiceNotConnectedException
+            or ServiceNotAuthenticatedException;
     }
 
     public override void Dispose()

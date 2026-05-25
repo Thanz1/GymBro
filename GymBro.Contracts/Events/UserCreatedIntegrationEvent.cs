@@ -12,6 +12,7 @@ public class UserCreatedIntegrationEvent
     public string FullName { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public string RegistrationSource { get; set; } = string.Empty;
+    public bool SendWelcomeEmail { get; set; } = true;
 }
 
 public static class IntegrationEventRoutingKeys

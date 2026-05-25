@@ -3,6 +3,7 @@
 
 @{
     ViewBag.Title = "Giỏ hàng";
+    var totalPrice = ViewData["TotalPrice"] is decimal value ? value : 0m;
 }
 
 <div class="cart-page container py-4">
@@ -64,7 +65,7 @@
                     <h5 class="fw-bold border-bottom pb-2 mb-3">Tóm tắt đơn hàng</h5>
                     <div class="d-flex justify-content-between mb-3">
                         <span>Tổng tiền:</span>
-                        <h4 class="text-danger fw-bold">@(((decimal)ViewData["TotalPrice"]).ToString("N0")) ₫</h4>
+                        <h4 class="text-danger fw-bold">@totalPrice.ToString("N0") ₫</h4>
                     </div>
                     <a href="@Url.Action("Checkout", "Cart")" class="btn btn-success w-100 py-3 fw-bold">TIẾN HÀNH THANH TOÁN</a>
                 </div>
