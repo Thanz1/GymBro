@@ -11,4 +11,5 @@ public interface IProductService
     Task<bool> UpdateProductAsync(int id, ProductDto productDto); 
     Task<bool> DeleteProductAsync(int id); 
     Task<bool> AdjustStockAsync(int id, int newQuantity, string note);
+    Task<IEnumerable<ProductDto>> SearchProductsAsync(string keyword);
 }

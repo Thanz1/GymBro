@@ -140,4 +140,26 @@ public class ProductController : ControllerBase
 
         return NoContent();
     }
+    [HttpGet("search")]
+    public async Task<IActionResult> SearchProducts([FromQuery] string keyword)
+    {
+        // Nếu không nhập gì thì trả về toàn bộ danh sách
+        if (string.IsNullOrWhiteSpace(keyword))
+        {
+            var allProducts = await _context.Products.ToListAsync();
+            return Ok(allProducts);
+        }
+
+        // Tìm kiếm tương đối chứa từ khóa (không phân biệt hoa thường)
+        var products = await _context.Products
+     .Where(p => p.ProductName.ToLower().Contains(keyword.ToLower()))
+     .ToListAsync();
+
+        if (!products.Any())
+        {
+            return NotFound(new { message = "Không tìm thấy sản phẩm nào khớp với từ khóa." });
+        }
+
+        return Ok(products);
+    }
 }

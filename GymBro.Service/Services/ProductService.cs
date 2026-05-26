@@ -1,5 +1,6 @@
 ﻿﻿using System.Net.Http.Json;
 using GymBro.Contracts;
+using Newtonsoft.Json;
 namespace GymBro.Service
 {
     public class ProductService : IProductService
@@ -57,6 +58,23 @@ namespace GymBro.Service
             var request = new { NewQuantity = newQuantity, Note = note };
             var response = await _httpClient.PostAsJsonAsync($"api/product/{id}/adjust-stock", request);
             return response.IsSuccessStatusCode;
+        }
+        public async Task<IEnumerable<ProductDto>> SearchProductsAsync(string keyword)
+        {
+            // Bắn request lên Gateway, Gateway sẽ tự chuyển xuống Product.API
+            string url = string.IsNullOrWhiteSpace(keyword)
+                ? "/product-api/products"
+                : $"/product-api/products/search?keyword={keyword}";
+
+            var response = await _httpClient.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<IEnumerable<ProductDto>>(content);
+            }
+
+            return new List<ProductDto>(); // Trả về list rỗng nếu lỗi
         }
     }
 }

@@ -1,35 +1,22 @@
+@model IEnumerable<GymBro.Contracts.ProductDto>
 @using GymBro.Contracts
 @{
     ViewBag.Title = "Trang chủ - GYMBRO";
     var newProducts = ViewBag.NewProducts as IEnumerable<ProductDto>;
     var bestSellingProducts = ViewBag.BestSellingProducts as IEnumerable<ProductDto>;
+    string keyword = ViewBag.Keyword as string;
 }
 
-@* Hero Banner *@
-<div class="hero-banner position-relative mb-5">
-    <img src="~/Content/Images/Postter.jpg" class="w-100 shadow" style="height: 450px; object-fit: cover;" alt="Banner" onerror="this.src='https://via.placeholder.com/1200x450'" />
-    <div class="position-absolute top-50 start-50 translate-middle text-center text-white">
-        <h1 class="display-2 fw-bold text-uppercase shadow-sm">GYMBRO</h1>
-        <p class="fs-4 fw-light">Sức mạnh từ sự kiên trì</p>
-        <a href="@Url.Action("Shop", "Home")" class="btn btn-danger btn-lg px-5 mt-3 shadow">MUA SẮM NGAY</a>
-    </div>
-</div>
 
-<div class="container">
-    @* Sản phẩm Mới *@
-    <section class="mb-5">
-        <div class="d-flex justify-content-between align-items-end mb-4">
-            <div>
-                <h2 class="fw-bold text-primary mb-0"><i class="bi bi-stars text-warning"></i> Sản phẩm mới nhất</h2>
-                <p class="text-muted mb-0">Những thiết bị vừa cập bến tại cửa hàng</p>
-            </div>
-            <a href="@Url.Action("Shop", "Home")" class="text-decoration-none text-danger fw-bold">Xem tất cả <i class="bi bi-arrow-right"></i></a>
-        </div>
 
+@if (!string.IsNullOrWhiteSpace(keyword))
+{
+    <div class="container mb-5">
+        <h3 class="mb-4">Kết quả tìm kiếm cho: <span class="text-danger fw-bold">"@keyword"</span></h3>
         <div class="row g-4">
-            @if (newProducts != null && newProducts.Any())
+            @if (Model != null && Model.Any())
             {
-                foreach (var item in newProducts)
+                foreach (var item in Model)
                 {
                     <div class="col-lg-3 col-md-4 col-sm-6">
                         <div class="card h-100 border-0 shadow-sm product-card">
@@ -48,6 +35,96 @@
                     </div>
                 }
             }
+            else
+            {
+                <div class="col-12 text-center mt-5">
+                    <h4 class="text-muted">Không tìm thấy sản phẩm nào phù hợp.</h4>
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-outline-danger mt-3">Quay lại trang chủ</a>
+                </div>
+            }
         </div>
-    </section>
-</div>
+    </div>
+}
+else
+{
+    @* Hero Banner *@
+    <div class="hero-banner position-relative mb-5">
+        <img src="~/Content/Images/Postter.jpg" class="w-100 shadow" style="height: 450px; object-fit: cover;" alt="Banner" onerror="this.src='https://via.placeholder.com/1200x450'" />
+        <div class="position-absolute top-50 start-50 translate-middle text-center text-white">
+            <h1 class="display-2 fw-bold text-uppercase shadow-sm">GYMBRO</h1>
+            <p class="fs-4 fw-light">Sức mạnh từ sự kiên trì</p>
+            <a href="@Url.Action("Shop", "Home")" class="btn btn-danger btn-lg px-5 mt-3 shadow">MUA SẮM NGAY</a>
+        </div>
+    </div>
+
+    <div class="container">
+        @* Sản phẩm Mới *@
+        <section class="mb-5">
+            <div class="d-flex justify-content-between align-items-end mb-4">
+                <div>
+                    <h2 class="fw-bold text-primary mb-0"><i class="bi bi-stars text-warning"></i> Sản phẩm mới nhất</h2>
+                    <p class="text-muted mb-0">Những thiết bị vừa cập bến tại cửa hàng</p>
+                </div>
+                <a href="@Url.Action("Shop", "Home")" class="text-decoration-none text-danger fw-bold">Xem tất cả <i class="bi bi-arrow-right"></i></a>
+            </div>
+
+            <div class="row g-4">
+                @if (newProducts != null && newProducts.Any())
+                {
+                    foreach (var item in newProducts)
+                    {
+                        <div class="col-lg-3 col-md-4 col-sm-6">
+                            <div class="card h-100 border-0 shadow-sm product-card">
+                                <a href="@Url.Action("Details", "Home", new { id = item.Id })" class="text-decoration-none">
+                                    <img src="~/Content/Images/@item.ImageURL" class="card-img-top p-2" style="height: 220px; object-fit: contain;" onerror="this.src='/Content/Images/no-image.png'" />
+                                </a>
+                                <div class="card-body">
+                                    <small class="text-muted text-uppercase">@(item.CategoryName ?? "Thiết bị")</small>
+                                    <h6 class="fw-bold text-dark mt-1 text-truncate">@item.ProductName</h6>
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <span class="text-danger fw-bold fs-5">@item.Price.ToString("N0") ₫</span>
+                                        <a href="@Url.Action("Details", "Home", new { id = item.Id })" class="btn btn-outline-danger btn-sm rounded-circle"><i class="bi bi-cart-plus"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </section>
+
+        @* Sản phẩm bán chạy *@
+        @if (bestSellingProducts != null && bestSellingProducts.Any())
+        {
+            <section class="mb-5">
+                <div class="d-flex justify-content-between align-items-end mb-4">
+                    <div>
+                        <h2 class="fw-bold text-success mb-0"><i class="bi bi-fire text-danger"></i> Sản phẩm bán chạy</h2>
+                        <p class="text-muted mb-0">Được khách hàng GymBro ưa chuộng nhất</p>
+                    </div>
+                    <a href="@Url.Action("Shop", "Home")" class="text-decoration-none text-danger fw-bold">Xem tất cả <i class="bi bi-arrow-right"></i></a>
+                </div>
+                <div class="row g-4">
+                    @foreach (var item in bestSellingProducts)
+                    {
+                        <div class="col-lg-3 col-md-4 col-sm-6">
+                            <div class="card h-100 border-0 shadow-sm product-card">
+                                <a href="@Url.Action("Details", "Home", new { id = item.Id })" class="text-decoration-none">
+                                    <img src="~/Content/Images/@item.ImageURL" class="card-img-top p-2" style="height: 220px; object-fit: contain;" onerror="this.src='/Content/Images/no-image.png'" />
+                                </a>
+                                <div class="card-body">
+                                    <small class="text-muted text-uppercase">@(item.CategoryName ?? "Thiết bị")</small>
+                                    <h6 class="fw-bold text-dark mt-1 text-truncate">@item.ProductName</h6>
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <span class="text-danger fw-bold fs-5">@item.Price.ToString("N0") ₫</span>
+                                        <a href="@Url.Action("Details", "Home", new { id = item.Id })" class="btn btn-outline-danger btn-sm rounded-circle"><i class="bi bi-cart-plus"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+}

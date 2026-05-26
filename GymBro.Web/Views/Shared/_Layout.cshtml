@@ -24,7 +24,16 @@
             <a class="navbar-brand fw-bold" href="@Url.Action("Index", "Home")"><i class="bi bi-dumbbell"></i> GYMBRO</a>
 
             <form action="@Url.Action("Shop", "Home")" method="GET" class="d-flex flex-grow-1 mx-4">
-                <input type="search" name="keyword" class="form-control rounded-pill" placeholder="Bạn muốn tìm gì?">
+                <div class="input-group">
+                    <input type="search"
+                           name="keyword"
+                           value="@ViewBag.Keyword"
+                           class="form-control rounded-start-pill border-0 px-4"
+                           placeholder="Bạn muốn tìm thiết bị, thực phẩm gì?">
+                    <button class="btn btn-light rounded-end-pill px-3" type="submit">
+                        <i class="bi bi-search text-danger fw-bold"></i>
+                    </button>
+                </div>
             </form>
 
             <ul class="navbar-nav d-flex align-items-center gap-3 flex-row">
