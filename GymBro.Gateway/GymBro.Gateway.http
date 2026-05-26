@@ -1,0 +1,6 @@
+@GymBro.Gateway_HostAddress = https://localhost:5094
+
+GET {{GymBro.Gateway_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
