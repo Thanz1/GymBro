@@ -44,9 +44,9 @@
                         <label class="form-label fw-bold">Hình ảnh sản phẩm</label>
                         <div class="border rounded p-2 mb-2">
                             <img id="preview" src="~/Content/Images/@(string.IsNullOrEmpty(Model.ImageURL) ? "no-image.png" : Model.ImageURL)"
-                                 class="img-fluid" style="max-height: 200px;" onerror="this.src='/Content/Images/no-image.png'" />[cite: 43]
+                                 class="img-fluid" style="max-height: 200px;" onerror="this.src='/Content/Images/no-image.png'" />
                         </div>
-                        <input type="file" name="imageFile" class="form-control" onchange="previewImage(this)" accept="image/*" />[cite: 43]
+                        <input type="file" name="imageFile" class="form-control" onchange="previewImage(this)" accept="image/*" />
                     </div>
                     <div class="col-12 mt-3">
                         <label class="form-label fw-bold">Mô tả chi tiết</label>
@@ -64,9 +64,9 @@
 </div>
 
 @section Scripts {
-    <script src="https://cdn.ckeditor.com/4.16.2/standard/ckeditor.js"></script>[cite: 43]
+    <script src="https://cdn.ckeditor.com/4.16.2/standard/ckeditor.js"></script>
     <script>
-        CKEDITOR.replace('Description');[cite: 43]
+        CKEDITOR.replace('Description');
         function previewImage(input) {
             var preview = document.getElementById('preview');
             if (input.files && input.files[0]) {

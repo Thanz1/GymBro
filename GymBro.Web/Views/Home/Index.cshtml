@@ -7,8 +7,6 @@
     string keyword = ViewBag.Keyword as string;
 }
 
-
-
 @if (!string.IsNullOrWhiteSpace(keyword))
 {
     <div class="container mb-5">
@@ -28,7 +26,7 @@
                                 <h6 class="fw-bold text-dark mt-1 text-truncate">@item.ProductName</h6>
                                 <div class="d-flex justify-content-between align-items-center mt-3">
                                     <span class="text-danger fw-bold fs-5">@item.Price.ToString("N0") ₫</span>
-                                    <a href="@Url.Action("Details", "Home", new { id = item.Id })" class="btn btn-outline-danger btn-sm rounded-circle"><i class="bi bi-cart-plus"></i></a>
+                                    <a href="@Url.Action("AddToCart", "Cart", new { productId = item.Id, quantity = 1 })" class="btn btn-outline-danger btn-sm rounded-circle"><i class="bi bi-cart-plus"></i></a>
                                 </div>
                             </div>
                         </div>
@@ -58,6 +56,7 @@ else
     </div>
 
     <div class="container">
+
         @* Sản phẩm Mới *@
         <section class="mb-5">
             <div class="d-flex justify-content-between align-items-end mb-4">
@@ -83,7 +82,7 @@ else
                                     <h6 class="fw-bold text-dark mt-1 text-truncate">@item.ProductName</h6>
                                     <div class="d-flex justify-content-between align-items-center mt-3">
                                         <span class="text-danger fw-bold fs-5">@item.Price.ToString("N0") ₫</span>
-                                        <a href="@Url.Action("Details", "Home", new { id = item.Id })" class="btn btn-outline-danger btn-sm rounded-circle"><i class="bi bi-cart-plus"></i></a>
+                                        <a href="@Url.Action("AddToCart", "Cart", new { productId = item.Id, quantity = 1 })" class="btn btn-outline-danger btn-sm rounded-circle"><i class="bi bi-cart-plus"></i></a>
                                     </div>
                                 </div>
                             </div>
@@ -117,7 +116,7 @@ else
                                     <h6 class="fw-bold text-dark mt-1 text-truncate">@item.ProductName</h6>
                                     <div class="d-flex justify-content-between align-items-center mt-3">
                                         <span class="text-danger fw-bold fs-5">@item.Price.ToString("N0") ₫</span>
-                                        <a href="@Url.Action("Details", "Home", new { id = item.Id })" class="btn btn-outline-danger btn-sm rounded-circle"><i class="bi bi-cart-plus"></i></a>
+                                        <a href="@Url.Action("AddToCart", "Cart", new { productId = item.Id, quantity = 1 })" class="btn btn-outline-danger btn-sm rounded-circle"><i class="bi bi-cart-plus"></i></a>
                                     </div>
                                 </div>
                             </div>

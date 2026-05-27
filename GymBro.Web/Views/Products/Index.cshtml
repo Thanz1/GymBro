@@ -58,24 +58,24 @@
                             <td class="text-center">
                                 <img src="~/Content/Images/@(string.IsNullOrEmpty(item.ImageURL) ? "no-image.png" : item.ImageURL)"
                                      class="img-thumbnail" style="width: 60px; height: 60px; object-fit: cover;"
-                                     onerror="this.src='/Content/Images/no-image.png'" />[cite: 44]
+                                     onerror="this.src='/Content/Images/no-image.png'" />
                             </td>
                             <td>
                                 <div class="fw-bold">@item.ProductName</div>
-                                <small class="text-muted">ID: #@item.Id</small>[cite: 44]
+                                <small class="text-muted">ID: #@item.Id</small>
                             </td>
-                            <td>@(item.CategoryName ?? "N/A")</td>[cite: 44]
-                            <td class="fw-bold text-danger">@item.Price.ToString("N0") ₫</td>[cite: 44]
+                            <td>@(item.CategoryName ?? "N/A")</td>
+                            <td class="fw-bold text-danger">@item.Price.ToString("N0") ₫</td>
                             <td class="text-center">
                                 <span class="badge @(item.StockQuantity <= 5 ? "bg-danger" : "bg-success") rounded-pill px-3">
                                     @item.StockQuantity
-                                </span>[cite: 44]
+                                </span>
                             </td>
                             <td class="text-center">
                                 <div class="btn-group">
-                                    <a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>[cite: 44]
-                                    <a href="@Url.Action("Details", new { id = item.Id })" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i></a>[cite: 44]
-                                    <a href="@Url.Action("Delete", new { id = item.Id })" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>[cite: 44]
+                                    <a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                                    <a href="@Url.Action("Details", new { id = item.Id })" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i></a>
+                                    <a href="@Url.Action("Delete", new { id = item.Id })" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
                                 </div>
                             </td>
                         </tr>

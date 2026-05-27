@@ -12,15 +12,15 @@
             <div class="row">
                 <div class="col-md-5 text-center">
                     <img src="~/Content/Images/@(string.IsNullOrEmpty(Model.ImageURL) ? "no-image.png" : Model.ImageURL)"
-                         class="img-fluid rounded shadow-sm" style="max-height: 400px;" onerror="this.src='/Content/Images/no-image.png'" />[cite: 42]
+                         class="img-fluid rounded shadow-sm" style="max-height: 400px;" onerror="this.src='/Content/Images/no-image.png'" />
                 </div>
                 <div class="col-md-7">
                     <h2 class="fw-bold">@Model.ProductName</h2>[cite: 42]
                     <div class="mb-3">
-                        <span class="badge bg-info text-dark">@(Model.CategoryName ?? "Chưa phân loại")</span>[cite: 42]
-                        <span class="text-muted ms-3">Mã SP: #@Model.Id</span>[cite: 42]
+                        <span class="badge bg-info text-dark">@(Model.CategoryName ?? "Chưa phân loại")</span>
+                        <span class="text-muted ms-3">Mã SP: #@Model.Id</span>
                     </div>
-                    <h3 class="text-danger fw-bold mb-4">@Model.Price.ToString("N0") VNĐ</h3>[cite: 42]
+                    <h3 class="text-danger fw-bold mb-4">@Model.Price.ToString("N0") VNĐ</h3>
 
                     <div class="mb-4">
                         <p class="mb-1">
@@ -39,8 +39,8 @@
                     </div>
 
                     <div class="d-flex gap-2">
-                        <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-primary"><i class="bi bi-pencil"></i> Chỉnh sửa</a>[cite: 42]
-                        <a href="@Url.Action("Index")" class="btn btn-secondary">Quay lại</a>[cite: 42]
+                        <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-primary"><i class="bi bi-pencil"></i> Chỉnh sửa</a>
+                        <a href="@Url.Action("Index")" class="btn btn-secondary">Quay lại</a>
                     </div>
                 </div>
             </div>

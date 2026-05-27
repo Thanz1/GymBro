@@ -3,6 +3,8 @@ using GymBro.Contracts.DTOs;
 using GymBro.Service;
 using GymBro.Web.Helpers;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
 
 namespace GymBro.Web.Controllers
 {
@@ -22,7 +24,9 @@ namespace GymBro.Web.Controllers
             _configuration = configuration;
         }
 
-        // --- ĐĂNG NHẬP ---
+        // =========================================================
+        // 1. CHỨC NĂNG ĐĂNG NHẬP (LOGIN)
+        // =========================================================
 
         [HttpGet]
         public IActionResult Login()
@@ -35,12 +39,11 @@ namespace GymBro.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginDto loginDto)
         {
-            // Identity API phía sau sẽ tự kiểm tra xem loginDto.Username là Tên hay Email
             var user = await _identityService.LoginAsync(loginDto);
 
             if (user != null)
             {
-                // Lưu thông tin vào Session để dùng cho toàn trang Web
+                // 1.1. Lưu thông tin vào Session để dùng cho toàn hệ thống Web
                 HttpContext.Session.SetObject("User", user);
 
                 if (!string.IsNullOrEmpty(user.Token))
@@ -48,8 +51,19 @@ namespace GymBro.Web.Controllers
                     HttpContext.Session.SetString("JWToken", user.Token);
                 }
 
+                // 1.2. Đồng bộ danh tính với hệ thống bảo mật Cookie của ASP.NET Core
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, user.Username ?? "User"),
+                    new Claim(ClaimTypes.Role, user.Role ?? "Customer")
+                };
+                var claimsIdentity = new ClaimsIdentity(claims, "Cookies"); // "Cookies" khớp với cài đặt trong Program.cs
+                await HttpContext.SignInAsync("Cookies", new ClaimsPrincipal(claimsIdentity));
+
+                // 1.3. Điều hướng phân quyền sau đăng nhập
                 if (string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase))
                     return RedirectToAction("Index", "Products");
+
                 return RedirectToAction("Index", "Home");
             }
 
@@ -73,10 +87,20 @@ namespace GymBro.Web.Controllers
 
             if (user != null)
             {
+                // 2.1. Lưu Session như đăng nhập thường
                 HttpContext.Session.SetObject("User", user);
 
                 if (!string.IsNullOrEmpty(user.Token))
                     HttpContext.Session.SetString("JWToken", user.Token);
+
+                // 2.2. Kích hoạt Cookie xác thực bảo mật cho tài khoản Google
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, user.Username ?? "User"),
+                    new Claim(ClaimTypes.Role, user.Role ?? "Customer")
+                };
+                var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
+                await HttpContext.SignInAsync("Cookies", new ClaimsPrincipal(claimsIdentity));
 
                 if (string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase))
                     return RedirectToAction("Index", "Products");
@@ -89,19 +113,20 @@ namespace GymBro.Web.Controllers
             return View("Login");
         }
 
-        // --- ĐĂNG KÝ TÀI KHOẢN ---
+        // =========================================================
+        // 2. CHỨC NĂNG ĐĂNG KÝ TÀI KHOẢN
+        // =========================================================
 
         [HttpGet]
         public IActionResult Register()
         {
-            return View(); // Trả về file Register.cshtml
+            return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterDto registerDto)
         {
-            // Gọi sang IdentityService để đăng ký
             var result = await _identityService.RegisterAsync(registerDto);
 
             if (result)
@@ -114,7 +139,9 @@ namespace GymBro.Web.Controllers
             return View(registerDto);
         }
 
-        // --- QUÊN MẬT KHẨU ---
+        // =========================================================
+        // 3. CHỨC NĂNG QUÊN & ĐỔI MẬT KHẨU
+        // =========================================================
 
         [HttpGet]
         public IActionResult ForgotPassword()
@@ -124,10 +151,8 @@ namespace GymBro.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        // ĐỔI: Nhận ResetPasswordDto thay vì ForgotPasswordDto
         public async Task<IActionResult> ForgotPassword(ResetPasswordDto resetPasswordDto)
         {
-            // ĐỔI: Gọi ResetPasswordAsync để thực hiện đổi mật khẩu thật
             var result = await _identityService.ResetPasswordAsync(resetPasswordDto);
 
             if (result)
@@ -139,26 +164,10 @@ namespace GymBro.Web.Controllers
             ViewBag.ErrorMessage = "Không tìm thấy tài khoản hoặc lỗi hệ thống.";
             return View();
         }
-        // --- ĐĂNG XUẤT & KHÁC ---
 
-        public IActionResult Logout()
-        {
-            HttpContext.Session.Clear();
-            return RedirectToAction("Index", "Home");
-        }
-
-        public async Task<IActionResult> OrderHistory()
-        {
-            var userSession = HttpContext.Session.GetObject<UserDto>("User");
-            if (userSession == null) return RedirectToAction("Login");
-
-            var orders = await _orderService.GetOrdersByUserIdAsync(userSession.Id);
-            return View(orders);
-        }
         [HttpGet]
         public IActionResult ResetPassword(string identifier)
         {
-            // Trả về View để người dùng nhập mật khẩu mới
             return View(new ResetPasswordDto { Identifier = identifier });
         }
 
@@ -173,6 +182,30 @@ namespace GymBro.Web.Controllers
             }
             ViewBag.ErrorMessage = "Không thể đổi mật khẩu, vui lòng thử lại.";
             return View(resetPasswordDto);
+        }
+
+        // =========================================================
+        // 4. CHỨC NĂNG ĐĂNG XUẤT & LỊCH SỬ ĐƠN HÀNG
+        // =========================================================
+
+        public async Task<IActionResult> Logout()
+        {
+            // Xóa Session
+            HttpContext.Session.Clear();
+
+            // Hủy Cookie bảo mật lưu trong trình duyệt tránh lỗi nhảy trang
+            await HttpContext.SignOutAsync("Cookies");
+
+            return RedirectToAction("Index", "Home");
+        }
+
+        public async Task<IActionResult> OrderHistory()
+        {
+            var userSession = HttpContext.Session.GetObject<UserDto>("User");
+            if (userSession == null) return RedirectToAction("Login");
+
+            var orders = await _orderService.GetOrdersByUserIdAsync(userSession.Id);
+            return View(orders);
         }
     }
 }

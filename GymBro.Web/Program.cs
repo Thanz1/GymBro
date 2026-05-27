@@ -36,7 +36,17 @@ builder.Services.AddHttpClient<ISupplierService, SupplierService>(client => {
 // builder.Services.AddHttpClient<IInventoryService, InventoryService>(client => {
 //    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:ProductApi"] ?? "https://localhost:7002");
 // });
-
+builder.Services.AddAuthentication(options =>
+{
+    // Đặt Cookie làm mặc định cho mọi hành động xác thực
+    options.DefaultScheme = "Cookies";
+    options.DefaultChallengeScheme = "Cookies";
+})
+.AddCookie("Cookies", options =>
+{
+    options.LoginPath = "/Account/Login"; // Đường dẫn đến trang đăng nhập
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
 // Nhóm 3: Order API (Port 7003) - Quản lý Đơn hàng, Thanh toán, Wishlist
 builder.Services.AddHttpClient<IOrderService, OrderService>(client => {
     client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:OrderApi"] ?? "https://localhost:7003");
@@ -76,6 +86,7 @@ app.UseRouting();
 
 // Cần UseSession trước UseAuthorization để lấy được User từ Session
 app.UseSession();
+app.UseAuthentication();
 app.UseAuthorization();
 
 // Route cho Area Admin (Dành cho các Controller kế thừa BaseAdminController)
