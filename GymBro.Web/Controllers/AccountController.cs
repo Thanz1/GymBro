@@ -187,6 +187,15 @@ namespace GymBro.Web.Controllers
         // =========================================================
         // 4. CHỨC NĂNG ĐĂNG XUẤT & LỊCH SỬ ĐƠN HÀNG
         // =========================================================
+        [HttpGet]
+        public IActionResult MyAccount()
+        {
+            var user = HttpContext.Session.GetObject<UserDto>("User");
+            if (user == null)
+                return RedirectToAction("Login", "Account");
+
+            return View(user);
+        }
 
         public async Task<IActionResult> Logout()
         {
@@ -206,6 +215,42 @@ namespace GymBro.Web.Controllers
 
             var orders = await _orderService.GetOrdersByUserIdAsync(userSession.Id);
             return View(orders);
+        }
+        [HttpGet]
+        public IActionResult EditProfile()
+        {
+            var user = HttpContext.Session.GetObject<UserDto>("User");
+            if (user == null) return RedirectToAction("Login");
+
+            return View(user); // Truyền dữ liệu cũ sang giao diện
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditProfile(UserDto updatedUser)
+        {
+            var userSession = HttpContext.Session.GetObject<UserDto>("User");
+            if (userSession == null) return RedirectToAction("Login");
+
+            // Ép ID để đảm bảo không bị cập nhật nhầm người khác
+            updatedUser.Id = userSession.Id;
+
+            // Gọi API thật
+            bool isUpdateSuccess = await _identityService.UpdateProfileAsync(updatedUser);
+
+            if (isUpdateSuccess)
+            {
+                // Cập nhật Session
+                userSession.FullName = updatedUser.FullName;
+                userSession.Email = updatedUser.Email;
+                HttpContext.Session.SetObject("User", userSession);
+
+                TempData["SuccessMessage"] = "Cập nhật thông tin thành công!";
+                return RedirectToAction(nameof(MyAccount));
+            }
+
+            ViewBag.ErrorMessage = "Không thể cập nhật thông tin (Email có thể đã tồn tại).";
+            return View(updatedUser);
         }
     }
 }

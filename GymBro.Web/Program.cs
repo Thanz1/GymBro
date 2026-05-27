@@ -26,8 +26,11 @@ builder.Services.AddHttpClient<IProductService, ProductService>(client => {
 builder.Services.AddHttpClient<ICategoryService, CategoryService>(client => {
     client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:ProductApi"] ?? "https://localhost:7002");
 });
-builder.Services.AddHttpClient<IReviewService, ReviewService>(client => {
-    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:ProductApi"] ?? "https://localhost:7002");
+builder.Services.AddHttpClient<IReviewService, ReviewService>(client =>
+{
+    var productApiUrl = builder.Configuration["ServiceUrls:ProductApi"] ?? "https://localhost:7002";
+    // Đảm bảo trỏ đúng vào cổng của Product.API
+    client.BaseAddress = new Uri(productApiUrl.TrimEnd('/') + "/");
 });
 builder.Services.AddHttpClient<ISupplierService, SupplierService>(client => {
     client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:ProductApi"] ?? "https://localhost:7002");

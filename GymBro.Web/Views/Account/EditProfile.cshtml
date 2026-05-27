@@ -1,0 +1,47 @@
+﻿@model GymBro.Contracts.UserDto
+
+@{
+    ViewBag.Title = "Chỉnh sửa thông tin";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Chỉnh sửa thông tin cá nhân</h5>
+                </div>
+                <div class="card-body p-4">
+                    @if (ViewBag.ErrorMessage != null)
+                    {
+                        <div class="alert alert-danger">@ViewBag.ErrorMessage</div>
+                    }
+
+                    <form asp-action="EditProfile" asp-controller="Account" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên đăng nhập (Không thể đổi)</label>
+                            <input type="text" class="form-control bg-light" value="@Model.Username" readonly />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Họ và tên</label>
+                            <input type="text" name="FullName" class="form-control" value="@Model.FullName" required placeholder="Nhập họ tên đầy đủ..." />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Email</label>
+                            <input type="email" name="Email" class="form-control" value="@Model.Email" required placeholder="Nhập địa chỉ email..." />
+                        </div>
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-success flex-grow-1 fw-bold">LƯU THAY ĐỔI</button>
+                            <a href="@Url.Action("MyAccount", "Account")" class="btn btn-secondary fw-bold">HỦY</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

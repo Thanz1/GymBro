@@ -8,11 +8,6 @@
     <h2 class="fw-bold">Hồ sơ cá nhân</h2>
     <hr />
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
-        }
-
     <div class="row">
         <div class="col-md-5">
             <div class="card border-0 shadow-sm">
@@ -26,8 +21,10 @@
                     <p><strong>Vai trò:</strong> <span class="badge bg-danger">@Model.Role</span></p>
 
                     <div class="mt-4">
+                        @* Chỉ giữ lại đúng 3 nút chuẩn *@
+                        @Html.ActionLink("Chỉnh sửa thông tin", "EditProfile", "Account", null, new { @class = "btn btn-primary w-100 mb-2" })
                         @Html.ActionLink("Đổi mật khẩu", "ChangePassword", "Account", null, new { @class = "btn btn-warning w-100 mb-2" })
-                        @Html.ActionLink("Lịch sử đơn hàng", "Orders", "Account", null, new { @class = "btn btn-info w-100" })
+                        @Html.ActionLink("Lịch sử đơn hàng", "OrderHistory", "Account", null, new { @class = "btn btn-info w-100" })
                     </div>
                 </div>
             </div>

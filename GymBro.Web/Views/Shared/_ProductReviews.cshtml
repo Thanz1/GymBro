@@ -1,6 +1,10 @@
 ﻿@using GymBro.Contracts
+@using GymBro.Web.Helpers
 @model IEnumerable<ReviewDto>
 
+@* =========================================================
+   1. KHU VỰC HIỂN THỊ DANH SÁCH ĐÁNH GIÁ
+   ========================================================= *@
 <div class="card mt-4 shadow-sm border-0">
     <div class="card-header bg-white border-bottom-0 pt-4 ps-4">
         <h4 class="fw-bold text-dark">
@@ -20,7 +24,6 @@
                                     <i class="bi bi-person-fill text-secondary fs-5"></i>
                                 </div>
                                 <div>
-                                    @* SỬA: Dùng UserName trực tiếp từ DTO *@
                                     <div class="fw-bold">@(review.UserName ?? "Khách")</div>
                                     <small class="text-muted">@review.CreatedDate.ToString("dd/MM/yyyy HH:mm")</small>
                                 </div>
@@ -43,3 +46,75 @@
         }
     </div>
 </div>
+
+@* =========================================================
+   2. KHU VỰC FORM ĐÁNH GIÁ (ĐÃ ĐƯỢC CHUẨN HÓA)
+   ========================================================= *@
+<div class="card mt-4 shadow-sm border-0 bg-light">
+    <div class="card-body p-4">
+        <h5 class="fw-bold mb-3">Gửi đánh giá của bạn</h5>
+
+        @{
+            var sessionUser = Context.Session.GetObject<UserDto>("User");
+        }
+
+        @if (sessionUser != null)
+        {
+            <form id="reviewForm" onsubmit="submitReview(event)">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="productId" value="@ViewBag.ProductId" />
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Xin chào <span class="text-primary">@sessionUser.FullName</span>, bạn chấm sản phẩm này mấy sao?</label>
+                    <select name="rating" class="form-select w-auto border-warning" required>
+                        <option value="5">⭐⭐⭐⭐⭐ 5 Sao - Rất hài lòng</option>
+                        <option value="4">⭐⭐⭐⭐ 4 Sao - Hài lòng</option>
+                        <option value="3">⭐⭐⭐ 3 Sao - Bình thường</option>
+                        <option value="2">⭐⭐ 2 Sao - Không hài lòng</option>
+                        <option value="1">⭐ 1 Sao - Rất tệ</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Nhận xét của bạn:</label>
+                    <textarea name="comment" class="form-control" rows="3" required placeholder="Nhập cảm nhận của bạn về sản phẩm này..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-danger px-4 fw-bold">GỬI ĐÁNH GIÁ</button>
+            </form>
+        }
+        else
+        {
+            <div class="alert alert-warning mb-0 border-warning">
+                <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+                Bạn cần <a href="@Url.Action("Login", "Account")" class="fw-bold text-danger text-decoration-none">Đăng nhập</a> để có thể gửi đánh giá.
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    function submitReview(event) {
+        event.preventDefault();
+
+        var form = document.getElementById('reviewForm');
+        var formData = new FormData(form);
+
+        fetch('/Reviews/Add', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                alert("Đánh giá thành công!");
+                // Ép trình duyệt tải lại trang lấy dữ liệu mới nhất (chống cache)
+                window.location.href = window.location.href.split('?')[0] + '?_t=' + Date.now();
+            } else {
+                alert("Có lỗi xảy ra, hãy kiểm tra lại.");
+            }
+        });
+    }
+</script>

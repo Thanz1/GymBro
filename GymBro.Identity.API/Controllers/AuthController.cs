@@ -359,4 +359,25 @@ public class AuthController : ControllerBase
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+    [HttpPut("update-profile")]
+    public async Task<IActionResult> UpdateProfile(UserDto request)
+    {
+        var user = await _context.Users.FindAsync(request.Id);
+        if (user == null)
+            return NotFound("Không tìm thấy tài khoản.");
+
+        // Kiểm tra xem email mới có bị trùng với người khác trong DB không
+        var email = Normalize(request.Email);
+        if (user.Email?.ToLower() != email && await _context.Users.AnyAsync(u => u.Email.ToLower() == email))
+        {
+            return BadRequest("Email đã được sử dụng bởi tài khoản khác.");
+        }
+
+        // Cập nhật thông tin
+        user.FullName = request.FullName?.Trim() ?? string.Empty;
+        user.Email = request.Email?.Trim() ?? string.Empty;
+
+        await _context.SaveChangesAsync();
+        return Ok();
+    }
 }

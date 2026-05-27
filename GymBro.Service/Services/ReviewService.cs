@@ -18,17 +18,19 @@ namespace GymBro.Service
                    ?? new List<ReviewDto>();
         }
 
-        // 2. Lấy đánh giá theo từng sản phẩm (Dùng cho trang Details)
+        // 2. Lấy đánh giá theo sản phẩm
         public async Task<IEnumerable<ReviewDto>> GetReviewsByProductIdAsync(int productId)
         {
-            return await _httpClient.GetFromJsonAsync<IEnumerable<ReviewDto>>($"api/review/product/{productId}")
+            // Sửa thành "api/Reviews/product/"
+            return await _httpClient.GetFromJsonAsync<IEnumerable<ReviewDto>>($"api/Reviews/product/{productId}")
                    ?? new List<ReviewDto>();
         }
 
-        // 3. Thêm đánh giá mới (Dùng cho khách hàng)
+        // 3. Thêm đánh giá mới
         public async Task<bool> AddReviewAsync(ReviewDto reviewDto)
         {
-            var response = await _httpClient.PostAsJsonAsync("api/review", reviewDto);
+            // LƯU Ý: Phải là "api/Reviews", KHÔNG PHẢI "api/review"
+            var response = await _httpClient.PostAsJsonAsync("api/Reviews", reviewDto);
             return response.IsSuccessStatusCode;
         }
 

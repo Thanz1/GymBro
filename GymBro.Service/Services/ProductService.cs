@@ -19,8 +19,19 @@ namespace GymBro.Service
 
         public async Task<IEnumerable<ProductDto>> GetNewProductsAsync(int count)
         {
-            var products = await GetAllProductsAsync();
-            return products.OrderByDescending(p => p.Id).Take(count);
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<IEnumerable<ProductDto>>($"api/product?count={count}");
+                return response ?? new List<ProductDto>();
+            }
+            catch (HttpRequestException) // Bắt lỗi khi API sập hoặc mất kết nối
+            {
+                // Ghi log lỗi ra console để lập trình viên biết
+                Console.WriteLine("[GYMBRO CẢNH BÁO] Product.API đã sập hoặc không phản hồi. Trả về danh sách rỗng.");
+
+                // Trả về danh sách trống thay vì nổ lỗi sập trang web
+                return new List<ProductDto>();
+            }
         }
 
         public async Task<IEnumerable<ProductDto>> GetBestSellingProductsAsync(int count)

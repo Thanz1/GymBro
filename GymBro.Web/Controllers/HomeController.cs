@@ -17,76 +17,117 @@ namespace GymBro.Web.Controllers
             _categoryService = categoryService;
         }
 
-        // Trang chủ: Tích hợp cả tìm kiếm và hiển thị mặc định
-        public async Task<IActionResult> Index(string keyword)
+        // ĐÃ SỬA: Gom 2 hàm Index làm 1 để triệt tiêu hoàn toàn lỗi AmbiguousMatchException
+        // Tích hợp luồng bọc phòng vệ try-catch giúp trang chủ không bị sập khi tắt Product.API
+        [HttpGet]
+        public async Task<IActionResult> Index(string? keyword = null)
         {
             ViewBag.Keyword = keyword;
 
-            // Nếu người dùng CÓ nhập từ khóa tìm kiếm
+            // TRƯỜNG HỢP 1: Nếu người dùng CÓ nhập từ khóa tìm kiếm sản phẩm
             if (!string.IsNullOrWhiteSpace(keyword))
             {
-                // Gọi API tìm kiếm sản phẩm
-                var searchResults = await _productService.SearchProductsAsync(keyword);
-                return View(searchResults); // Trả kết quả tìm kiếm ra giao diện
+                try
+                {
+                    // Gọi API tìm kiếm sản phẩm từ Product.API
+                    var searchResults = await _productService.SearchProductsAsync(keyword);
+                    return View(searchResults ?? new List<ProductDto>());
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[GYMBRO LỖI] Lỗi kết nối API tìm kiếm: {ex.Message}");
+                    return View(new List<ProductDto>()); // API sập trả về danh sách rỗng để bảo vệ trang
+                }
             }
 
-            // Nếu KHÔNG tìm kiếm -> Load giao diện trang chủ mặc định
-            ViewBag.NewProducts = await _productService.GetNewProductsAsync(8);
-            ViewBag.BestSellingProducts = await _productService.GetBestSellingProductsAsync(8);
+            // TRƯỜNG HỢP 2: Giao diện trang chủ mặc định (Khi keyword bị rỗng hoặc null)
+            try
+            {
+                // Lấy dữ liệu tươi từ Product.API
+                ViewBag.NewProducts = await _productService.GetNewProductsAsync(8);
+                ViewBag.BestSellingProducts = await _productService.GetBestSellingProductsAsync(8);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[GYMBRO CẢNH BÁO] Product.API đã ngắt kết nối. Kích hoạt chế độ phòng vệ.");
+                // API lỗi/sập -> Gán danh sách rỗng để View không bị nổ lỗi NullReferenceException
+                ViewBag.NewProducts = new List<ProductDto>();
+                ViewBag.BestSellingProducts = new List<ProductDto>();
+            }
 
-            return View();
+            return View(new List<ProductDto>());
         }
 
         // Trang cửa hàng: Tìm kiếm, lọc và sắp xếp
         public async Task<IActionResult> Shop(string keyword, int? categoryId, decimal? minPrice, decimal? maxPrice, string sortOrder, int? page)
         {
-            var allProducts = await _productService.GetAllProductsAsync();
-            var categories = await _categoryService.GetAllCategoriesAsync();
-
-            var query = allProducts.AsQueryable();
-
-            if (!string.IsNullOrEmpty(keyword))
+            try
             {
-                query = query.Where(p => p.ProductName.Contains(keyword, StringComparison.OrdinalIgnoreCase)
-                                     || (p.Description != null && p.Description.Contains(keyword, StringComparison.OrdinalIgnoreCase)));
-                ViewBag.Keyword = keyword;
+                var allProducts = await _productService.GetAllProductsAsync();
+                var categories = await _categoryService.GetAllCategoriesAsync();
+
+                var query = allProducts.AsQueryable();
+
+                if (!string.IsNullOrEmpty(keyword))
+                {
+                    query = query.Where(p => p.ProductName.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+                                         || (p.Description != null && p.Description.Contains(keyword, StringComparison.OrdinalIgnoreCase)));
+                    ViewBag.Keyword = keyword;
+                }
+
+                if (categoryId.HasValue)
+                {
+                    query = query.Where(p => p.CategoryId == categoryId);
+                    ViewBag.CategoryId = categoryId;
+                }
+
+                if (minPrice.HasValue) query = query.Where(p => p.Price >= minPrice);
+                if (maxPrice.HasValue) query = query.Where(p => p.Price <= maxPrice);
+
+                query = sortOrder switch
+                {
+                    "price_asc" => query.OrderBy(p => p.Price),
+                    "price_desc" => query.OrderByDescending(p => p.Price),
+                    "name_asc" => query.OrderBy(p => p.ProductName),
+                    _ => query.OrderByDescending(p => p.Id),
+                };
+
+                ViewBag.SortOrder = sortOrder;
+                ViewBag.MinPrice = minPrice;
+                ViewBag.MaxPrice = maxPrice;
+                ViewBag.Categories = categories?.ToList() ?? new List<CategoryDto>();
+
+                return View(query.ToList());
             }
-
-            if (categoryId.HasValue)
+            catch (Exception ex)
             {
-                query = query.Where(p => p.CategoryId == categoryId);
-                ViewBag.CategoryId = categoryId;
+                Console.WriteLine($"[GYMBRO LỖI] Cửa hàng không thể tải dữ liệu: {ex.Message}");
+                ViewBag.Categories = new List<CategoryDto>();
+                return View(new List<ProductDto>());
             }
-
-            if (minPrice.HasValue) query = query.Where(p => p.Price >= minPrice);
-            if (maxPrice.HasValue) query = query.Where(p => p.Price <= maxPrice);
-
-            query = sortOrder switch
-            {
-                "price_asc" => query.OrderBy(p => p.Price),
-                "price_desc" => query.OrderByDescending(p => p.Price),
-                "name_asc" => query.OrderBy(p => p.ProductName),
-                _ => query.OrderByDescending(p => p.Id),
-            };
-
-            ViewBag.SortOrder = sortOrder;
-            ViewBag.MinPrice = minPrice;
-            ViewBag.MaxPrice = maxPrice;
-            ViewBag.Categories = categories.ToList();
-
-            return View(query.ToList());
         }
 
         // Trang chi tiết sản phẩm
         public async Task<IActionResult> Details(int id)
         {
-            var product = await _productService.GetProductByIdAsync(id);
-            if (product == null) return NotFound();
+            try
+            {
+                var product = await _productService.GetProductByIdAsync(id);
+                if (product == null) return NotFound();
 
-            return View(product);
+                // Đồng thời gắn ProductId vào ViewBag phục vụ luồng load Ajax Review
+                ViewBag.ProductId = id;
+
+                return View(product);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[GYMBRO LỖI] Không thể tải chi tiết sản phẩm #{id}: {ex.Message}");
+                return NotFound();
+            }
         }
 
         public IActionResult About() => View();
         public IActionResult Contact() => View();
     }
-    }
+}

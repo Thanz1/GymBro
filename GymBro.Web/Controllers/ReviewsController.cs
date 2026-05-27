@@ -17,12 +17,26 @@ namespace GymBro.Web.Controllers
         // Lấy danh sách đánh giá theo sản phẩm (Dùng PartialView để load Ajax)
         public async Task<IActionResult> GetByProduct(int productId)
         {
-            var reviews = await _reviewService.GetReviewsByProductIdAsync(productId);
+            try
+            {
+                var reviews = await _reviewService.GetReviewsByProductIdAsync(productId);
+                if (reviews == null) reviews = new List<ReviewDto>();
+                var sortedReviews = reviews.OrderByDescending(r => r.CreatedDate).ToList();
 
-            // Sắp xếp giảm dần theo ngày tạo ngay tại đây
-            var sortedReviews = reviews.OrderByDescending(r => r.CreatedDate).ToList();
+                // THÊM DÒNG NÀY ĐỂ GẮN CHẶT ID SẢN PHẨM VÀO VIEW
+                ViewBag.ProductId = productId;
 
-            return PartialView("_ProductReviews", sortedReviews);
+                return PartialView("_ProductReviews", sortedReviews);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[GYMBRO LỖI] Không thể lấy đánh giá: {ex.Message}");
+
+                // Thêm cả ở phần bắt lỗi cho chắc chắn
+                ViewBag.ProductId = productId;
+
+                return PartialView("_ProductReviews", new List<ReviewDto>());
+            }
         }
 
         // Thêm đánh giá mới

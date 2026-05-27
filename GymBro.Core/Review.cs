@@ -22,6 +22,7 @@ namespace GymBro.Core
 
         [StringLength(1000)]
         public string Comment { get; set; } = string.Empty;
+        public string? UserName { get; set; }
 
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 

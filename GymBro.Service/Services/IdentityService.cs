@@ -80,4 +80,9 @@ public class IdentityService : IIdentityService
         var response = await _httpClient.PostAsJsonAsync("api/auth/create-admin", adminDto);
         return response.IsSuccessStatusCode;
     }
+    public async Task<bool> UpdateProfileAsync(UserDto updatedUser)
+    {
+        var response = await _httpClient.PutAsJsonAsync("api/auth/update-profile", updatedUser);
+        return response.IsSuccessStatusCode;
+    }
 }

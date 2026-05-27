@@ -19,7 +19,7 @@ namespace GymBro.Infrastructure
         public DbSet<Review> Reviews => Set<Review>();
         public DbSet<Supplier> Suppliers => Set<Supplier>();
         public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
-
+       
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

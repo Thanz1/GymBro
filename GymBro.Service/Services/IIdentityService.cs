@@ -12,6 +12,7 @@ namespace GymBro.Service
         Task<bool> CheckHealthAsync();
         Task<IEnumerable<UserDto>> GetAllUsersAsync();
         Task<bool> HasAdminAsync();
+        Task<bool> UpdateProfileAsync(UserDto updatedUser);
         Task<bool> CreateAdminAsync(RegisterDto adminDto);
     }
 }
