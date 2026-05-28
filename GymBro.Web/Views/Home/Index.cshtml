@@ -45,9 +45,11 @@
 }
 else
 {
-    @* Hero Banner *@
+    @* =========================================================
+       HERO BANNER - Đã sửa lỗi link ảnh dự phòng
+       ========================================================= *@
     <div class="hero-banner position-relative mb-5">
-        <img src="~/Content/Images/Postter.jpg" class="w-100 shadow" style="height: 450px; object-fit: cover;" alt="Banner" onerror="this.src='https://via.placeholder.com/1200x450'" />
+        <img src="~/Content/Images/Postter.jpg" class="w-100 shadow" style="height: 450px; object-fit: cover;" alt="Banner" onerror="this.src='https://placehold.co/1200x450/eeeeee/999999?text=GYMBRO+BANNER'" />
         <div class="position-absolute top-50 start-50 translate-middle text-center text-white">
             <h1 class="display-2 fw-bold text-uppercase shadow-sm">GYMBRO</h1>
             <p class="fs-4 fw-light">Sức mạnh từ sự kiên trì</p>
@@ -93,7 +95,7 @@ else
                 }
                 else
                 {
-                    @* ĐÃ SỬA: Hiển thị thông báo bảo trì dịch vụ khi Product.API sập *@
+                    @* Khối bảo vệ (Graceful Degradation) khi API Product bị tắt *@
                     <div class="col-12">
                         <div class="alert alert-light text-center py-4 shadow-sm border">
                             <i class="bi bi-exclamation-triangle text-warning fs-3 mb-2 d-block"></i>
@@ -140,7 +142,7 @@ else
                 }
                 else
                 {
-                    @* ĐÃ SỬA: Hiển thị thông báo bảo trì dịch vụ khi Product.API sập *@
+                    @* Khối bảo vệ (Graceful Degradation) khi API Product bị tắt *@
                     <div class="col-12">
                         <div class="alert alert-light text-center py-4 shadow-sm border">
                             <i class="bi bi-exclamation-triangle text-warning fs-3 mb-2 d-block"></i>
