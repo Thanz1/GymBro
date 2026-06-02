@@ -8,9 +8,7 @@
     string currentUserName = isAuth ? (chatUser.FullName ?? chatUser.Username) : "Khách vãng lai";
 }
 
-
-
-<button id = "btn-open-chat" style = "position: fixed; bottom: 20px; right: 20px; z-index: 1000; padding: 12px 24px; background-color: #dc3545; color: white; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4); transition: transform 0.2s;" >
+<button id="btn-open-chat" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; padding: 12px 24px; background-color: #dc3545; color: white; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4); transition: transform 0.2s;">
     <i class="fas fa-comments"></i> Chat với GymBro
 </button>
 
@@ -58,7 +56,6 @@
             btnOpen.style.display = "none";
             chatMessages.scrollTop = chatMessages.scrollHeight; // Cuộn xuống đáy
         };
-
         btnClose.onclick = () => {
             chatPopup.style.display = "none";
             btnOpen.style.display = "block";
@@ -100,12 +97,26 @@
             chatMessages.scrollTop = chatMessages.scrollHeight;
         });
 
-        // Khởi động kết nối
+        // Khởi động kết nối (ĐÃ SỬA: Xử lý Fault Tolerance khi Identity.API sập)
         connection.start().then(function () {
             console.log("Đã kết nối SignalR thành công!");
             connection.invoke("JoinChat", currentUserId).catch(err => console.error("Lỗi JoinChat: ", err));
         }).catch(function (err) {
             console.error("Lỗi kết nối SignalR: ", err);
+
+            // Xóa câu chào mừng mặc định và thay bằng thông báo lỗi
+            chatMessages.innerHTML = `
+                <div style="text-align: center; margin-top: 50px; color: #dc3545;">
+                    <i class="fas fa-plug fa-2x mb-2"></i>
+                    <p style="font-weight: bold; font-size: 14px;">Hệ thống tư vấn đang bảo trì!</p>
+                    <p style="font-size: 12px; color: gray;">Vui lòng liên hệ Hotline: 1900 xxxx</p>
+                </div>`;
+
+            // Vô hiệu hóa ô nhập tin nhắn và nút gửi để người dùng không bấm được
+            chatInput.disabled = true;
+            btnSend.disabled = true;
+            chatInput.placeholder = "Đang bảo trì...";
+            chatInput.style.backgroundColor = "#e9ecef";
         });
 
         // Hàm Gửi tin nhắn

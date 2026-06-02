@@ -37,20 +37,25 @@ public class CartController : ControllerBase
 
         foreach (var item in cartItems)
         {
-            // Gọi sang Product.API lấy thông tin
-            var productRes = await client.GetFromJsonAsync<ProductDto>($"products/{item.ProductId}");
-
-            if (productRes != null)
+            ProductDto? productRes = null;
+            try
             {
-                result.Add(new CartItemDto
-                {
-                    ProductId = item.ProductId,
-                    ProductName = productRes.ProductName,
-                    Price = productRes.Price,
-                    Quantity = item.Quantity,
-                    ImageURL = productRes.ImageURL
-                });
+                // ĐÃ SỬA: Bọc lỗi khi gọi sang Product.API
+                productRes = await client.GetFromJsonAsync<ProductDto>($"products/{item.ProductId}");
             }
+            catch (Exception)
+            {
+                // Bỏ qua lỗi nếu Product.API sập, dùng dữ liệu dự phòng
+            }
+
+            result.Add(new CartItemDto
+            {
+                ProductId = item.ProductId,
+                ProductName = productRes?.ProductName ?? "Sản phẩm đang cập nhật",
+                Price = productRes?.Price ?? 0,
+                Quantity = item.Quantity,
+                ImageURL = productRes?.ImageURL ?? "no-image.png"
+            });
         }
 
         return Ok(result);
@@ -64,10 +69,18 @@ public class CartController : ControllerBase
             return Unauthorized("Token không hợp lệ hoặc thiếu UserId!");
 
         var client = _httpClientFactory.CreateClient("ProductService");
-        var response = await client.GetAsync($"products/{request.ProductId}");
 
-        if (!response.IsSuccessStatusCode)
-            return BadRequest("Sản phẩm không tồn tại trên hệ thống!");
+        try
+        {
+            // ĐÃ SỬA: Bọc lỗi kiểm tra sản phẩm
+            var response = await client.GetAsync($"products/{request.ProductId}");
+            if (!response.IsSuccessStatusCode)
+                return BadRequest("Sản phẩm không tồn tại trên hệ thống!");
+        }
+        catch (Exception)
+        {
+            return StatusCode(503, "Dịch vụ kiểm tra kho hàng đang bảo trì. Vui lòng thử lại sau!");
+        }
 
         var existingItem = await _context.CartItems
             .FirstOrDefaultAsync(c => c.UserId == userId && c.ProductId == request.ProductId);
