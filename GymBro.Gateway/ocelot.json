@@ -2,11 +2,11 @@
     "Routes": [
         {
             "DownstreamPathTemplate": "/api/{everything}",
-            "DownstreamScheme": "https",
+            "DownstreamScheme": "http",
             "DownstreamHostAndPorts": [
                 {
-                    "Host": "localhost",
-                    "Port": 7001
+                    "Host": "identity_api",
+                    "Port": 8080
                 }
             ],
             "UpstreamPathTemplate": "/identity-api/{everything}",
@@ -14,11 +14,11 @@
         },
         {
             "DownstreamPathTemplate": "/api/{everything}",
-            "DownstreamScheme": "https",
+            "DownstreamScheme": "http",
             "DownstreamHostAndPorts": [
                 {
-                    "Host": "localhost",
-                    "Port": 7002
+                    "Host": "product_api",
+                    "Port": 8080
                 }
             ],
             "UpstreamPathTemplate": "/product-api/{everything}",
@@ -26,11 +26,11 @@
         },
         {
             "DownstreamPathTemplate": "/api/{everything}",
-            "DownstreamScheme": "https",
+            "DownstreamScheme": "http",
             "DownstreamHostAndPorts": [
                 {
-                    "Host": "localhost",
-                    "Port": 7003
+                    "Host": "order_api",
+                    "Port": 8080
                 }
             ],
             "UpstreamPathTemplate": "/order-api/{everything}",
@@ -38,6 +38,6 @@
         }
     ],
     "GlobalConfiguration": {
-        "BaseUrl": "https://localhost:8000"
+        "BaseUrl": "http://gateway:8080"
     }
 }
