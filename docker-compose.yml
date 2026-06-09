@@ -1,24 +1,22 @@
 version: '3.8'
 
 services:
-  # 1. CƠ SỞ DỮ LIỆU
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest
-    container_name: sql_server_gymbro
+    container_name: sql_server_gymbro_multi
     environment:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=GymBro@2024Password
     ports:
       - "1433:1433"
     volumes:
-      - sql_data:/var/opt/mssql
+      - sql_data_multi:/var/opt/mssql # Đổi tên volume để không đụng bản single
     networks:
-      - gymbro_network
+      - gymbro_network_multi
 
-  # 2. HÀNG ĐỢI THÔNG ĐIỆP (BẤT ĐỒNG BỘ)
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: gymbro_rabbitmq
+    container_name: gymbro_rabbitmq_multi
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -26,72 +24,74 @@ services:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
     networks:
-      - gymbro_network
+      - gymbro_network_multi
 
-  # ==========================================
-  # 3. CÁC MICROSERVICES LÕI
-  # ==========================================
-  
-  # A. Identity API (Port 7001)
   identity_api:
     build:
       context: .
-      dockerfile: GymBro.Identity.API/Dockerfile.multi
-    container_name: gymbro_identity_api
+      dockerfile: GymBro.Identity.API/Dockerfile 
+    image: gymbro-identity:multi
+    container_name: gymbro_identity_api_multi
+    restart: always
     depends_on:
       - db
       - rabbitmq
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Server=db;Database=GymBro_Identity;User Id=sa;Password=GymBro@2024Password;TrustServerCertificate=True;MultipleActiveResultSets=true
+      - RabbitMQ__HostName=rabbitmq
     ports:
       - "7001:8080"
     networks:
-      - gymbro_network
+      - gymbro_network_multi
 
-  # B. Product API (Port 7002) - DỊCH VỤ DÙNG ĐỂ THÍ NGHIỆM ĐO LƯỜNG
   product_api:
     build:
       context: .
-      # CHỖ ĐỔI KỊCH BẢN NGHIÊN CỨU:
-      # Thay đổi giữa Dockerfile.single và Dockerfile.multi ở đây
-      dockerfile: GymBro.Product.API/Dockerfile.multi 
-    container_name: gymbro_product_api
+      dockerfile: GymBro.Product.API/Dockerfile
+    image: gymbro-product:multi
+    container_name: gymbro_product_api_multi
+    restart: always
     depends_on:
       - db
       - rabbitmq
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Server=db;Database=GymBro_Product;User Id=sa;Password=GymBro@2024Password;TrustServerCertificate=True;MultipleActiveResultSets=true
+      - RabbitMQ__HostName=rabbitmq
     ports:
       - "7002:8080"
     networks:
-      - gymbro_network
+      - gymbro_network_multi
 
-  # C. Order API (Port 7003)
   order_api:
     build:
       context: .
-      dockerfile: GymBro.Order.API/Dockerfile.multi
-    container_name: gymbro_order_api
+      dockerfile: GymBro.Order.API/Dockerfile
+    image: gymbro-order:multi
+    container_name: gymbro_order_api_multi
+    restart: always
     depends_on:
       - db
       - rabbitmq
-      - product_api # Cần Product API chạy trước để HTTP Client gọi đồng bộ sang
+      - product_api
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Server=db;Database=GymBro_Order;User Id=sa;Password=GymBro@2024Password;TrustServerCertificate=True;MultipleActiveResultSets=true
+      - RabbitMQ__HostName=rabbitmq
+      - ServiceUrls__ProductApi=http://product_api:8080
     ports:
       - "7003:8080"
     networks:
-      - gymbro_network
+      - gymbro_network_multi
 
-  # 4. API GATEWAY (Port 8000)
   gateway:
     build:
       context: .
       dockerfile: GymBro.Gateway/Dockerfile
-    container_name: gymbro_gateway
+    image: gymbro-gateway:multi
+    container_name: gymbro_gateway_multi
+    restart: always
     depends_on:
       - identity_api
       - product_api
@@ -101,26 +101,30 @@ services:
     ports:
       - "8000:8080"
     networks:
-      - gymbro_network
+      - gymbro_network_multi
 
-  # 5. GIAO DIỆN WEB (FRONT-END)
   gymbro_web:
     build:
       context: .
       dockerfile: GymBro.Web/Dockerfile
-    container_name: gymbro_web
+    image: gymbro-web:multi
+    container_name: gymbro_web_multi
+    restart: always
     depends_on:
       - gateway
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ServiceUrls__ProductApi=http://product_api:8080
+      - ServiceUrls__OrderApi=http://order_api:8080
+      - ServiceUrls__IdentityApi=http://identity_api:8080
     ports:
       - "5000:8080"
     networks:
-      - gymbro_network
+      - gymbro_network_multi
 
 networks:
-  gymbro_network:
+  gymbro_network_multi:
     driver: bridge
 
 volumes:
-  sql_data:
+  sql_data_multi:
