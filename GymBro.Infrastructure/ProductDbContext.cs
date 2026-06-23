@@ -28,6 +28,20 @@ namespace GymBro.Infrastructure
             modelBuilder.Entity<Category>()
                 .Property(c => c.CategoryName)
                 .IsRequired();
+
+            // Product service chỉ sở hữu các bảng catalog/kho. Các navigation sang
+            // Order/Identity được bỏ qua để Docker DB mới không kéo nhầm schema service khác.
+            modelBuilder.Entity<Product>()
+                .Ignore(p => p.OrderDetails);
+
+            modelBuilder.Entity<Review>()
+                .Ignore(r => r.User);
+
+            modelBuilder.Entity<InventoryTransaction>()
+                .Ignore(i => i.Order);
+
+            modelBuilder.Entity<Supplier>()
+                .Ignore(s => s.PurchaseOrders);
         }
     }
 }

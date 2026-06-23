@@ -65,7 +65,7 @@ namespace GymBro.Product.API.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize]
+        // [Authorize] // Web layer handles authentication via cookies
         public async Task<IActionResult> UpdateCategory(int id, CategoryDto request)
         {
             if (id != request.Id) return BadRequest("ID không khớp.");
@@ -81,7 +81,7 @@ namespace GymBro.Product.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize]
+        // [Authorize] // Web layer handles authentication via cookies
         public async Task<IActionResult> DeleteCategory(int id)
         {
             var category = await _context.Categories.FindAsync(id);

@@ -1,0 +1,191 @@
+name: gymbro_multi
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: sql_server_gymbro_multi
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${SA_PASSWORD}
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data_multi:/var/opt/mssql
+    networks:
+      - gymbro_network_multi
+    # Security: chỉ expose port cần thiết, không expose port khác
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: gymbro_rabbitmq_multi
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    networks:
+      - gymbro_network_multi
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  identity_api:
+    build:
+      context: .
+      dockerfile: GymBro.Identity.API/Dockerfile.multistage
+    image: gymbro-identity:multi
+    container_name: gymbro_identity_api_multi
+    restart: always
+    depends_on:
+      - db
+      - rabbitmq
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=db;Database=GymBro_Identity;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=true
+      - RabbitMQ__HostName=rabbitmq
+    ports:
+      - "7001:8080"
+    networks:
+      - gymbro_network_multi
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  product_api:
+    build:
+      context: .
+      dockerfile: GymBro.Product.API/Dockerfile.multistage
+    image: gymbro-product:multi
+    container_name: gymbro_product_api_multi
+    restart: always
+    depends_on:
+      - db
+      - rabbitmq
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=db;Database=GymBro_Product;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=true
+      - RabbitMQ__HostName=rabbitmq
+    ports:
+      - "7002:8080"
+    networks:
+      - gymbro_network_multi
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  order_api:
+    build:
+      context: .
+      dockerfile: GymBro.Order.API/Dockerfile.multistage
+    image: gymbro-order:multi
+    container_name: gymbro_order_api_multi
+    restart: always
+    depends_on:
+      - db
+      - rabbitmq
+      - product_api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=db;Database=GymBro_Order;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=true
+      - RabbitMQ__HostName=rabbitmq
+      - ServiceUrls__ProductApi=http://product_api:8080
+    ports:
+      - "7003:8080"
+    networks:
+      - gymbro_network_multi
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  gateway:
+    build:
+      context: .
+      dockerfile: GymBro.Gateway/Dockerfile.multistage
+    image: gymbro-gateway:multi
+    container_name: gymbro_gateway_multi
+    restart: always
+    depends_on:
+      - identity_api
+      - product_api
+      - order_api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "8000:8080"
+    networks:
+      - gymbro_network_multi
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  gymbro_web:
+    build:
+      context: .
+      dockerfile: GymBro.Web/Dockerfile.multistage
+    image: gymbro-web:multi
+    container_name: gymbro_web_multi
+    restart: always
+    depends_on:
+      - gateway
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ServiceUrls__ProductApi=http://product_api:8080
+      - ServiceUrls__OrderApi=http://order_api:8080
+      - ServiceUrls__IdentityApi=http://identity_api:8080
+    ports:
+      - "5000:8080"
+    networks:
+      - gymbro_network_multi
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+networks:
+  gymbro_network_multi:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+
+volumes:
+  sql_data_multi:

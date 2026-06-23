@@ -361,3 +361,10 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# ===== GYMBRO ENV SECRETS (Docker Compose) =====
+# .env chứa password dùng bởi docker-compose-multistage.yml
+# ĐANG BỊ CHẶN để bảo vệ secret. Muốn share project:
+#   1. Mở dòng dưới, xóa hoặc comment nó lại
+#   2. Nội dung .env đã được copy sang .env.example (luôn được commit)
+.env

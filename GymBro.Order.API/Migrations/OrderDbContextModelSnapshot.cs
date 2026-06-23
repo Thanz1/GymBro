@@ -47,24 +47,6 @@ namespace GymBro.Order.API.Migrations
                     b.ToTable("CartItems");
                 });
 
-            modelBuilder.Entity("GymBro.Core.Category", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CategoryName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Categories");
-                });
-
             modelBuilder.Entity("GymBro.Core.InventoryTransaction", b =>
                 {
                     b.Property<int>("Id")
@@ -223,41 +205,6 @@ namespace GymBro.Order.API.Migrations
                     b.ToTable("PaymentMethods");
                 });
 
-            modelBuilder.Entity("GymBro.Core.Product", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ImageURL")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("ProductName")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("StockQuantity")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
-
-                    b.ToTable("Products");
-                });
-
             modelBuilder.Entity("GymBro.Core.PurchaseOrder", b =>
                 {
                     b.Property<int>("Id")
@@ -281,8 +228,6 @@ namespace GymBro.Order.API.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("SupplierId");
 
                     b.ToTable("PurchaseOrders");
                 });
@@ -316,35 +261,7 @@ namespace GymBro.Order.API.Migrations
                     b.ToTable("PurchaseOrderDetails");
                 });
 
-            modelBuilder.Entity("GymBro.Core.Supplier", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Address")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Phone")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SupplierName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Suppliers");
-                });
+            // Relationships (không FK sang bảng đã xóa)
 
             modelBuilder.Entity("GymBro.Core.InventoryTransaction", b =>
                 {
@@ -352,19 +269,7 @@ namespace GymBro.Order.API.Migrations
                         .WithMany("InventoryTransactions")
                         .HasForeignKey("OrderId");
 
-                    b.HasOne("GymBro.Core.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GymBro.Core.PurchaseOrder", null)
-                        .WithMany("InventoryTransactions")
-                        .HasForeignKey("PurchaseOrderId");
-
                     b.Navigation("Order");
-
-                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("GymBro.Core.OrderDetail", b =>
@@ -372,12 +277,6 @@ namespace GymBro.Order.API.Migrations
                     b.HasOne("GymBro.Core.Order", "Order")
                         .WithMany("OrderDetails")
                         .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GymBro.Core.Product", null)
-                        .WithMany("OrderDetails")
-                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -395,52 +294,6 @@ namespace GymBro.Order.API.Migrations
                     b.Navigation("Order");
                 });
 
-            modelBuilder.Entity("GymBro.Core.Product", b =>
-                {
-                    b.HasOne("GymBro.Core.Category", "Category")
-                        .WithMany("Products")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-                });
-
-            modelBuilder.Entity("GymBro.Core.PurchaseOrder", b =>
-                {
-                    b.HasOne("GymBro.Core.Supplier", "Supplier")
-                        .WithMany("PurchaseOrders")
-                        .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Supplier");
-                });
-
-            modelBuilder.Entity("GymBro.Core.PurchaseOrderDetail", b =>
-                {
-                    b.HasOne("GymBro.Core.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GymBro.Core.PurchaseOrder", "PurchaseOrder")
-                        .WithMany("PurchaseOrderDetails")
-                        .HasForeignKey("PurchaseOrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-
-                    b.Navigation("PurchaseOrder");
-                });
-
-            modelBuilder.Entity("GymBro.Core.Category", b =>
-                {
-                    b.Navigation("Products");
-                });
-
             modelBuilder.Entity("GymBro.Core.Order", b =>
                 {
                     b.Navigation("InventoryTransactions");
@@ -448,23 +301,6 @@ namespace GymBro.Order.API.Migrations
                     b.Navigation("OrderDetails");
 
                     b.Navigation("Payments");
-                });
-
-            modelBuilder.Entity("GymBro.Core.Product", b =>
-                {
-                    b.Navigation("OrderDetails");
-                });
-
-            modelBuilder.Entity("GymBro.Core.PurchaseOrder", b =>
-                {
-                    b.Navigation("InventoryTransactions");
-
-                    b.Navigation("PurchaseOrderDetails");
-                });
-
-            modelBuilder.Entity("GymBro.Core.Supplier", b =>
-                {
-                    b.Navigation("PurchaseOrders");
                 });
 #pragma warning restore 612, 618
         }

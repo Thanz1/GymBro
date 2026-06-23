@@ -36,7 +36,39 @@ builder.Services.AddAutoMapper(cfg =>
 var app = builder.Build();
 
 // =========================================================
-// 2. CẤU HÌNH PIPELINE (MIDDLEWARE)
+// 2. TỰ ĐỘNG MIGRATE DATABASE (CÓ RETRY KHI SQL CHƯA SẴN SÀNG)
+// =========================================================
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ProductDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    
+    var maxRetries = 5;
+    var delay = TimeSpan.FromSeconds(5);
+    
+    for (int i = 1; i <= maxRetries; i++)
+    {
+        try
+        {
+            db.Database.Migrate();
+            logger.LogInformation("[GymBro.Product.API] Migration thành công.");
+            break;
+        }
+        catch (Exception ex) when (i < maxRetries)
+        {
+            logger.LogWarning("[GymBro.Product.API] Lần {Attempt}/{MaxRetries} - Migration thất bại: {Message}. Thử lại sau {Delay}s...", 
+                i, maxRetries, ex.Message, delay.TotalSeconds);
+            Thread.Sleep(delay);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "[GymBro.Product.API] Migration thất bại sau {MaxRetries} lần thử.", maxRetries);
+        }
+    }
+}
+
+// =========================================================
+// 3. CẤU HÌNH PIPELINE (MIDDLEWARE)
 // =========================================================
 
 if (app.Environment.IsDevelopment())
@@ -47,7 +79,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Chèn Authentication trước Authorization nếu Thành có dùng đăng nhập
+// Chèn Authentication trước Authorization nếu có dùng đăng nhập
 app.UseAuthorization();
 
 app.MapControllers();

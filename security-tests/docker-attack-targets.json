@@ -1,88 +1,74 @@
 {
   "targets": [
     {
-      "name": "GymBro Web - compose multi-stage",
-      "profile": "compose",
+      "name": "GymBro Web - baseline single-stage",
+      "profile": "single",
+      "image": "gymbro-web:single",
+      "container": "gymbro_web_single",
+      "role": "public-web"
+    },
+    {
+      "name": "GymBro Gateway - baseline single-stage",
+      "profile": "single",
+      "image": "gymbro-gateway:single",
+      "container": "gymbro_gateway_single",
+      "role": "public-gateway"
+    },
+    {
+      "name": "GymBro Identity API - baseline single-stage",
+      "profile": "single",
+      "image": "gymbro-identity:single",
+      "container": "gymbro_identity_api_single",
+      "role": "internal-api"
+    },
+    {
+      "name": "GymBro Product API - baseline single-stage",
+      "profile": "single",
+      "image": "gymbro-product:single",
+      "container": "gymbro_product_api_single",
+      "role": "internal-api"
+    },
+    {
+      "name": "GymBro Order API - baseline single-stage",
+      "profile": "single",
+      "image": "gymbro-order:single",
+      "container": "gymbro_order_api_single",
+      "role": "internal-api"
+    },
+    {
+      "name": "GymBro Web - current multi-stage",
+      "profile": "multi",
       "image": "gymbro-web:multi",
       "container": "gymbro_web_multi",
       "role": "public-web"
     },
     {
-      "name": "GymBro Gateway - compose multi-stage",
-      "profile": "compose",
+      "name": "GymBro Gateway - current multi-stage",
+      "profile": "multi",
       "image": "gymbro-gateway:multi",
       "container": "gymbro_gateway_multi",
       "role": "public-gateway"
     },
     {
-      "name": "GymBro Identity API - compose multi-stage",
-      "profile": "compose",
+      "name": "GymBro Identity API - current multi-stage",
+      "profile": "multi",
       "image": "gymbro-identity:multi",
       "container": "gymbro_identity_api_multi",
       "role": "internal-api"
     },
     {
-      "name": "GymBro Product API - compose multi-stage",
-      "profile": "compose",
+      "name": "GymBro Product API - current multi-stage",
+      "profile": "multi",
       "image": "gymbro-product:multi",
       "container": "gymbro_product_api_multi",
       "role": "internal-api"
     },
     {
-      "name": "GymBro Order API - compose multi-stage",
-      "profile": "compose",
+      "name": "GymBro Order API - current multi-stage",
+      "profile": "multi",
       "image": "gymbro-order:multi",
       "container": "gymbro_order_api_multi",
       "role": "internal-api"
-    },
-    {
-      "name": "GymBro Web - secure multi-stage research image",
-      "profile": "research",
-      "image": "gymbro/web:secure-multistage",
-      "container": "gymbro_web",
-      "role": "public-web"
-    },
-    {
-      "name": "GymBro API - secure multi-stage research image",
-      "profile": "research",
-      "image": "gymbro/api:secure-multistage",
-      "container": "gymbro_api",
-      "role": "internal-api"
-    },
-    {
-      "name": "GymBro migrator - secure multi-stage research image",
-      "profile": "research",
-      "image": "gymbro/migrator:secure-multistage",
-      "container": "gymbro_migrator",
-      "role": "migration-job"
-    },
-    {
-      "name": "GymBro single-stage baseline image",
-      "profile": "research",
-      "image": "gymbro:single-stage",
-      "container": "gymbro_web_single",
-      "role": "baseline"
-    },
-    {
-      "name": "GymBro secure demo image",
-      "profile": "research",
-      "image": "gymbro:secure",
-      "container": "gymbro_web",
-      "role": "public-web"
-    },
-    {
-      "name": "GymBro Web single-stage report image",
-      "profile": "research",
-      "image": "gymbro-web-single-report:latest",
-      "container": "",
-      "role": "baseline"
-    },
-    {
-      "name": "GymBro Web multi-stage report image",
-      "profile": "research",
-      "image": "gymbro-web-multistage-report:latest",
-      "container": "",
-      "role": "public-web"
     }
   ]
 }

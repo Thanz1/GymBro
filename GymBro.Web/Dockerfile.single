@@ -1,0 +1,16 @@
+# Baseline Single-stage (THUẦN TÚY) — SDK image cho cả build và runtime
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+WORKDIR /src
+
+# Copy toàn bộ source code (không tách stage restore riêng)
+COPY . .
+WORKDIR /src/GymBro.Web
+
+RUN dotnet restore "GymBro.Web.csproj"
+RUN dotnet publish "GymBro.Web.csproj" -c Release -o /app/publish /p:UseAppHost=false /p:ErrorOnDuplicatePublishOutputFiles=false
+
+WORKDIR /app/publish
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
+
+ENTRYPOINT ["dotnet", "GymBro.Web.dll"]

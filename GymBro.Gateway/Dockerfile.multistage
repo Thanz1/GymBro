@@ -1,0 +1,48 @@
+# ============================================================
+# STAGE 1: Build
+# ============================================================
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy only .csproj files to leverage Docker layer caching
+COPY GymBro.Gateway/GymBro.Gateway.csproj GymBro.Gateway/
+
+# Restore NuGet packages
+RUN dotnet restore "GymBro.Gateway/GymBro.Gateway.csproj"
+
+# Copy the entire source code
+COPY . .
+
+# Build & publish
+WORKDIR /src/GymBro.Gateway
+RUN dotnet publish "GymBro.Gateway.csproj" -c Release -o /app/publish /p:UseAppHost=false /p:ErrorOnDuplicatePublishOutputFiles=false /p:DebugSymbols=false /p:DebugType=none
+
+# ============================================================
+# STAGE 2: Runtime (Hardened)
+# ============================================================
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+WORKDIR /app
+
+# Cài curl cho HEALTHCHECK
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Tạo non-root user 'gymbro' (không chạy bằng root)
+RUN groupadd -r gymbro && useradd -r -g gymbro -d /home/gymbro -m gymbro
+
+# Copy published output từ build stage
+COPY --from=build /app/publish .
+
+# Trao quyền sở hữu thư mục cho user gymbro
+RUN chown -R gymbro:gymbro /app /home/gymbro
+
+# Chuyển sang user không phải root
+USER gymbro
+
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
+
+# Healthcheck — kiểm tra ứng dụng còn sống
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:8080/ || exit 1
+
+ENTRYPOINT ["dotnet", "GymBro.Gateway.dll"]

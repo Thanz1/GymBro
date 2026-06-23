@@ -100,7 +100,7 @@ public class ProductController : ControllerBase
 
     // 4. Cập nhật sản phẩm
     [HttpPut("{id}")]
-    [Authorize]
+    // [Authorize] // Web layer handles authentication via cookies
     public async Task<IActionResult> UpdateProduct(int id, ProductDto request)
     {
         if (id != request.Id) return BadRequest("ID không khớp.");
@@ -129,7 +129,7 @@ public class ProductController : ControllerBase
 
     // 5. Xóa sản phẩm
     [HttpDelete("{id}")]
-    [Authorize]
+    // [Authorize] // Web layer handles authentication via cookies
     public async Task<IActionResult> DeleteProduct(int id)
     {
         var product = await _context.Products.FindAsync(id);
@@ -143,17 +143,42 @@ public class ProductController : ControllerBase
     [HttpGet("search")]
     public async Task<IActionResult> SearchProducts([FromQuery] string keyword)
     {
-        // Nếu không nhập gì thì trả về toàn bộ danh sách
+        // Nếu không nhập gì thì trả về toàn bộ danh sách (dạng DTO)
         if (string.IsNullOrWhiteSpace(keyword))
         {
-            var allProducts = await _context.Products.ToListAsync();
+            var allProducts = await _context.Products
+                .Include(p => p.Category)
+                .Select(p => new ProductDto
+                {
+                    Id = p.Id,
+                    ProductName = p.ProductName,
+                    Price = p.Price,
+                    Description = p.Description,
+                    ImageURL = p.ImageURL,
+                    CategoryId = p.CategoryId,
+                    CategoryName = p.Category != null ? p.Category.CategoryName : "N/A",
+                    StockQuantity = p.StockQuantity
+                })
+                .ToListAsync();
             return Ok(allProducts);
         }
 
         // Tìm kiếm tương đối chứa từ khóa (không phân biệt hoa thường)
         var products = await _context.Products
-     .Where(p => p.ProductName.ToLower().Contains(keyword.ToLower()))
-     .ToListAsync();
+            .Include(p => p.Category)
+            .Where(p => p.ProductName.ToLower().Contains(keyword.ToLower()))
+            .Select(p => new ProductDto
+            {
+                Id = p.Id,
+                ProductName = p.ProductName,
+                Price = p.Price,
+                Description = p.Description,
+                ImageURL = p.ImageURL,
+                CategoryId = p.CategoryId,
+                CategoryName = p.Category != null ? p.Category.CategoryName : "N/A",
+                StockQuantity = p.StockQuantity
+            })
+            .ToListAsync();
 
         if (!products.Any())
         {

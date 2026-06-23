@@ -68,6 +68,14 @@ namespace GymBro.Web.Controllers
             return View(productDto);
         }
 
+        // GET: Admin/Products/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            var product = await _productService.GetProductByIdAsync(id);
+            if (product == null) return NotFound();
+            return View(product);
+        }
+
         // GET: Admin/Products/Edit/5
         public async Task<IActionResult> Edit(int id)
         {

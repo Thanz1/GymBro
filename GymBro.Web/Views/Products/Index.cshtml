@@ -75,7 +75,10 @@
                                 <div class="btn-group">
                                     <a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
                                     <a href="@Url.Action("Details", new { id = item.Id })" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i></a>
-                                    <a href="@Url.Action("Delete", new { id = item.Id })" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                                    <form asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm @item.ProductName?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
